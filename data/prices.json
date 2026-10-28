@@ -1,0 +1,7435 @@
+{
+ "source": "https://maplestory.quest",
+ "game": "MapleStory Classic World",
+ "fetched": "2026-10-28",
+ "items": [
+  {
+   "id": 2450000,
+   "name": "1.5x EXP Coupon (15 min)",
+   "npc_pays": 1
+  },
+  {
+   "id": 2450001,
+   "name": "2x EXP Coupon (15 min)",
+   "npc_pays": 1
+  },
+  {
+   "id": 2450002,
+   "name": "3x EXP Coupon (15 min)",
+   "npc_pays": 1
+  },
+  {
+   "id": 4031128,
+   "name": "A Gift for JM",
+   "npc_pays": 1
+  },
+  {
+   "id": 4031127,
+   "name": "A Gift for Nella",
+   "npc_pays": 1
+  },
+  {
+   "id": 2060003,
+   "name": "Adamantium Arrows for Bows",
+   "npc_pays": 3
+  },
+  {
+   "id": 1472010,
+   "name": "Adamantium Guards",
+   "npc_pays": 6900,
+   "level": 30
+  },
+  {
+   "id": 1472006,
+   "name": "Adamantium Igor",
+   "npc_pays": 4900,
+   "level": 20
+  },
+  {
+   "id": 4010103,
+   "name": "Adamantium Ingot",
+   "npc_pays": 300
+  },
+  {
+   "id": 4010003,
+   "name": "Adamantium Ore",
+   "npc_pays": 60
+  },
+  {
+   "id": 4031126,
+   "name": "Alex's Gift Sack",
+   "npc_pays": 1
+  },
+  {
+   "id": 4031078,
+   "name": "Alligator Skin Pouch",
+   "npc_pays": 1
+  },
+  {
+   "id": 1402004,
+   "name": "Aluminum Baseball Bat",
+   "npc_pays": 6500,
+   "level": 30
+  },
+  {
+   "id": 4031136,
+   "name": "Amended Ledger",
+   "npc_pays": 1
+  },
+  {
+   "id": 4020101,
+   "name": "Amethyst",
+   "npc_pays": 1000
+  },
+  {
+   "id": 1032001,
+   "name": "Amethyst Earrings",
+   "npc_pays": 2250,
+   "level": 15
+  },
+  {
+   "id": 4020001,
+   "name": "Amethyst Ore",
+   "npc_pays": 200
+  },
+  {
+   "id": 3015006,
+   "name": "Amorian Relaxer",
+   "npc_pays": 500
+  },
+  {
+   "id": 4001007,
+   "name": "Ancient Scroll",
+   "npc_pays": 1
+  },
+  {
+   "id": 2020019,
+   "name": "Andre's Seafood Soup",
+   "npc_pays": 48
+  },
+  {
+   "id": 4031068,
+   "name": "Animal Fossil",
+   "npc_pays": 1
+  },
+  {
+   "id": 4000062,
+   "name": "Animal Fur Bundle",
+   "npc_pays": 10
+  },
+  {
+   "id": 3030000,
+   "name": "Anvil",
+   "npc_pays": 100
+  },
+  {
+   "id": 2010001,
+   "name": "Apple",
+   "npc_pays": 2
+  },
+  {
+   "id": 4020102,
+   "name": "Aquamarine",
+   "npc_pays": 200
+  },
+  {
+   "id": 4020002,
+   "name": "Aquamarine Ore",
+   "npc_pays": 40
+  },
+  {
+   "id": 4000054,
+   "name": "Aqumander Tail",
+   "npc_pays": 43
+  },
+  {
+   "id": 3030005,
+   "name": "Arcane Station",
+   "npc_pays": 100
+  },
+  {
+   "id": 2002010,
+   "name": "Arcforging Kit",
+   "npc_pays": 100
+  },
+  {
+   "id": 1062000,
+   "name": "Archer Pants",
+   "npc_pays": 800,
+   "level": 10
+  },
+  {
+   "id": 3000058,
+   "name": "Arcon Figure",
+   "npc_pays": 500
+  },
+  {
+   "id": 4130002,
+   "name": "Armor Crafting Catalyst",
+   "npc_pays": 1000
+  },
+  {
+   "id": 4001000,
+   "name": "Arwen's Glass Shoe",
+   "npc_pays": 250
+  },
+  {
+   "id": 3000014,
+   "name": "Assorted Pottery Set",
+   "npc_pays": 10
+  },
+  {
+   "id": 4031123,
+   "name": "Athena Pierce's Box",
+   "npc_pays": 1
+  },
+  {
+   "id": 2430043,
+   "name": "Atmospheric Effect Box",
+   "npc_pays": 1
+  },
+  {
+   "id": 2897005,
+   "name": "Aura Face Coupon",
+   "npc_pays": 1
+  },
+  {
+   "id": 2430040,
+   "name": "Aura Outfit Set",
+   "npc_pays": 1
+  },
+  {
+   "id": 2430062,
+   "name": "Avatar Gift Box",
+   "npc_pays": 1
+  },
+  {
+   "id": 4031077,
+   "name": "Ayan's Letter",
+   "npc_pays": 1
+  },
+  {
+   "id": 4031076,
+   "name": "Ayan's Toy Sword",
+   "npc_pays": 1
+  },
+  {
+   "id": 4000141,
+   "name": "Bain's Spiky Collar",
+   "npc_pays": 90
+  },
+  {
+   "id": 1462002,
+   "name": "Balanche",
+   "npc_pays": 4500,
+   "level": 20
+  },
+  {
+   "id": 4031035,
+   "name": "Bartos's Letter",
+   "npc_pays": 1
+  },
+  {
+   "id": 1082004,
+   "name": "Basic Archer Gloves",
+   "npc_pays": 1800,
+   "level": 15
+  },
+  {
+   "id": 1312002,
+   "name": "Battle Axe",
+   "npc_pays": 2500,
+   "level": 15
+  },
+  {
+   "id": 1452003,
+   "name": "Battle Bow",
+   "npc_pays": 5500,
+   "level": 25
+  },
+  {
+   "id": 1462001,
+   "name": "Battle Crossbow",
+   "npc_pays": 3500,
+   "level": 15
+  },
+  {
+   "id": 3015010,
+   "name": "Beach Chair(Blue)",
+   "npc_pays": 100
+  },
+  {
+   "id": 3015009,
+   "name": "Beach Chair(Red)",
+   "npc_pays": 100
+  },
+  {
+   "id": 1072036,
+   "name": "Bear Huntertop",
+   "npc_pays": 1200,
+   "level": 20
+  },
+  {
+   "id": 1072016,
+   "name": "Beige Nitty",
+   "npc_pays": 900,
+   "level": 15
+  },
+  {
+   "id": 1050000,
+   "name": "Beige Plain Robe",
+   "npc_pays": 2700,
+   "level": 15
+  },
+  {
+   "id": 1062004,
+   "name": "Bennis Chain Pants",
+   "npc_pays": 2000,
+   "level": 25
+  },
+  {
+   "id": 4031110,
+   "name": "Betty's report",
+   "npc_pays": 1
+  },
+  {
+   "id": 4000140,
+   "name": "Binding Bridle",
+   "npc_pays": 89
+  },
+  {
+   "id": 1041007,
+   "name": "Black Armine",
+   "npc_pays": 1000,
+   "level": 10
+  },
+  {
+   "id": 1061005,
+   "name": "Black Armine Skirt",
+   "npc_pays": 800,
+   "level": 10
+  },
+  {
+   "id": 1002015,
+   "name": "Black Bandana",
+   "npc_pays": 600,
+   "level": 10
+  },
+  {
+   "id": 1002074,
+   "name": "Black Baseball Cap",
+   "npc_pays": 1300,
+   "level": 22
+  },
+  {
+   "id": 1040036,
+   "name": "Black Bennis Chainmail",
+   "npc_pays": 2500,
+   "level": 25
+  },
+  {
+   "id": 1082008,
+   "name": "Black Cat Gloves",
+   "npc_pays": 2400,
+   "level": 20
+  },
+  {
+   "id": 3015052,
+   "name": "Black Christmas Recharger Chair",
+   "npc_pays": 1
+  },
+  {
+   "id": 1061011,
+   "name": "Black Cloth Pants (Female)",
+   "npc_pays": 800,
+   "level": 10
+  },
+  {
+   "id": 1060010,
+   "name": "Black Cloth Pants (Male)",
+   "npc_pays": 800,
+   "level": 10
+  },
+  {
+   "id": 1041013,
+   "name": "Black Cloth Vest (Female)",
+   "npc_pays": 1000,
+   "level": 10
+  },
+  {
+   "id": 1040012,
+   "name": "Black Cloth Vest (Male)",
+   "npc_pays": 1000,
+   "level": 10
+  },
+  {
+   "id": 4020108,
+   "name": "Black Crystal",
+   "npc_pays": 2500
+  },
+  {
+   "id": 4020008,
+   "name": "Black Crystal Ore",
+   "npc_pays": 500
+  },
+  {
+   "id": 1050011,
+   "name": "Black Dragon Robe",
+   "npc_pays": 5400,
+   "level": 30
+  },
+  {
+   "id": 1082007,
+   "name": "Black Duo",
+   "npc_pays": 1800,
+   "level": 15
+  },
+  {
+   "id": 4003010,
+   "name": "Black Dye",
+   "npc_pays": 250
+  },
+  {
+   "id": 1072040,
+   "name": "Black Enamel Boots",
+   "npc_pays": 1200,
+   "level": 20
+  },
+  {
+   "id": 4031033,
+   "name": "Black Feather",
+   "npc_pays": 1000
+  },
+  {
+   "id": 1002047,
+   "name": "Black Feather Hat",
+   "npc_pays": 900,
+   "level": 15
+  },
+  {
+   "id": 1002027,
+   "name": "Black Ghetto Beanie",
+   "npc_pays": 600,
+   "level": 10
+  },
+  {
+   "id": 1072012,
+   "name": "Black Gomushin",
+   "npc_pays": 660,
+   "level": 11
+  },
+  {
+   "id": 1002004,
+   "name": "Black Headband",
+   "npc_pays": 300,
+   "level": 5
+  },
+  {
+   "id": 1002094,
+   "name": "Black Hunter",
+   "npc_pays": 1500,
+   "level": 25
+  },
+  {
+   "id": 1072073,
+   "name": "Black Hunter Boots",
+   "npc_pays": 1800,
+   "level": 30
+  },
+  {
+   "id": 1041052,
+   "name": "Black Huntress Armor",
+   "npc_pays": 3000,
+   "level": 30
+  },
+  {
+   "id": 1061046,
+   "name": "Black Huntress Pants",
+   "npc_pays": 2400,
+   "level": 30
+  },
+  {
+   "id": 1002108,
+   "name": "Black Jester",
+   "npc_pays": 1800,
+   "level": 30
+  },
+  {
+   "id": 1072057,
+   "name": "Black Lappy Boots",
+   "npc_pays": 1500,
+   "level": 25
+  },
+  {
+   "id": 1002069,
+   "name": "Black Loosecap",
+   "npc_pays": 1200,
+   "level": 20
+  },
+  {
+   "id": 1082033,
+   "name": "Black Lutia",
+   "npc_pays": 3600,
+   "level": 30
+  },
+  {
+   "id": 1072069,
+   "name": "Black Magic Shoes",
+   "npc_pays": 1800,
+   "level": 30
+  },
+  {
+   "id": 1082036,
+   "name": "Black Marker",
+   "npc_pays": 3600,
+   "level": 30
+  },
+  {
+   "id": 1060032,
+   "name": "Black Martial Arts Pants",
+   "npc_pays": 2400,
+   "level": 30
+  },
+  {
+   "id": 1072017,
+   "name": "Black Nitty",
+   "npc_pays": 900,
+   "level": 15
+  },
+  {
+   "id": 1040029,
+   "name": "Black Pao",
+   "npc_pays": 2000,
+   "level": 20
+  },
+  {
+   "id": 1060022,
+   "name": "Black Pao Bottoms",
+   "npc_pays": 1600,
+   "level": 20
+  },
+  {
+   "id": 1002067,
+   "name": "Black Robin Hat",
+   "npc_pays": 1200,
+   "level": 20
+  },
+  {
+   "id": 2100000,
+   "name": "Black Sack",
+   "npc_pays": 1
+  },
+  {
+   "id": 1040039,
+   "name": "Black Sneak",
+   "npc_pays": 2500,
+   "level": 25
+  },
+  {
+   "id": 1060028,
+   "name": "Black Sneak Pants",
+   "npc_pays": 2000,
+   "level": 25
+  },
+  {
+   "id": 1072082,
+   "name": "Black Snowshoes",
+   "npc_pays": 1800,
+   "level": 30
+  },
+  {
+   "id": 1041030,
+   "name": "Black Split",
+   "npc_pays": 2000,
+   "level": 20
+  },
+  {
+   "id": 1060019,
+   "name": "Black Split Pants",
+   "npc_pays": 1600,
+   "level": 20
+  },
+  {
+   "id": 1040025,
+   "name": "Black Split Piece",
+   "npc_pays": 2000,
+   "level": 20
+  },
+  {
+   "id": 1061025,
+   "name": "Black Split Skirt",
+   "npc_pays": 1600,
+   "level": 20
+  },
+  {
+   "id": 1041056,
+   "name": "Black Steal",
+   "npc_pays": 3000,
+   "level": 30
+  },
+  {
+   "id": 1061051,
+   "name": "Black Steal Pants",
+   "npc_pays": 2400,
+   "level": 30
+  },
+  {
+   "id": 1002008,
+   "name": "Black Swimming Cap",
+   "npc_pays": 450,
+   "level": 8
+  },
+  {
+   "id": 1002052,
+   "name": "Black Thief Hood",
+   "npc_pays": 900,
+   "level": 15
+  },
+  {
+   "id": 1072050,
+   "name": "Black Wind Shoes",
+   "npc_pays": 1500,
+   "level": 25
+  },
+  {
+   "id": 1050014,
+   "name": "Black Wizard Robe",
+   "npc_pays": 5400,
+   "level": 30
+  },
+  {
+   "id": 4001006,
+   "name": "Blackbull's Deed to the Land",
+   "npc_pays": 1
+  },
+  {
+   "id": 4000084,
+   "name": "Bloctopus Key Chain",
+   "npc_pays": 35
+  },
+  {
+   "id": 1072065,
+   "name": "Blood Battle Grieves",
+   "npc_pays": 1800,
+   "level": 30
+  },
+  {
+   "id": 1082020,
+   "name": "Blood Mesana",
+   "npc_pays": 3000,
+   "level": 25
+  },
+  {
+   "id": 1041044,
+   "name": "Blood Sneak",
+   "npc_pays": 2500,
+   "level": 25
+  },
+  {
+   "id": 1061038,
+   "name": "Blood Sneak Pants",
+   "npc_pays": 2000,
+   "level": 25
+  },
+  {
+   "id": 3015033,
+   "name": "Bloody Rose",
+   "npc_pays": 1
+  },
+  {
+   "id": 1072041,
+   "name": "Blue Ankle-strap Sandals",
+   "npc_pays": 1260,
+   "level": 21
+  },
+  {
+   "id": 1002020,
+   "name": "Blue Apprentice Hat",
+   "npc_pays": 600,
+   "level": 10
+  },
+  {
+   "id": 1412004,
+   "name": "Blue Axe",
+   "npc_pays": 6500,
+   "level": 30
+  },
+  {
+   "id": 3992018,
+   "name": "Blue Ball Ornament",
+   "npc_pays": 75
+  },
+  {
+   "id": 1002083,
+   "name": "Blue Bamboo Hat",
+   "npc_pays": 1500,
+   "level": 25
+  },
+  {
+   "id": 1002013,
+   "name": "Blue Bandana",
+   "npc_pays": 600,
+   "level": 10
+  },
+  {
+   "id": 1002077,
+   "name": "Blue Baseball Cap",
+   "npc_pays": 1300,
+   "level": 22
+  },
+  {
+   "id": 1072006,
+   "name": "Blue Basic Boots",
+   "npc_pays": 600,
+   "level": 10
+  },
+  {
+   "id": 1041041,
+   "name": "Blue Bennis Chainmail (Female)",
+   "npc_pays": 2500,
+   "level": 25
+  },
+  {
+   "id": 1040034,
+   "name": "Blue Bennis Chainmail (Male)",
+   "npc_pays": 2500,
+   "level": 25
+  },
+  {
+   "id": 3992028,
+   "name": "Blue Candle",
+   "npc_pays": 75
+  },
+  {
+   "id": 3992031,
+   "name": "Blue Candy Canes",
+   "npc_pays": 75
+  },
+  {
+   "id": 1061010,
+   "name": "Blue Cloth Pants (Female)",
+   "npc_pays": 800,
+   "level": 10
+  },
+  {
+   "id": 1060009,
+   "name": "Blue Cloth Pants (Male)",
+   "npc_pays": 800,
+   "level": 10
+  },
+  {
+   "id": 1041012,
+   "name": "Blue Cloth Vest (Female)",
+   "npc_pays": 1000,
+   "level": 10
+  },
+  {
+   "id": 1040011,
+   "name": "Blue Cloth Vest (Male)",
+   "npc_pays": 1000,
+   "level": 10
+  },
+  {
+   "id": 1082012,
+   "name": "Blue Diros",
+   "npc_pays": 2400,
+   "level": 20
+  },
+  {
+   "id": 1050007,
+   "name": "Blue Doros Robe",
+   "npc_pays": 4500,
+   "level": 25
+  },
+  {
+   "id": 1082006,
+   "name": "Blue Duo",
+   "npc_pays": 1800,
+   "level": 15
+  },
+  {
+   "id": 4003014,
+   "name": "Blue Dye",
+   "npc_pays": 250
+  },
+  {
+   "id": 1072039,
+   "name": "Blue Enamel Boots",
+   "npc_pays": 1200,
+   "level": 20
+  },
+  {
+   "id": 1051007,
+   "name": "Blue Engrit",
+   "npc_pays": 5400,
+   "level": 30
+  },
+  {
+   "id": 1061042,
+   "name": "Blue Fairy Skirt",
+   "npc_pays": 2400,
+   "level": 30
+  },
+  {
+   "id": 1041048,
+   "name": "Blue Fairy Top",
+   "npc_pays": 3000,
+   "level": 30
+  },
+  {
+   "id": 1002045,
+   "name": "Blue Feather Hat",
+   "npc_pays": 900,
+   "level": 15
+  },
+  {
+   "id": 1322018,
+   "name": "Blue Flowery Tube",
+   "npc_pays": 1,
+   "level": null
+  },
+  {
+   "id": 1002025,
+   "name": "Blue Ghetto Beanie",
+   "npc_pays": 600,
+   "level": 10
+  },
+  {
+   "id": 1072009,
+   "name": "Blue Gidder Shoes",
+   "npc_pays": 600,
+   "level": 10
+  },
+  {
+   "id": 3992006,
+   "name": "Blue Gift-Box Ornament",
+   "npc_pays": 75
+  },
+  {
+   "id": 1002117,
+   "name": "Blue Guise",
+   "npc_pays": 1800,
+   "level": 30
+  },
+  {
+   "id": 1002113,
+   "name": "Blue Hawkeye",
+   "npc_pays": 1800,
+   "level": 30
+  },
+  {
+   "id": 1002007,
+   "name": "Blue Headband",
+   "npc_pays": 300,
+   "level": 5
+  },
+  {
+   "id": 1072030,
+   "name": "Blue High Boots",
+   "npc_pays": 1200,
+   "level": 20
+  },
+  {
+   "id": 1002093,
+   "name": "Blue Hunter",
+   "npc_pays": 1500,
+   "level": 25
+  },
+  {
+   "id": 1072071,
+   "name": "Blue Hunter Boots",
+   "npc_pays": 1800,
+   "level": 30
+  },
+  {
+   "id": 1040043,
+   "name": "Blue Hunter's Armor",
+   "npc_pays": 3000,
+   "level": 30
+  },
+  {
+   "id": 1060035,
+   "name": "Blue Hunter's Pants",
+   "npc_pays": 2400,
+   "level": 30
+  },
+  {
+   "id": 1002105,
+   "name": "Blue Jester",
+   "npc_pays": 1800,
+   "level": 30
+  },
+  {
+   "id": 1072031,
+   "name": "Blue Jewelry Boots",
+   "npc_pays": 1200,
+   "level": 20
+  },
+  {
+   "id": 1050003,
+   "name": "Blue Kendo Robe",
+   "npc_pays": 3600,
+   "level": 20
+  },
+  {
+   "id": 1072054,
+   "name": "Blue Lappy Boots",
+   "npc_pays": 1500,
+   "level": 25
+  },
+  {
+   "id": 1040005,
+   "name": "Blue Lolico Armor",
+   "npc_pays": 1000,
+   "level": 10
+  },
+  {
+   "id": 1060005,
+   "name": "Blue Lolico Pants",
+   "npc_pays": 800,
+   "level": 10
+  },
+  {
+   "id": 1002070,
+   "name": "Blue Loosecap",
+   "npc_pays": 1200,
+   "level": 20
+  },
+  {
+   "id": 1082032,
+   "name": "Blue Lutia",
+   "npc_pays": 3600,
+   "level": 30
+  },
+  {
+   "id": 1072067,
+   "name": "Blue Magic Shoes",
+   "npc_pays": 1800,
+   "level": 30
+  },
+  {
+   "id": 2020021,
+   "name": "Blue Malady's Candy",
+   "npc_pays": 1
+  },
+  {
+   "id": 1002034,
+   "name": "Blue Metal Gear",
+   "npc_pays": 950,
+   "level": 15
+  },
+  {
+   "id": 3992014,
+   "name": "Blue Miniature Bulb",
+   "npc_pays": 75
+  },
+  {
+   "id": 1002038,
+   "name": "Blue Moon Conehat",
+   "npc_pays": 900,
+   "level": 15
+  },
+  {
+   "id": 1082009,
+   "name": "Blue Morrican",
+   "npc_pays": 2400,
+   "level": 20
+  },
+  {
+   "id": 4000016,
+   "name": "Blue Mushroom Cap",
+   "npc_pays": 19
+  },
+  {
+   "id": 1040019,
+   "name": "Blue Nightshift",
+   "npc_pays": 1500,
+   "level": 15
+  },
+  {
+   "id": 1060014,
+   "name": "Blue Nightshift Pants",
+   "npc_pays": 1200,
+   "level": 15
+  },
+  {
+   "id": 1072023,
+   "name": "Blue Ninja Sandals",
+   "npc_pays": 900,
+   "level": 15
+  },
+  {
+   "id": 1040013,
+   "name": "Blue One-lined T-Shirt",
+   "npc_pays": 1200,
+   "level": 12
+  },
+  {
+   "id": 1040028,
+   "name": "Blue Pao",
+   "npc_pays": 2000,
+   "level": 20
+  },
+  {
+   "id": 1060021,
+   "name": "Blue Pao Bottoms",
+   "npc_pays": 1600,
+   "level": 20
+  },
+  {
+   "id": 1050001,
+   "name": "Blue Plain Robe",
+   "npc_pays": 2700,
+   "level": 15
+  },
+  {
+   "id": 2000003,
+   "name": "Blue Potion",
+   "npc_pays": 22
+  },
+  {
+   "id": 2000008,
+   "name": "Blue Potion",
+   "npc_pays": 22
+  },
+  {
+   "id": 4001022,
+   "name": "Blue Primrose Seed",
+   "npc_pays": 1
+  },
+  {
+   "id": 1041036,
+   "name": "Blue Qi Pao",
+   "npc_pays": 2000,
+   "level": 20
+  },
+  {
+   "id": 1061030,
+   "name": "Blue Qi Pao Pants",
+   "npc_pays": 1600,
+   "level": 20
+  },
+  {
+   "id": 1061033,
+   "name": "Blue Qi Pao Skirt",
+   "npc_pays": 1760,
+   "level": 22
+  },
+  {
+   "id": 1002066,
+   "name": "Blue Robin Hat",
+   "npc_pays": 1200,
+   "level": 20
+  },
+  {
+   "id": 1050010,
+   "name": "Blue Sauna Robe",
+   "npc_pays": 5400,
+   "level": 30
+  },
+  {
+   "id": 1082022,
+   "name": "Blue Savata",
+   "npc_pays": 3000,
+   "level": 25
+  },
+  {
+   "id": 3010008,
+   "name": "Blue Seal Cushion",
+   "npc_pays": 1
+  },
+  {
+   "id": 1040021,
+   "name": "Blue Sergeant",
+   "npc_pays": 2000,
+   "level": 20
+  },
+  {
+   "id": 1041037,
+   "name": "Blue Shark",
+   "npc_pays": 2500,
+   "level": 25
+  },
+  {
+   "id": 1061035,
+   "name": "Blue Shark Skirt",
+   "npc_pays": 2000,
+   "level": 25
+  },
+  {
+   "id": 4000002,
+   "name": "Blue Snail Shell",
+   "npc_pays": 2
+  },
+  {
+   "id": 1040038,
+   "name": "Blue Sneak",
+   "npc_pays": 2500,
+   "level": 25
+  },
+  {
+   "id": 1072080,
+   "name": "Blue Snowshoes",
+   "npc_pays": 1800,
+   "level": 30
+  },
+  {
+   "id": 1040023,
+   "name": "Blue Split Piece",
+   "npc_pays": 2000,
+   "level": 20
+  },
+  {
+   "id": 3992009,
+   "name": "Blue Star Miniature Bulb",
+   "npc_pays": 75
+  },
+  {
+   "id": 1041054,
+   "name": "Blue Steal",
+   "npc_pays": 3000,
+   "level": 30
+  },
+  {
+   "id": 1061049,
+   "name": "Blue Steal Pants",
+   "npc_pays": 2400,
+   "level": 30
+  },
+  {
+   "id": 1040000,
+   "name": "Blue Striped Undershirt",
+   "npc_pays": 1,
+   "level": null
+  },
+  {
+   "id": 1002009,
+   "name": "Blue Swimming Cap",
+   "npc_pays": 450,
+   "level": 8
+  },
+  {
+   "id": 1002050,
+   "name": "Blue Thief Hood",
+   "npc_pays": 900,
+   "level": 15
+  },
+  {
+   "id": 1002097,
+   "name": "Blue Tiberian",
+   "npc_pays": 1500,
+   "level": 25
+  },
+  {
+   "id": 4000106,
+   "name": "Blue Toy Block",
+   "npc_pays": 45
+  },
+  {
+   "id": 1060006,
+   "name": "Blue Training Pants",
+   "npc_pays": 800,
+   "level": 10
+  },
+  {
+   "id": 1040006,
+   "name": "Blue Training Shirt",
+   "npc_pays": 1000,
+   "level": 10
+  },
+  {
+   "id": 4031043,
+   "name": "Blue Viola",
+   "npc_pays": 1000
+  },
+  {
+   "id": 1072061,
+   "name": "Blue Whitebottom Boots",
+   "npc_pays": 1560,
+   "level": 26
+  },
+  {
+   "id": 1050012,
+   "name": "Blue Wizard Robe",
+   "npc_pays": 5400,
+   "level": 30
+  },
+  {
+   "id": 1002060,
+   "name": "Blue Wizardry Hat",
+   "npc_pays": 1200,
+   "level": 20
+  },
+  {
+   "id": 1072020,
+   "name": "Blue Woodsman Boots",
+   "npc_pays": 900,
+   "level": 15
+  },
+  {
+   "id": 3992036,
+   "name": "Blue-Ribboned Giftbox",
+   "npc_pays": 75
+  },
+  {
+   "id": 1060000,
+   "name": "Blue-Striped Boxers",
+   "npc_pays": 1,
+   "level": null
+  },
+  {
+   "id": 1041006,
+   "name": "Blueberry Lolica Armor",
+   "npc_pays": 1000,
+   "level": 10
+  },
+  {
+   "id": 4031120,
+   "name": "Bound Ledger",
+   "npc_pays": 1
+  },
+  {
+   "id": 3000003,
+   "name": "Brass Candlestick",
+   "npc_pays": 10
+  },
+  {
+   "id": 3000048,
+   "name": "Brick Pile",
+   "npc_pays": 10
+  },
+  {
+   "id": 1402003,
+   "name": "Broadsword",
+   "npc_pays": 5500,
+   "level": 25
+  },
+  {
+   "id": 4031124,
+   "name": "Broken Wooden Bow",
+   "npc_pays": 1
+  },
+  {
+   "id": 1072025,
+   "name": "Bronze Aroa Boots",
+   "npc_pays": 960,
+   "level": 16
+  },
+  {
+   "id": 2060001,
+   "name": "Bronze Arrows for Bows",
+   "npc_pays": 1
+  },
+  {
+   "id": 2061001,
+   "name": "Bronze Arrows for Crossbows",
+   "npc_pays": 1
+  },
+  {
+   "id": 1072075,
+   "name": "Bronze Chain Boots",
+   "npc_pays": 1800,
+   "level": 30
+  },
+  {
+   "id": 1002054,
+   "name": "Bronze Football Helmet",
+   "npc_pays": 1200,
+   "level": 20
+  },
+  {
+   "id": 1002035,
+   "name": "Bronze Full Helm",
+   "npc_pays": 900,
+   "level": 15
+  },
+  {
+   "id": 1072014,
+   "name": "Bronze Grieves",
+   "npc_pays": 900,
+   "level": 15
+  },
+  {
+   "id": 1002029,
+   "name": "Bronze Helmet",
+   "npc_pays": 700,
+   "level": 12
+  },
+  {
+   "id": 1472004,
+   "name": "Bronze Igor",
+   "npc_pays": 4500,
+   "level": 20
+  },
+  {
+   "id": 4010100,
+   "name": "Bronze Ingot",
+   "npc_pays": 100
+  },
+  {
+   "id": 1002016,
+   "name": "Bronze Koif",
+   "npc_pays": 600,
+   "level": 10
+  },
+  {
+   "id": 1082015,
+   "name": "Bronze Mischief",
+   "npc_pays": 2400,
+   "level": 20
+  },
+  {
+   "id": 1082028,
+   "name": "Bronze Missel",
+   "npc_pays": 3600,
+   "level": 30
+  },
+  {
+   "id": 4010000,
+   "name": "Bronze Ore",
+   "npc_pays": 20
+  },
+  {
+   "id": 1002101,
+   "name": "Bronze Pride",
+   "npc_pays": 1800,
+   "level": 30
+  },
+  {
+   "id": 1002057,
+   "name": "Bronze Viking Helm",
+   "npc_pays": 1200,
+   "level": 20
+  },
+  {
+   "id": 1082025,
+   "name": "Bronze Wolfskin",
+   "npc_pays": 3000,
+   "level": 25
+  },
+  {
+   "id": 1061017,
+   "name": "Brown Able Skirt",
+   "npc_pays": 1200,
+   "level": 15
+  },
+  {
+   "id": 1072043,
+   "name": "Brown Ankle-strap Sandals",
+   "npc_pays": 1260,
+   "level": 21
+  },
+  {
+   "id": 1002019,
+   "name": "Brown Apprentice Hat",
+   "npc_pays": 600,
+   "level": 10
+  },
+  {
+   "id": 1040009,
+   "name": "Brown Archer Top",
+   "npc_pays": 1000,
+   "level": 10
+  },
+  {
+   "id": 1072026,
+   "name": "Brown Aroa Boots",
+   "npc_pays": 960,
+   "level": 16
+  },
+  {
+   "id": 1002081,
+   "name": "Brown Bamboo Hat",
+   "npc_pays": 1500,
+   "level": 25
+  },
+  {
+   "id": 1002076,
+   "name": "Brown Baseball Cap",
+   "npc_pays": 1300,
+   "level": 22
+  },
+  {
+   "id": 1072004,
+   "name": "Brown Basic Boots",
+   "npc_pays": 600,
+   "level": 10
+  },
+  {
+   "id": 1040015,
+   "name": "Brown Corporal",
+   "npc_pays": 1500,
+   "level": 15
+  },
+  {
+   "id": 1060012,
+   "name": "Brown Corporal Pants",
+   "npc_pays": 1200,
+   "level": 15
+  },
+  {
+   "id": 1051001,
+   "name": "Brown Doroness Robe",
+   "npc_pays": 4500,
+   "level": 25
+  },
+  {
+   "id": 1050006,
+   "name": "Brown Doros Robe",
+   "npc_pays": 4500,
+   "level": 25
+  },
+  {
+   "id": 1082005,
+   "name": "Brown Duo",
+   "npc_pays": 1800,
+   "level": 15
+  },
+  {
+   "id": 1002044,
+   "name": "Brown Feather Hat",
+   "npc_pays": 900,
+   "level": 15
+  },
+  {
+   "id": 1002026,
+   "name": "Brown Ghetto Beanie",
+   "npc_pays": 600,
+   "level": 10
+  },
+  {
+   "id": 1072010,
+   "name": "Brown Gidder Shoes",
+   "npc_pays": 600,
+   "level": 10
+  },
+  {
+   "id": 1002118,
+   "name": "Brown Guise",
+   "npc_pays": 1800,
+   "level": 30
+  },
+  {
+   "id": 1072008,
+   "name": "Brown Hard Leather Boots",
+   "npc_pays": 600,
+   "level": 10
+  },
+  {
+   "id": 1062003,
+   "name": "Brown Hard Leather Pants",
+   "npc_pays": 1600,
+   "level": 20
+  },
+  {
+   "id": 1040026,
+   "name": "Brown Hard Leather Top",
+   "npc_pays": 2000,
+   "level": 20
+  },
+  {
+   "id": 1002111,
+   "name": "Brown Hawkeye",
+   "npc_pays": 1800,
+   "level": 30
+  },
+  {
+   "id": 1072028,
+   "name": "Brown High Boots",
+   "npc_pays": 1200,
+   "level": 20
+  },
+  {
+   "id": 1002091,
+   "name": "Brown Hunter",
+   "npc_pays": 1500,
+   "level": 25
+  },
+  {
+   "id": 1072074,
+   "name": "Brown Hunter Boots",
+   "npc_pays": 1800,
+   "level": 30
+  },
+  {
+   "id": 1072051,
+   "name": "Brown Jack Boots",
+   "npc_pays": 1500,
+   "level": 25
+  },
+  {
+   "id": 1002106,
+   "name": "Brown Jester",
+   "npc_pays": 1800,
+   "level": 30
+  },
+  {
+   "id": 1041027,
+   "name": "Brown Lamelle",
+   "npc_pays": 2000,
+   "level": 20
+  },
+  {
+   "id": 1040004,
+   "name": "Brown Lolico Armor",
+   "npc_pays": 1000,
+   "level": 10
+  },
+  {
+   "id": 1060004,
+   "name": "Brown Lolico Pants",
+   "npc_pays": 800,
+   "level": 10
+  },
+  {
+   "id": 1002071,
+   "name": "Brown Loosecap",
+   "npc_pays": 1200,
+   "level": 20
+  },
+  {
+   "id": 1082034,
+   "name": "Brown Marker",
+   "npc_pays": 3600,
+   "level": 30
+  },
+  {
+   "id": 1060031,
+   "name": "Brown Martial Arts Pants",
+   "npc_pays": 2400,
+   "level": 30
+  },
+  {
+   "id": 1002042,
+   "name": "Brown Moon Conehat",
+   "npc_pays": 900,
+   "level": 15
+  },
+  {
+   "id": 1041024,
+   "name": "Brown Nightshift",
+   "npc_pays": 1500,
+   "level": 15
+  },
+  {
+   "id": 1061020,
+   "name": "Brown Nightshift Pants",
+   "npc_pays": 1200,
+   "level": 15
+  },
+  {
+   "id": 4001020,
+   "name": "Brown Primrose Seed",
+   "npc_pays": 1
+  },
+  {
+   "id": 1061023,
+   "name": "Brown Ramel Skirt",
+   "npc_pays": 1600,
+   "level": 20
+  },
+  {
+   "id": 1002064,
+   "name": "Brown Robin Hat",
+   "npc_pays": 1200,
+   "level": 20
+  },
+  {
+   "id": 1002000,
+   "name": "Brown Skullcap",
+   "npc_pays": 300,
+   "level": 5
+  },
+  {
+   "id": 1040037,
+   "name": "Brown Sneak",
+   "npc_pays": 2500,
+   "level": 25
+  },
+  {
+   "id": 1060026,
+   "name": "Brown Sneak Pants",
+   "npc_pays": 2000,
+   "level": 25
+  },
+  {
+   "id": 1002098,
+   "name": "Brown Tiberian",
+   "npc_pays": 1500,
+   "level": 25
+  },
+  {
+   "id": 1060007,
+   "name": "Brown Training Pants",
+   "npc_pays": 800,
+   "level": 10
+  },
+  {
+   "id": 1040007,
+   "name": "Brown Training Shirt",
+   "npc_pays": 1000,
+   "level": 10
+  },
+  {
+   "id": 1002022,
+   "name": "Brown Winter Hat",
+   "npc_pays": 600,
+   "level": 10
+  },
+  {
+   "id": 1072019,
+   "name": "Brown Woodsman Boots",
+   "npc_pays": 900,
+   "level": 15
+  },
+  {
+   "id": 4031112,
+   "name": "Bruce's Special Cake",
+   "npc_pays": 1
+  },
+  {
+   "id": 4000014,
+   "name": "Bubbling's Huge Bubble",
+   "npc_pays": 15
+  },
+  {
+   "id": 4000132,
+   "name": "Buffoon's Grandpa Clock",
+   "npc_pays": 74
+  },
+  {
+   "id": 4000122,
+   "name": "Buffy Hat",
+   "npc_pays": 62
+  },
+  {
+   "id": 2020002,
+   "name": "Cake",
+   "npc_pays": 15
+  },
+  {
+   "id": 2020023,
+   "name": "Cake",
+   "npc_pays": 15
+  },
+  {
+   "id": 3015037,
+   "name": "Camping Tent",
+   "npc_pays": 1
+  },
+  {
+   "id": 3992023,
+   "name": "Candy Cane",
+   "npc_pays": 75
+  },
+  {
+   "id": 1003000,
+   "name": "Cap of Memories",
+   "npc_pays": 1400,
+   "level": 30
+  },
+  {
+   "id": 1332009,
+   "name": "Cass",
+   "npc_pays": 5500,
+   "level": 30
+  },
+  {
+   "id": 4000113,
+   "name": "Cellion Tail",
+   "npc_pays": 53
+  },
+  {
+   "id": 4000130,
+   "name": "Cerebes Tooth",
+   "npc_pays": 72
+  },
+  {
+   "id": 3015032,
+   "name": "Charge UP Chair",
+   "npc_pays": 1
+  },
+  {
+   "id": 4000020,
+   "name": "Charm of the Undead",
+   "npc_pays": 24
+  },
+  {
+   "id": 4000097,
+   "name": "Cheap Battery",
+   "npc_pays": 41
+  },
+  {
+   "id": 3000005,
+   "name": "Cherry Bed",
+   "npc_pays": 10
+  },
+  {
+   "id": 3000008,
+   "name": "Cherry Bench",
+   "npc_pays": 10
+  },
+  {
+   "id": 3000004,
+   "name": "Cherry Bookshelf",
+   "npc_pays": 10
+  },
+  {
+   "id": 3000001,
+   "name": "Cherry Lattice Window",
+   "npc_pays": 10
+  },
+  {
+   "id": 3000006,
+   "name": "Cherry Wardrobe",
+   "npc_pays": 10
+  },
+  {
+   "id": 3015040,
+   "name": "Chewing Panda Chair",
+   "npc_pays": 1
+  },
+  {
+   "id": 4000149,
+   "name": "Chief Gray's Sign",
+   "npc_pays": 490
+  },
+  {
+   "id": 4031117,
+   "name": "Chief Stan's Hammer",
+   "npc_pays": 1
+  },
+  {
+   "id": 3015049,
+   "name": "Christmas Box",
+   "npc_pays": 1
+  },
+  {
+   "id": 3015026,
+   "name": "Christmas Tree Chair",
+   "npc_pays": 1
+  },
+  {
+   "id": 3992026,
+   "name": "Christmas wreath",
+   "npc_pays": 300
+  },
+  {
+   "id": 2022002,
+   "name": "Cider",
+   "npc_pays": 1
+  },
+  {
+   "id": 3992024,
+   "name": "Circular Tree Ornament",
+   "npc_pays": 300
+  },
+  {
+   "id": 4000040,
+   "name": "Clang Claw",
+   "npc_pays": 49
+  },
+  {
+   "id": 3015014,
+   "name": "Clear Chair",
+   "npc_pays": 100
+  },
+  {
+   "id": 4000082,
+   "name": "Clock Spring",
+   "npc_pays": 34
+  },
+  {
+   "id": 4000061,
+   "name": "Coconut",
+   "npc_pays": 10
+  },
+  {
+   "id": 1332005,
+   "name": "Coconut Knife",
+   "npc_pays": 3500,
+   "level": 20
+  },
+  {
+   "id": 4000089,
+   "name": "Cog",
+   "npc_pays": 37
+  },
+  {
+   "id": 4000034,
+   "name": "Cold Eye Tail",
+   "npc_pays": 41
+  },
+  {
+   "id": 2430000,
+   "name": "Companion's Magic Box",
+   "npc_pays": 1
+  },
+  {
+   "id": 2430053,
+   "name": "Compensation Box",
+   "npc_pays": 1
+  },
+  {
+   "id": 2430054,
+   "name": "Compensation Box",
+   "npc_pays": 1
+  },
+  {
+   "id": 2430055,
+   "name": "Compensation Box",
+   "npc_pays": 1
+  },
+  {
+   "id": 2430056,
+   "name": "Compensation Box",
+   "npc_pays": 1
+  },
+  {
+   "id": 2430057,
+   "name": "Compensation Box",
+   "npc_pays": 1
+  },
+  {
+   "id": 1452001,
+   "name": "Composite Bow",
+   "npc_pays": 3500,
+   "level": 15
+  },
+  {
+   "id": 3000013,
+   "name": "Corked Storage Jar",
+   "npc_pays": 10
+  },
+  {
+   "id": 4031097,
+   "name": "Cracked Black Crystal",
+   "npc_pays": 1
+  },
+  {
+   "id": 3000063,
+   "name": "Crimson Balrog Helmet",
+   "npc_pays": 500
+  },
+  {
+   "id": 4000041,
+   "name": "Croco Skin",
+   "npc_pays": 52
+  },
+  {
+   "id": 1462000,
+   "name": "Crossbow",
+   "npc_pays": 2500,
+   "level": 10
+  },
+  {
+   "id": 3015048,
+   "name": "Cuddly Polar Bear",
+   "npc_pays": 1
+  },
+  {
+   "id": 4000027,
+   "name": "Curse Eye Tail",
+   "npc_pays": 33
+  },
+  {
+   "id": 4000033,
+   "name": "Cursed Doll",
+   "npc_pays": 40
+  },
+  {
+   "id": 1060027,
+   "name": "Dark Brown Sneak Pants",
+   "npc_pays": 2000,
+   "level": 25
+  },
+  {
+   "id": 1040046,
+   "name": "Dark Brown Stealer",
+   "npc_pays": 3000,
+   "level": 30
+  },
+  {
+   "id": 1060038,
+   "name": "Dark Brown Stealer Pants",
+   "npc_pays": 2400,
+   "level": 30
+  },
+  {
+   "id": 4003024,
+   "name": "Dark Crystal",
+   "npc_pays": 8000
+  },
+  {
+   "id": 4003019,
+   "name": "Dark Crystal Ore",
+   "npc_pays": 3500
+  },
+  {
+   "id": 1051005,
+   "name": "Dark Engrit",
+   "npc_pays": 5400,
+   "level": 30
+  },
+  {
+   "id": 1002116,
+   "name": "Dark Guise",
+   "npc_pays": 1800,
+   "level": 30
+  },
+  {
+   "id": 1002114,
+   "name": "Dark Hawkeye",
+   "npc_pays": 1800,
+   "level": 30
+  },
+  {
+   "id": 1040045,
+   "name": "Dark Hunter's Armor",
+   "npc_pays": 3000,
+   "level": 30
+  },
+  {
+   "id": 1060037,
+   "name": "Dark Hunter's Pants",
+   "npc_pays": 2400,
+   "level": 30
+  },
+  {
+   "id": 4000117,
+   "name": "Dark Jr. Yeti Skin",
+   "npc_pays": 56
+  },
+  {
+   "id": 4000079,
+   "name": "Dark Leatty Furball",
+   "npc_pays": 33
+  },
+  {
+   "id": 1040032,
+   "name": "Dark Master Sergeant",
+   "npc_pays": 2500,
+   "level": 25
+  },
+  {
+   "id": 1060025,
+   "name": "Dark Master Sergeant Kilt",
+   "npc_pays": 2000,
+   "level": 25
+  },
+  {
+   "id": 1082021,
+   "name": "Dark Mesana",
+   "npc_pays": 3000,
+   "level": 25
+  },
+  {
+   "id": 1082017,
+   "name": "Dark Mischief",
+   "npc_pays": 2400,
+   "level": 20
+  },
+  {
+   "id": 1002041,
+   "name": "Dark Moon Conehat",
+   "npc_pays": 900,
+   "level": 15
+  },
+  {
+   "id": 4000038,
+   "name": "Dark Nependeath Seed",
+   "npc_pays": 47
+  },
+  {
+   "id": 4000108,
+   "name": "Dark Nependeath Seed",
+   "npc_pays": 47
+  },
+  {
+   "id": 1040020,
+   "name": "Dark Nightshift",
+   "npc_pays": 1500,
+   "level": 15
+  },
+  {
+   "id": 1060015,
+   "name": "Dark Nightshift Pants",
+   "npc_pays": 1200,
+   "level": 15
+  },
+  {
+   "id": 4000124,
+   "name": "Dark Pepe Beak",
+   "npc_pays": 64
+  },
+  {
+   "id": 1082024,
+   "name": "Dark Savata",
+   "npc_pays": 3000,
+   "level": 25
+  },
+  {
+   "id": 1040047,
+   "name": "Dark Silver Stealer",
+   "npc_pays": 3000,
+   "level": 30
+  },
+  {
+   "id": 1060039,
+   "name": "Dark Silver Stealer Pants",
+   "npc_pays": 2400,
+   "level": 30
+  },
+  {
+   "id": 1041047,
+   "name": "Dark Sneak",
+   "npc_pays": 2500,
+   "level": 25
+  },
+  {
+   "id": 1061041,
+   "name": "Dark Sneak Pants",
+   "npc_pays": 2000,
+   "level": 25
+  },
+  {
+   "id": 4000044,
+   "name": "Dark Stone Golem Rubble",
+   "npc_pays": 58
+  },
+  {
+   "id": 1002096,
+   "name": "Dark Tiberian",
+   "npc_pays": 1500,
+   "level": 25
+  },
+  {
+   "id": 1072047,
+   "name": "Dark War Boots",
+   "npc_pays": 1500,
+   "level": 25
+  },
+  {
+   "id": 1082027,
+   "name": "Dark Wolfskin",
+   "npc_pays": 3000,
+   "level": 25
+  },
+  {
+   "id": 4000128,
+   "name": "Dark Yeti Horn",
+   "npc_pays": 68
+  },
+  {
+   "id": 4000059,
+   "name": "Decayed Charm",
+   "npc_pays": 52
+  },
+  {
+   "id": 4031135,
+   "name": "Deciphered Document",
+   "npc_pays": 1
+  },
+  {
+   "id": 4000135,
+   "name": "Deep Buffoon's Rock Piece",
+   "npc_pays": 77
+  },
+  {
+   "id": 1072034,
+   "name": "Deer Huntertop",
+   "npc_pays": 1200,
+   "level": 20
+  },
+  {
+   "id": 2002014,
+   "name": "Destructive Potion",
+   "npc_pays": 375
+  },
+  {
+   "id": 4003022,
+   "name": "Dexterity Crystal",
+   "npc_pays": 5000
+  },
+  {
+   "id": 4003017,
+   "name": "Dexterity Crystal Ore",
+   "npc_pays": 2000
+  },
+  {
+   "id": 2002003,
+   "name": "Dexterity Potion",
+   "npc_pays": 250
+  },
+  {
+   "id": 4020107,
+   "name": "Diamond",
+   "npc_pays": 1200
+  },
+  {
+   "id": 4020007,
+   "name": "Diamond Ore",
+   "npc_pays": 240
+  },
+  {
+   "id": 4000155,
+   "name": "Dirty Bandage",
+   "npc_pays": 47
+  },
+  {
+   "id": 1312001,
+   "name": "Double Axe",
+   "npc_pays": 1500,
+   "level": 10
+  },
+  {
+   "id": 4031026,
+   "name": "Double-Rooted Red Ginseng",
+   "npc_pays": 2000
+  },
+  {
+   "id": 4000050,
+   "name": "Dragon Skin",
+   "npc_pays": 200
+  },
+  {
+   "id": 3015046,
+   "name": "Dragon Skull Chair",
+   "npc_pays": 1
+  },
+  {
+   "id": 4000036,
+   "name": "Drake Skull",
+   "npc_pays": 45
+  },
+  {
+   "id": 2012000,
+   "name": "Drake's Blood",
+   "npc_pays": 300
+  },
+  {
+   "id": 2012003,
+   "name": "Drake's Meat",
+   "npc_pays": 250
+  },
+  {
+   "id": 2020007,
+   "name": "Dried Squid",
+   "npc_pays": 18
+  },
+  {
+   "id": 4000139,
+   "name": "Dual Pirate's Propeller",
+   "npc_pays": 87
+  },
+  {
+   "id": 4000057,
+   "name": "Duskmander Tail",
+   "npc_pays": 49
+  },
+  {
+   "id": 1462004,
+   "name": "Eagle Crow",
+   "npc_pays": 6500,
+   "level": 30
+  },
+  {
+   "id": 4000055,
+   "name": "Echopus Leg",
+   "npc_pays": 44
+  },
+  {
+   "id": 2010002,
+   "name": "Egg",
+   "npc_pays": 3
+  },
+  {
+   "id": 4031142,
+   "name": "Elda's Last Message",
+   "npc_pays": 1
+  },
+  {
+   "id": 4031141,
+   "name": "Elda's Name-Charm",
+   "npc_pays": 1
+  },
+  {
+   "id": 2000004,
+   "name": "Elixir",
+   "npc_pays": 500
+  },
+  {
+   "id": 1302006,
+   "name": "Eloon",
+   "npc_pays": 4500,
+   "level": 25
+  },
+  {
+   "id": 4020103,
+   "name": "Emerald",
+   "npc_pays": 400
+  },
+  {
+   "id": 1072062,
+   "name": "Emerald Battle Grieves",
+   "npc_pays": 1800,
+   "level": 30
+  },
+  {
+   "id": 1032007,
+   "name": "Emerald Earrings",
+   "npc_pays": 4500,
+   "level": 30
+  },
+  {
+   "id": 4020003,
+   "name": "Emerald Ore",
+   "npc_pays": 80
+  },
+  {
+   "id": 1382002,
+   "name": "Emerald Staff",
+   "npc_pays": 2500,
+   "level": 15
+  },
+  {
+   "id": 4031131,
+   "name": "Encrypted Document",
+   "npc_pays": 1
+  },
+  {
+   "id": 4031132,
+   "name": "Encrypted Document",
+   "npc_pays": 1
+  },
+  {
+   "id": 4001011,
+   "name": "Eos Rock Scroll",
+   "npc_pays": 1000
+  },
+  {
+   "id": 4001009,
+   "name": "Event Trophy",
+   "npc_pays": 5000
+  },
+  {
+   "id": 4000022,
+   "name": "Evil Eye Tail",
+   "npc_pays": 27
+  },
+  {
+   "id": 4000134,
+   "name": "Evil Spirit",
+   "npc_pays": 76
+  },
+  {
+   "id": 3000040,
+   "name": "Exit Sign",
+   "npc_pays": 10
+  },
+  {
+   "id": 4001014,
+   "name": "Eye of Fire",
+   "npc_pays": 1
+  },
+  {
+   "id": 1032023,
+   "name": "Faded Maple Leaf Earrings",
+   "npc_pays": 4200,
+   "level": 28
+  },
+  {
+   "id": 4031098,
+   "name": "Fairy Dust",
+   "npc_pays": 1
+  },
+  {
+   "id": 4003005,
+   "name": "Fairy Wing",
+   "npc_pays": 5000
+  },
+  {
+   "id": 2012001,
+   "name": "Fairy's Honey",
+   "npc_pays": 250
+  },
+  {
+   "id": 4000024,
+   "name": "Fairy's Tentacle",
+   "npc_pays": 29
+  },
+  {
+   "id": 2020008,
+   "name": "Fat Sausage",
+   "npc_pays": 80
+  },
+  {
+   "id": 2897001,
+   "name": "Fern Face Coupon",
+   "npc_pays": 1
+  },
+  {
+   "id": 2542003,
+   "name": "Fern Hair Coupon",
+   "npc_pays": 1
+  },
+  {
+   "id": 2430032,
+   "name": "Fern Outfit Set",
+   "npc_pays": 1
+  },
+  {
+   "id": 2430033,
+   "name": "Fern's Clothes Selector Coupon",
+   "npc_pays": 1
+  },
+  {
+   "id": 1332003,
+   "name": "Field Dagger",
+   "npc_pays": 2500,
+   "level": 15
+  },
+  {
+   "id": 4000026,
+   "name": "Fire Boar's Tooth",
+   "npc_pays": 32
+  },
+  {
+   "id": 3000039,
+   "name": "Fire Extinguisher",
+   "npc_pays": 10
+  },
+  {
+   "id": 3000045,
+   "name": "Fire Hydrant",
+   "npc_pays": 10
+  },
+  {
+   "id": 4001015,
+   "name": "Fire Ore",
+   "npc_pays": 1
+  },
+  {
+   "id": 4000071,
+   "name": "Fire Sentinel Shellpiece",
+   "npc_pays": 30
+  },
+  {
+   "id": 4000111,
+   "name": "Firebomb Flame",
+   "npc_pays": 51
+  },
+  {
+   "id": 1312005,
+   "name": "Fireman's Axe",
+   "npc_pays": 5500,
+   "level": 30
+  },
+  {
+   "id": 4000015,
+   "name": "Firewood",
+   "npc_pays": 17
+  },
+  {
+   "id": 1432002,
+   "name": "Fish Spear",
+   "npc_pays": 4500,
+   "level": 20
+  },
+  {
+   "id": 4001008,
+   "name": "Flaming Feather",
+   "npc_pays": 1
+  },
+  {
+   "id": 3000002,
+   "name": "Flower Bud Ceiling Light",
+   "npc_pays": 10
+  },
+  {
+   "id": 4000096,
+   "name": "Fly-Eye Wing",
+   "npc_pays": 41
+  },
+  {
+   "id": 4031079,
+   "name": "Flying Medicine",
+   "npc_pays": 1
+  },
+  {
+   "id": 1432001,
+   "name": "Fork on a Stick",
+   "npc_pays": 3500,
+   "level": 15
+  },
+  {
+   "id": 1332008,
+   "name": "Forked Dagger",
+   "npc_pays": 4900,
+   "level": 27
+  },
+  {
+   "id": 1432003,
+   "name": "Forked Spear",
+   "npc_pays": 6500,
+   "level": 30
+  },
+  {
+   "id": 4031071,
+   "name": "Fossil Box",
+   "npc_pays": 1
+  },
+  {
+   "id": 4031074,
+   "name": "Fossil Report",
+   "npc_pays": 1
+  },
+  {
+   "id": 2430027,
+   "name": "Founder's Chat Ring Exchange Coupon",
+   "npc_pays": 1
+  },
+  {
+   "id": 2430026,
+   "name": "Founder's Label Ring Exchange Coupon",
+   "npc_pays": 1
+  },
+  {
+   "id": 2430024,
+   "name": "Founder's Thief Avatar Set",
+   "npc_pays": 1
+  },
+  {
+   "id": 4000063,
+   "name": "Fragment of Magic",
+   "npc_pays": 10
+  },
+  {
+   "id": 4000127,
+   "name": "Free Spirit",
+   "npc_pays": 67
+  },
+  {
+   "id": 4031031,
+   "name": "Fresh Milk",
+   "npc_pays": 500
+  },
+  {
+   "id": 2020001,
+   "name": "Fried Chicken",
+   "npc_pays": 6
+  },
+  {
+   "id": 2430029,
+   "name": "Frieren Clothes Selector Coupon",
+   "npc_pays": 1
+  },
+  {
+   "id": 2897000,
+   "name": "Frieren Face Coupon",
+   "npc_pays": 1
+  },
+  {
+   "id": 2542001,
+   "name": "Frieren Hair (Ringlets) Coupon",
+   "npc_pays": 1
+  },
+  {
+   "id": 2542002,
+   "name": "Frieren Hair (Sleep) Coupon",
+   "npc_pays": 1
+  },
+  {
+   "id": 2542000,
+   "name": "Frieren Hair Coupon",
+   "npc_pays": 1
+  },
+  {
+   "id": 2430028,
+   "name": "Frieren Outfit Set",
+   "npc_pays": 1
+  },
+  {
+   "id": 2430030,
+   "name": "Frieren Outfit Set (Ringlets)",
+   "npc_pays": 1
+  },
+  {
+   "id": 2430031,
+   "name": "Frieren Outfit Set (Sleep)",
+   "npc_pays": 1
+  },
+  {
+   "id": 1332001,
+   "name": "Fruit Knife",
+   "npc_pays": 750,
+   "level": 8
+  },
+  {
+   "id": 3015053,
+   "name": "Furnace Chair",
+   "npc_pays": 1
+  },
+  {
+   "id": 1322011,
+   "name": "Fusion Mace",
+   "npc_pays": 4500,
+   "level": 25
+  },
+  {
+   "id": 3015041,
+   "name": "Fuzzy Kitty Chair",
+   "npc_pays": 1
+  },
+  {
+   "id": 4020100,
+   "name": "Garnet",
+   "npc_pays": 200
+  },
+  {
+   "id": 4020000,
+   "name": "Garnet Ore",
+   "npc_pays": 40
+  },
+  {
+   "id": 1472000,
+   "name": "Garnier",
+   "npc_pays": 2500,
+   "level": 10
+  },
+  {
+   "id": 4000146,
+   "name": "Gatekeeper Armband",
+   "npc_pays": 108
+  },
+  {
+   "id": 4000137,
+   "name": "Ghost Pirate Key",
+   "npc_pays": 83
+  },
+  {
+   "id": 4000058,
+   "name": "Giant Tree's Bough",
+   "npc_pays": 51
+  },
+  {
+   "id": 4000060,
+   "name": "Giant Tree's Rotten Bough",
+   "npc_pays": 54
+  },
+  {
+   "id": 2430058,
+   "name": "Gift Box",
+   "npc_pays": 1
+  },
+  {
+   "id": 2430003,
+   "name": "Gift for the New Journey",
+   "npc_pays": 1
+  },
+  {
+   "id": 4000144,
+   "name": "Gigantic Viking Hat",
+   "npc_pays": 98
+  },
+  {
+   "id": 1302008,
+   "name": "Gladius",
+   "npc_pays": 5500,
+   "level": 30
+  },
+  {
+   "id": 4000051,
+   "name": "Glowing Mushroom Spore",
+   "npc_pays": 39
+  },
+  {
+   "id": 4031138,
+   "name": "Glowspore Lamp",
+   "npc_pays": 1
+  },
+  {
+   "id": 2100006,
+   "name": "GM Black Sack: Jr. Balrog Level 80",
+   "npc_pays": 1
+  },
+  {
+   "id": 2100002,
+   "name": "GM Black Sack: King Slime Level 32",
+   "npc_pays": 1
+  },
+  {
+   "id": 2100001,
+   "name": "GM Black Sack: Mano Level 20",
+   "npc_pays": 1
+  },
+  {
+   "id": 2100003,
+   "name": "GM Black Sack: Mushmom Level 40",
+   "npc_pays": 1
+  },
+  {
+   "id": 2100005,
+   "name": "GM Black Sack: Rotten Mushmom Level 60",
+   "npc_pays": 1
+  },
+  {
+   "id": 2100004,
+   "name": "GM Black Sack: Zombie Mushmom Level 50",
+   "npc_pays": 1
+  },
+  {
+   "id": 1002088,
+   "name": "Gold Burgonet Helm",
+   "npc_pays": 1550,
+   "level": 25
+  },
+  {
+   "id": 1072078,
+   "name": "Gold Chain Boots",
+   "npc_pays": 1800,
+   "level": 30
+  },
+  {
+   "id": 1032004,
+   "name": "Gold Earrings",
+   "npc_pays": 3750,
+   "level": 25
+  },
+  {
+   "id": 4010106,
+   "name": "Gold Ingot",
+   "npc_pays": 300
+  },
+  {
+   "id": 4010006,
+   "name": "Gold Ore",
+   "npc_pays": 60
+  },
+  {
+   "id": 3015005,
+   "name": "Gold Seal Cushion",
+   "npc_pays": 5000
+  },
+  {
+   "id": 1002080,
+   "name": "Gold Sharp Helm",
+   "npc_pays": 1400,
+   "level": 22
+  },
+  {
+   "id": 1041046,
+   "name": "Gold Sneak",
+   "npc_pays": 2500,
+   "level": 25
+  },
+  {
+   "id": 1061040,
+   "name": "Gold Sneak Pants",
+   "npc_pays": 2000,
+   "level": 25
+  },
+  {
+   "id": 1082039,
+   "name": "Gold Sylvia",
+   "npc_pays": 3600,
+   "level": 30
+  },
+  {
+   "id": 1472003,
+   "name": "Gold Titans",
+   "npc_pays": 3900,
+   "level": 15
+  },
+  {
+   "id": 1072046,
+   "name": "Gold War Boots",
+   "npc_pays": 1500,
+   "level": 25
+  },
+  {
+   "id": 1002103,
+   "name": "Golden Pride",
+   "npc_pays": 1900,
+   "level": 30
+  },
+  {
+   "id": 4000053,
+   "name": "Golden Stirge Wing",
+   "npc_pays": 42
+  },
+  {
+   "id": 2020010,
+   "name": "Grape Juice",
+   "npc_pays": 126
+  },
+  {
+   "id": 3015035,
+   "name": "Greater Teru Bozu Chair",
+   "npc_pays": 1
+  },
+  {
+   "id": 3990022,
+   "name": "Green \" + \"",
+   "npc_pays": 50
+  },
+  {
+   "id": 3990023,
+   "name": "Green \" - \"",
+   "npc_pays": 50
+  },
+  {
+   "id": 3991012,
+   "name": "Green \"A\"",
+   "npc_pays": 50
+  },
+  {
+   "id": 3991013,
+   "name": "Green \"C\"",
+   "npc_pays": 50
+  },
+  {
+   "id": 3991014,
+   "name": "Green \"E\"",
+   "npc_pays": 50
+  },
+  {
+   "id": 3991015,
+   "name": "Green \"H\"",
+   "npc_pays": 50
+  },
+  {
+   "id": 3991016,
+   "name": "Green \"I\"",
+   "npc_pays": 50
+  },
+  {
+   "id": 3991017,
+   "name": "Green \"M\"",
+   "npc_pays": 50
+  },
+  {
+   "id": 3991018,
+   "name": "Green \"P\"",
+   "npc_pays": 50
+  },
+  {
+   "id": 3991019,
+   "name": "Green \"R\"",
+   "npc_pays": 50
+  },
+  {
+   "id": 3991020,
+   "name": "Green \"S\"",
+   "npc_pays": 50
+  },
+  {
+   "id": 3991021,
+   "name": "Green \"T\"",
+   "npc_pays": 50
+  },
+  {
+   "id": 3991022,
+   "name": "Green \"X\"",
+   "npc_pays": 50
+  },
+  {
+   "id": 3991023,
+   "name": "Green \"Y\"",
+   "npc_pays": 50
+  },
+  {
+   "id": 1041020,
+   "name": "Green Able Armor",
+   "npc_pays": 1500,
+   "level": 15
+  },
+  {
+   "id": 1061016,
+   "name": "Green Able Armor Skirt",
+   "npc_pays": 1200,
+   "level": 15
+  },
+  {
+   "id": 2010007,
+   "name": "Green Apple",
+   "npc_pays": 3
+  },
+  {
+   "id": 1040008,
+   "name": "Green Archer Top",
+   "npc_pays": 1000,
+   "level": 10
+  },
+  {
+   "id": 1041017,
+   "name": "Green Arianne",
+   "npc_pays": 1500,
+   "level": 15
+  },
+  {
+   "id": 1061013,
+   "name": "Green Arianne Skirt",
+   "npc_pays": 1200,
+   "level": 15
+  },
+  {
+   "id": 1041008,
+   "name": "Green Armine",
+   "npc_pays": 1000,
+   "level": 10
+  },
+  {
+   "id": 1061006,
+   "name": "Green Armine Skirt",
+   "npc_pays": 800,
+   "level": 10
+  },
+  {
+   "id": 1072027,
+   "name": "Green Aroa Boots",
+   "npc_pays": 960,
+   "level": 16
+  },
+  {
+   "id": 1041009,
+   "name": "Green Avelin",
+   "npc_pays": 1000,
+   "level": 10
+  },
+  {
+   "id": 1061007,
+   "name": "Green Avelin Skirt",
+   "npc_pays": 800,
+   "level": 10
+  },
+  {
+   "id": 1002082,
+   "name": "Green Bamboo Hat",
+   "npc_pays": 1500,
+   "level": 25
+  },
+  {
+   "id": 1041040,
+   "name": "Green Bennis Chainmail (Female)",
+   "npc_pays": 2500,
+   "level": 25
+  },
+  {
+   "id": 1040033,
+   "name": "Green Bennis Chainmail (Male)",
+   "npc_pays": 2500,
+   "level": 25
+  },
+  {
+   "id": 3010004,
+   "name": "Green Chair",
+   "npc_pays": 500
+  },
+  {
+   "id": 3015050,
+   "name": "Green Christmas Recharger Chair",
+   "npc_pays": 1
+  },
+  {
+   "id": 1082014,
+   "name": "Green Diros",
+   "npc_pays": 2400,
+   "level": 20
+  },
+  {
+   "id": 1061043,
+   "name": "Green Fairy Skirt",
+   "npc_pays": 2400,
+   "level": 30
+  },
+  {
+   "id": 1041049,
+   "name": "Green Fairy Top",
+   "npc_pays": 3000,
+   "level": 30
+  },
+  {
+   "id": 1002043,
+   "name": "Green Feather Hat",
+   "npc_pays": 900,
+   "level": 15
+  },
+  {
+   "id": 1002028,
+   "name": "Green Ghetto Beanie",
+   "npc_pays": 600,
+   "level": 10
+  },
+  {
+   "id": 1002119,
+   "name": "Green Guise",
+   "npc_pays": 1800,
+   "level": 30
+  },
+  {
+   "id": 1072007,
+   "name": "Green Hard Leather Boots",
+   "npc_pays": 600,
+   "level": 10
+  },
+  {
+   "id": 1002110,
+   "name": "Green Hawkeye",
+   "npc_pays": 1800,
+   "level": 30
+  },
+  {
+   "id": 1002005,
+   "name": "Green Headband",
+   "npc_pays": 300,
+   "level": 5
+  },
+  {
+   "id": 1002090,
+   "name": "Green Hunter",
+   "npc_pays": 1500,
+   "level": 25
+  },
+  {
+   "id": 1072072,
+   "name": "Green Hunter Boots",
+   "npc_pays": 1800,
+   "level": 30
+  },
+  {
+   "id": 1040042,
+   "name": "Green Hunter's Armor",
+   "npc_pays": 3000,
+   "level": 30
+  },
+  {
+   "id": 1060034,
+   "name": "Green Hunter's Pants",
+   "npc_pays": 2400,
+   "level": 30
+  },
+  {
+   "id": 1041051,
+   "name": "Green Huntress Armor",
+   "npc_pays": 3000,
+   "level": 30
+  },
+  {
+   "id": 1061045,
+   "name": "Green Huntress Pants",
+   "npc_pays": 2400,
+   "level": 30
+  },
+  {
+   "id": 1040041,
+   "name": "Green Hwarang Shirt",
+   "npc_pays": 3000,
+   "level": 30
+  },
+  {
+   "id": 1072052,
+   "name": "Green Jack Boots",
+   "npc_pays": 1500,
+   "level": 25
+  },
+  {
+   "id": 1002109,
+   "name": "Green Jester",
+   "npc_pays": 1800,
+   "level": 30
+  },
+  {
+   "id": 1041026,
+   "name": "Green Lamelle",
+   "npc_pays": 2000,
+   "level": 20
+  },
+  {
+   "id": 1072056,
+   "name": "Green Lappy Boots",
+   "npc_pays": 1500,
+   "level": 25
+  },
+  {
+   "id": 1040017,
+   "name": "Green Leather Hoodwear",
+   "npc_pays": 1500,
+   "level": 15
+  },
+  {
+   "id": 1002072,
+   "name": "Green Loosecap",
+   "npc_pays": 1200,
+   "level": 20
+  },
+  {
+   "id": 2020022,
+   "name": "Green Malady's Candy",
+   "npc_pays": 1
+  },
+  {
+   "id": 1082035,
+   "name": "Green Marker",
+   "npc_pays": 3600,
+   "level": 30
+  },
+  {
+   "id": 3992016,
+   "name": "Green Miniature Bulb",
+   "npc_pays": 75
+  },
+  {
+   "id": 1002040,
+   "name": "Green Moon Conehat",
+   "npc_pays": 900,
+   "level": 15
+  },
+  {
+   "id": 1082010,
+   "name": "Green Morrican",
+   "npc_pays": 2400,
+   "level": 20
+  },
+  {
+   "id": 4000013,
+   "name": "Green Mushroom Cap",
+   "npc_pays": 14
+  },
+  {
+   "id": 3990019,
+   "name": "Green No. 0",
+   "npc_pays": 50
+  },
+  {
+   "id": 3990010,
+   "name": "Green No. 1",
+   "npc_pays": 50
+  },
+  {
+   "id": 3990011,
+   "name": "Green No. 2",
+   "npc_pays": 50
+  },
+  {
+   "id": 3990012,
+   "name": "Green No. 3",
+   "npc_pays": 50
+  },
+  {
+   "id": 3990013,
+   "name": "Green No. 4",
+   "npc_pays": 50
+  },
+  {
+   "id": 3990014,
+   "name": "Green No. 5",
+   "npc_pays": 50
+  },
+  {
+   "id": 3990015,
+   "name": "Green No. 6",
+   "npc_pays": 50
+  },
+  {
+   "id": 3990016,
+   "name": "Green No. 7",
+   "npc_pays": 50
+  },
+  {
+   "id": 3990017,
+   "name": "Green No. 8",
+   "npc_pays": 50
+  },
+  {
+   "id": 3990018,
+   "name": "Green No. 9",
+   "npc_pays": 50
+  },
+  {
+   "id": 1050002,
+   "name": "Green Plain Robe",
+   "npc_pays": 2700,
+   "level": 15
+  },
+  {
+   "id": 4001017,
+   "name": "Green Primrose Seed",
+   "npc_pays": 1
+  },
+  {
+   "id": 1061022,
+   "name": "Green Ramel Skirt",
+   "npc_pays": 1600,
+   "level": 20
+  },
+  {
+   "id": 1002063,
+   "name": "Green Robin Hat",
+   "npc_pays": 1200,
+   "level": 20
+  },
+  {
+   "id": 1041031,
+   "name": "Green Shivermail",
+   "npc_pays": 2000,
+   "level": 20
+  },
+  {
+   "id": 1061026,
+   "name": "Green Shivermail Skirt",
+   "npc_pays": 1600,
+   "level": 20
+  },
+  {
+   "id": 1002001,
+   "name": "Green Skullcap",
+   "npc_pays": 300,
+   "level": 5
+  },
+  {
+   "id": 1072081,
+   "name": "Green Snowshoes",
+   "npc_pays": 1800,
+   "level": 30
+  },
+  {
+   "id": 3992010,
+   "name": "Green Star Miniature Bulb",
+   "npc_pays": 75
+  },
+  {
+   "id": 1002049,
+   "name": "Green Thief Hood",
+   "npc_pays": 900,
+   "level": 15
+  },
+  {
+   "id": 1002099,
+   "name": "Green Tiberian",
+   "npc_pays": 1500,
+   "level": 25
+  },
+  {
+   "id": 1002023,
+   "name": "Green Winter Hat",
+   "npc_pays": 600,
+   "level": 10
+  },
+  {
+   "id": 1050015,
+   "name": "Green Wizard Robe",
+   "npc_pays": 5400,
+   "level": 30
+  },
+  {
+   "id": 1002062,
+   "name": "Green Wizardry Hat",
+   "npc_pays": 1200,
+   "level": 20
+  },
+  {
+   "id": 1072018,
+   "name": "Green Woodsman Boots",
+   "npc_pays": 900,
+   "level": 15
+  },
+  {
+   "id": 1041022,
+   "name": "Grey Able Armor",
+   "npc_pays": 1500,
+   "level": 15
+  },
+  {
+   "id": 1061018,
+   "name": "Grey Able Skirt",
+   "npc_pays": 1200,
+   "level": 15
+  },
+  {
+   "id": 3015004,
+   "name": "Grey Seal Cushion",
+   "npc_pays": 5000
+  },
+  {
+   "id": 1060011,
+   "name": "Grey Thick Sweat Pants",
+   "npc_pays": 960,
+   "level": 12
+  },
+  {
+   "id": 4000115,
+   "name": "Grupin Tail",
+   "npc_pays": 53
+  },
+  {
+   "id": 3015023,
+   "name": "Halloween Broomstick Chair",
+   "npc_pays": 1
+  },
+  {
+   "id": 4031129,
+   "name": "Halloween Candies",
+   "npc_pays": 1
+  },
+  {
+   "id": 2020004,
+   "name": "Hamburger",
+   "npc_pays": 35
+  },
+  {
+   "id": 1322005,
+   "name": "Hammer",
+   "npc_pays": 2900,
+   "level": 17
+  },
+  {
+   "id": 1322007,
+   "name": "Hard Briefcase",
+   "npc_pays": 3500,
+   "level": 20
+  },
+  {
+   "id": 4000081,
+   "name": "Hard Walnut",
+   "npc_pays": 34
+  },
+  {
+   "id": 1372001,
+   "name": "Hardwood Wand",
+   "npc_pays": 2500,
+   "level": 15
+  },
+  {
+   "id": 4031140,
+   "name": "Hearthkeeper's Journal",
+   "npc_pays": 1
+  },
+  {
+   "id": 1422001,
+   "name": "Heavy Mace",
+   "npc_pays": 3500,
+   "level": 15
+  },
+  {
+   "id": 4000116,
+   "name": "Hector Tail",
+   "npc_pays": 55
+  },
+  {
+   "id": 4031099,
+   "name": "Hella's Pendant",
+   "npc_pays": 1
+  },
+  {
+   "id": 3000017,
+   "name": "Henesys Flag",
+   "npc_pays": 10
+  },
+  {
+   "id": 3010009,
+   "name": "Henesys Resident's Chair",
+   "npc_pays": 5000
+  },
+  {
+   "id": 3000016,
+   "name": "Henesys Table",
+   "npc_pays": 10
+  },
+  {
+   "id": 2897003,
+   "name": "Himmel Face Coupon",
+   "npc_pays": 1
+  },
+  {
+   "id": 2542005,
+   "name": "Himmel Hair Coupon",
+   "npc_pays": 1
+  },
+  {
+   "id": 2430038,
+   "name": "Himmel Outfit Set",
+   "npc_pays": 1
+  },
+  {
+   "id": 3015028,
+   "name": "Hinakazari Chair",
+   "npc_pays": 100
+  },
+  {
+   "id": 4000019,
+   "name": "Horny Mushroom Cap",
+   "npc_pays": 22
+  },
+  {
+   "id": 4000158,
+   "name": "Horse Skull",
+   "npc_pays": 73
+  },
+  {
+   "id": 2020005,
+   "name": "Hot Dog",
+   "npc_pays": 18
+  },
+  {
+   "id": 2020006,
+   "name": "Hot Dog Supreme",
+   "npc_pays": 48
+  },
+  {
+   "id": 1452002,
+   "name": "Hunter's Bow",
+   "npc_pays": 4500,
+   "level": 20
+  },
+  {
+   "id": 2070007,
+   "name": "Hwabi Throwing Stars",
+   "npc_pays": 25000
+  },
+  {
+   "id": 3015025,
+   "name": "Ice Chair",
+   "npc_pays": 1
+  },
+  {
+   "id": 2020012,
+   "name": "Ice Cream Pop",
+   "npc_pays": 150
+  },
+  {
+   "id": 1062001,
+   "name": "Ice Jeans",
+   "npc_pays": 1360,
+   "level": 17
+  },
+  {
+   "id": 4000145,
+   "name": "Ice Piece",
+   "npc_pays": 99
+  },
+  {
+   "id": 4000070,
+   "name": "Ice Sentinel Shellpiece",
+   "npc_pays": 30
+  },
+  {
+   "id": 1372003,
+   "name": "Ice Wand",
+   "npc_pays": 4500,
+   "level": 25
+  },
+  {
+   "id": 2070010,
+   "name": "Icicle",
+   "npc_pays": 500
+  },
+  {
+   "id": 3015027,
+   "name": "Igloo",
+   "npc_pays": 1
+  },
+  {
+   "id": 2070006,
+   "name": "Ilbi Throwing Stars",
+   "npc_pays": 20000
+  },
+  {
+   "id": 4031119,
+   "name": "Incomplete Ledger",
+   "npc_pays": 1
+  },
+  {
+   "id": 4031133,
+   "name": "Ink of Truth",
+   "npc_pays": 1
+  },
+  {
+   "id": 2060002,
+   "name": "Iron Arrows for Bows",
+   "npc_pays": 2
+  },
+  {
+   "id": 2061002,
+   "name": "Iron Arrows for Crossbows",
+   "npc_pays": 2
+  },
+  {
+   "id": 1412001,
+   "name": "Iron Axe",
+   "npc_pays": 4500,
+   "level": 20
+  },
+  {
+   "id": 1442001,
+   "name": "Iron Ball",
+   "npc_pays": 3500,
+   "level": 15
+  },
+  {
+   "id": 1002087,
+   "name": "Iron Burgonet Helm",
+   "npc_pays": 1500,
+   "level": 25
+  },
+  {
+   "id": 1072076,
+   "name": "Iron Chain Boots",
+   "npc_pays": 1800,
+   "level": 30
+  },
+  {
+   "id": 1332007,
+   "name": "Iron Dagger",
+   "npc_pays": 4500,
+   "level": 25
+  },
+  {
+   "id": 4000023,
+   "name": "Iron Hog's Metal Hoof",
+   "npc_pays": 28
+  },
+  {
+   "id": 4010101,
+   "name": "Iron Ingot",
+   "npc_pays": 100
+  },
+  {
+   "id": 1322008,
+   "name": "Iron Mace",
+   "npc_pays": 3500,
+   "level": 20
+  },
+  {
+   "id": 4010001,
+   "name": "Iron Ore",
+   "npc_pays": 20
+  },
+  {
+   "id": 1002058,
+   "name": "Iron Viking Helm",
+   "npc_pays": 1250,
+   "level": 20
+  },
+  {
+   "id": 3015039,
+   "name": "It's a Hoot! Chair",
+   "npc_pays": 1
+  },
+  {
+   "id": 1442003,
+   "name": "Janitor's Mop",
+   "npc_pays": 5500,
+   "level": 25
+  },
+  {
+   "id": 1060003,
+   "name": "Jean Capris",
+   "npc_pays": 400,
+   "level": 5
+  },
+  {
+   "id": 1002104,
+   "name": "Jousting Helmet",
+   "npc_pays": 1800,
+   "level": 30
+  },
+  {
+   "id": 3000062,
+   "name": "Jr. Balrog Horn",
+   "npc_pays": 500
+  },
+  {
+   "id": 2210007,
+   "name": "Jr. Balrog Invasion",
+   "npc_pays": 1
+  },
+  {
+   "id": 4000029,
+   "name": "Jr. Boogie Horn",
+   "npc_pays": 35
+  },
+  {
+   "id": 4000102,
+   "name": "Jr. Cerebes Tooth",
+   "npc_pays": 43
+  },
+  {
+   "id": 4000018,
+   "name": "Jr. Necki Skin",
+   "npc_pays": 21
+  },
+  {
+   "id": 4000085,
+   "name": "Jr. Pepe's Fish",
+   "npc_pays": 35
+  },
+  {
+   "id": 4000067,
+   "name": "Jr. Sentinel Shellpiece",
+   "npc_pays": 26
+  },
+  {
+   "id": 4000110,
+   "name": "Jr. Yeti Skin",
+   "npc_pays": 50
+  },
+  {
+   "id": 1082001,
+   "name": "Juno",
+   "npc_pays": 1200,
+   "level": 10
+  },
+  {
+   "id": 1092008,
+   "name": "Jurgen Wristguard",
+   "npc_pays": 4400,
+   "level": 22
+  },
+  {
+   "id": 3015015,
+   "name": "Kadomatsu",
+   "npc_pays": 1
+  },
+  {
+   "id": 3000043,
+   "name": "Kerning City Flag",
+   "npc_pays": 10
+  },
+  {
+   "id": 3010010,
+   "name": "Kerning City Resident's Chair",
+   "npc_pays": 5000
+  },
+  {
+   "id": 3000037,
+   "name": "Kerning City Street Sign",
+   "npc_pays": 10
+  },
+  {
+   "id": 3000042,
+   "name": "Kerning City Table",
+   "npc_pays": 10
+  },
+  {
+   "id": 3000055,
+   "name": "King Slime Balloon",
+   "npc_pays": 500
+  },
+  {
+   "id": 3992025,
+   "name": "King-sized Star",
+   "npc_pays": 300
+  },
+  {
+   "id": 3015016,
+   "name": "Kotatsu",
+   "npc_pays": 1
+  },
+  {
+   "id": 2070003,
+   "name": "Kumbi Throwing Stars",
+   "npc_pays": 1500
+  },
+  {
+   "id": 3000054,
+   "name": "Lakelis Statue",
+   "npc_pays": 500
+  },
+  {
+   "id": 4000126,
+   "name": "Lazy Buffy Marble",
+   "npc_pays": 66
+  },
+  {
+   "id": 4000011,
+   "name": "Leaf",
+   "npc_pays": 11
+  },
+  {
+   "id": 1032015,
+   "name": "Leaf Earrings",
+   "npc_pays": 3750,
+   "level": 25
+  },
+  {
+   "id": 2430004,
+   "name": "Leaf Points (1,000) Exchange Coupon",
+   "npc_pays": 1
+  },
+  {
+   "id": 2430006,
+   "name": "Leaf Points (10,000) Exchange Coupon",
+   "npc_pays": 1
+  },
+  {
+   "id": 2430008,
+   "name": "Leaf Points (100,000) Exchange Coupon",
+   "npc_pays": 1
+  },
+  {
+   "id": 2430005,
+   "name": "Leaf Points (5,000) Exchange Coupon",
+   "npc_pays": 1
+  },
+  {
+   "id": 2430007,
+   "name": "Leaf Points (50,000) Exchange Coupon",
+   "npc_pays": 1
+  },
+  {
+   "id": 4000049,
+   "name": "Leather",
+   "npc_pays": 10
+  },
+  {
+   "id": 1322002,
+   "name": "Leather Purse",
+   "npc_pays": 1900,
+   "level": 12
+  },
+  {
+   "id": 2002008,
+   "name": "Leatherworking Kit",
+   "npc_pays": 100
+  },
+  {
+   "id": 3030004,
+   "name": "Leatherworking Station",
+   "npc_pays": 100
+  },
+  {
+   "id": 4000077,
+   "name": "Leatty Furball",
+   "npc_pays": 32
+  },
+  {
+   "id": 2010005,
+   "name": "Lemon",
+   "npc_pays": 15
+  },
+  {
+   "id": 2010008,
+   "name": "Lemon",
+   "npc_pays": 15
+  },
+  {
+   "id": 1082003,
+   "name": "Lemona",
+   "npc_pays": 1800,
+   "level": 15
+  },
+  {
+   "id": 3994002,
+   "name": "Letter A",
+   "npc_pays": 1
+  },
+  {
+   "id": 3994001,
+   "name": "Letter E",
+   "npc_pays": 1
+  },
+  {
+   "id": 3994003,
+   "name": "Letter F",
+   "npc_pays": 1
+  },
+  {
+   "id": 3994006,
+   "name": "Letter I",
+   "npc_pays": 1
+  },
+  {
+   "id": 3994000,
+   "name": "Letter L",
+   "npc_pays": 1
+  },
+  {
+   "id": 3994007,
+   "name": "Letter N",
+   "npc_pays": 1
+  },
+  {
+   "id": 3994005,
+   "name": "Letter O",
+   "npc_pays": 1
+  },
+  {
+   "id": 3994004,
+   "name": "Letter P",
+   "npc_pays": 1
+  },
+  {
+   "id": 3994009,
+   "name": "Letter S",
+   "npc_pays": 1
+  },
+  {
+   "id": 3994008,
+   "name": "Letter T",
+   "npc_pays": 1
+  },
+  {
+   "id": 2190000,
+   "name": "Lie Detector Test",
+   "npc_pays": 5000
+  },
+  {
+   "id": 2190002,
+   "name": "Lie Detector Test",
+   "npc_pays": 1
+  },
+  {
+   "id": 4031034,
+   "name": "Life Scroll",
+   "npc_pays": 1
+  },
+  {
+   "id": 4000025,
+   "name": "Ligator Skin",
+   "npc_pays": 31
+  },
+  {
+   "id": 1032006,
+   "name": "Lightning Earrings",
+   "npc_pays": 4500,
+   "level": 30
+  },
+  {
+   "id": 2897006,
+   "name": "Linie Face Coupon",
+   "npc_pays": 1
+  },
+  {
+   "id": 2430041,
+   "name": "Linie Outfit Set",
+   "npc_pays": 1
+  },
+  {
+   "id": 1072037,
+   "name": "Lion Huntertop",
+   "npc_pays": 1200,
+   "level": 20
+  },
+  {
+   "id": 4000114,
+   "name": "Lioner Tail",
+   "npc_pays": 53
+  },
+  {
+   "id": 3000050,
+   "name": "Little Bug",
+   "npc_pays": 10
+  },
+  {
+   "id": 3000023,
+   "name": "Little Sunflower",
+   "npc_pays": 10
+  },
+  {
+   "id": 1322012,
+   "name": "Lollipop",
+   "npc_pays": 5500,
+   "level": 30
+  },
+  {
+   "id": 1302001,
+   "name": "Long Sword",
+   "npc_pays": 1500,
+   "level": 10
+  },
+  {
+   "id": 4000032,
+   "name": "Lorang Claw",
+   "npc_pays": 38
+  },
+  {
+   "id": 4000131,
+   "name": "Lucida Tail",
+   "npc_pays": 73
+  },
+  {
+   "id": 4003023,
+   "name": "Luck Crystal",
+   "npc_pays": 5000
+  },
+  {
+   "id": 4003018,
+   "name": "Luck Crystal Ore",
+   "npc_pays": 2000
+  },
+  {
+   "id": 4000105,
+   "name": "Lunar Pixie's Moonpiece",
+   "npc_pays": 45
+  },
+  {
+   "id": 4000030,
+   "name": "Lupin Doll",
+   "npc_pays": 100
+  },
+  {
+   "id": 4000031,
+   "name": "Lupin's Banana",
+   "npc_pays": 37
+  },
+  {
+   "id": 4000112,
+   "name": "Luster Pixie's Sunpiece",
+   "npc_pays": 52
+  },
+  {
+   "id": 4000136,
+   "name": "Lycanthrope Toenail",
+   "npc_pays": 80
+  },
+  {
+   "id": 2897007,
+   "name": "L\u00fcgner Face Coupon",
+   "npc_pays": 1
+  },
+  {
+   "id": 2430042,
+   "name": "L\u00fcgner Outfit Set",
+   "npc_pays": 1
+  },
+  {
+   "id": 1322003,
+   "name": "Mace",
+   "npc_pays": 2500,
+   "level": 15
+  },
+  {
+   "id": 1302005,
+   "name": "Machete",
+   "npc_pays": 3500,
+   "level": 20
+  },
+  {
+   "id": 4031067,
+   "name": "Magic Box",
+   "npc_pays": 1
+  },
+  {
+   "id": 2002001,
+   "name": "Magic Potion",
+   "npc_pays": 250
+  },
+  {
+   "id": 4000042,
+   "name": "Malady's Experimental Frog",
+   "npc_pays": 55
+  },
+  {
+   "id": 2000006,
+   "name": "Mana Elixir",
+   "npc_pays": 1000
+  },
+  {
+   "id": 2430025,
+   "name": "Manji Avatar Set",
+   "npc_pays": 1
+  },
+  {
+   "id": 3000052,
+   "name": "Mano Statue",
+   "npc_pays": 500
+  },
+  {
+   "id": 4031134,
+   "name": "Maple Leaf",
+   "npc_pays": 1
+  },
+  {
+   "id": 3015020,
+   "name": "Maple Tree Chair",
+   "npc_pays": 100
+  },
+  {
+   "id": 2430064,
+   "name": "MapleStory Community VIP Chat Ring Exchange Coupon",
+   "npc_pays": 1
+  },
+  {
+   "id": 2430060,
+   "name": "MapleStory Community VIP Exchange Gift Box",
+   "npc_pays": 1
+  },
+  {
+   "id": 2430063,
+   "name": "MapleStory Community VIP Label Ring Exchange Coupon",
+   "npc_pays": 1
+  },
+  {
+   "id": 2430013,
+   "name": "MapleStory Fest 2026 Chat Ring Exchange Coupon",
+   "npc_pays": 1
+  },
+  {
+   "id": 2430009,
+   "name": "MapleStory Fest 2026 Gift Box (Bronze)",
+   "npc_pays": 1
+  },
+  {
+   "id": 2430011,
+   "name": "MapleStory Fest 2026 Gift Box (Gold)",
+   "npc_pays": 1
+  },
+  {
+   "id": 2430010,
+   "name": "MapleStory Fest 2026 Gift Box (Silver)",
+   "npc_pays": 1
+  },
+  {
+   "id": 2430012,
+   "name": "MapleStory Fest 2026 Label Ring Exchange Coupon",
+   "npc_pays": 1
+  },
+  {
+   "id": 2430014,
+   "name": "MapleStory Fest 2026 Special Hat Exchange Box (Bronze)",
+   "npc_pays": 1
+  },
+  {
+   "id": 2430016,
+   "name": "MapleStory Fest 2026 Special Hat Exchange Box (Gold)",
+   "npc_pays": 1
+  },
+  {
+   "id": 2430015,
+   "name": "MapleStory Fest 2026 Special Hat Exchange Box (Silver)",
+   "npc_pays": 1
+  },
+  {
+   "id": 3015000,
+   "name": "MapleStory Fest 2026 Staff Chair",
+   "npc_pays": 1
+  },
+  {
+   "id": 2430061,
+   "name": "MapleStory Fest 2026 Surprise Gift Box",
+   "npc_pays": 1
+  },
+  {
+   "id": 4031001,
+   "name": "Maria's Letter",
+   "npc_pays": 1
+  },
+  {
+   "id": 1002994,
+   "name": "Mark of the Beta",
+   "npc_pays": 1500,
+   "level": 25
+  },
+  {
+   "id": 4000098,
+   "name": "Mateon's Tentacle",
+   "npc_pays": 41
+  },
+  {
+   "id": 2010003,
+   "name": "Meat",
+   "npc_pays": 8
+  },
+  {
+   "id": 1472007,
+   "name": "Meba",
+   "npc_pays": 5500,
+   "level": 25
+  },
+  {
+   "id": 4000109,
+   "name": "Mecateon's Laser Gun",
+   "npc_pays": 48
+  },
+  {
+   "id": 4000104,
+   "name": "Mechanical Heart",
+   "npc_pays": 44
+  },
+  {
+   "id": 4000039,
+   "name": "Medicine With Weird Vibes",
+   "npc_pays": 48
+  },
+  {
+   "id": 2020014,
+   "name": "Melting Cheese",
+   "npc_pays": 200
+  },
+  {
+   "id": 4031107,
+   "name": "Memory Powder",
+   "npc_pays": 1
+  },
+  {
+   "id": 1412000,
+   "name": "Metal Axe",
+   "npc_pays": 2500,
+   "level": 10
+  },
+  {
+   "id": 3000030,
+   "name": "Metal Bookshelf",
+   "npc_pays": 10
+  },
+  {
+   "id": 3000028,
+   "name": "Metal Ceiling Light",
+   "npc_pays": 10
+  },
+  {
+   "id": 1002032,
+   "name": "Metal Gear",
+   "npc_pays": 900,
+   "level": 15
+  },
+  {
+   "id": 1002017,
+   "name": "Metal Koif",
+   "npc_pays": 650,
+   "level": 10
+  },
+  {
+   "id": 3000035,
+   "name": "Metal Scale",
+   "npc_pays": 10
+  },
+  {
+   "id": 3000046,
+   "name": "Metal Trash Can",
+   "npc_pays": 10
+  },
+  {
+   "id": 3000029,
+   "name": "Metal Wall Light",
+   "npc_pays": 10
+  },
+  {
+   "id": 1372002,
+   "name": "Metal Wand",
+   "npc_pays": 3500,
+   "level": 20
+  },
+  {
+   "id": 3000032,
+   "name": "Metal Wardrobe",
+   "npc_pays": 10
+  },
+  {
+   "id": 3000027,
+   "name": "Metal Window",
+   "npc_pays": 10
+  },
+  {
+   "id": 3000026,
+   "name": "Metal Window with Curtains",
+   "npc_pays": 10
+  },
+  {
+   "id": 2061003,
+   "name": "Mithril Arrows for Crossbows",
+   "npc_pays": 3
+  },
+  {
+   "id": 1312004,
+   "name": "Mithril Axe",
+   "npc_pays": 4500,
+   "level": 25
+  },
+  {
+   "id": 1072063,
+   "name": "Mithril Battle Grieves",
+   "npc_pays": 1800,
+   "level": 30
+  },
+  {
+   "id": 1092004,
+   "name": "Mithril Buckler",
+   "npc_pays": 4000,
+   "level": 20
+  },
+  {
+   "id": 1002056,
+   "name": "Mithril Football Helmet",
+   "npc_pays": 1300,
+   "level": 20
+  },
+  {
+   "id": 1002037,
+   "name": "Mithril Full Helm",
+   "npc_pays": 1000,
+   "level": 15
+  },
+  {
+   "id": 1472009,
+   "name": "Mithril Guards",
+   "npc_pays": 6700,
+   "level": 30
+  },
+  {
+   "id": 1002031,
+   "name": "Mithril Helmet",
+   "npc_pays": 800,
+   "level": 12
+  },
+  {
+   "id": 4010102,
+   "name": "Mithril Ingot",
+   "npc_pays": 200
+  },
+  {
+   "id": 1002018,
+   "name": "Mithril Koif",
+   "npc_pays": 700,
+   "level": 10
+  },
+  {
+   "id": 1422004,
+   "name": "Mithril Maul",
+   "npc_pays": 6500,
+   "level": 30
+  },
+  {
+   "id": 1082016,
+   "name": "Mithril Mischief",
+   "npc_pays": 2400,
+   "level": 20
+  },
+  {
+   "id": 4010002,
+   "name": "Mithril Ore",
+   "npc_pays": 40
+  },
+  {
+   "id": 1442004,
+   "name": "Mithril Pole Arm",
+   "npc_pays": 6500,
+   "level": 30
+  },
+  {
+   "id": 1002079,
+   "name": "Mithril Sharp Helm",
+   "npc_pays": 1350,
+   "level": 22
+  },
+  {
+   "id": 1472002,
+   "name": "Mithril Titans",
+   "npc_pays": 3700,
+   "level": 15
+  },
+  {
+   "id": 1002059,
+   "name": "Mithril Viking Helm",
+   "npc_pays": 1300,
+   "level": 20
+  },
+  {
+   "id": 1372004,
+   "name": "Mithril Wand",
+   "npc_pays": 5500,
+   "level": 30
+  },
+  {
+   "id": 1072044,
+   "name": "Mithril War Boots",
+   "npc_pays": 1500,
+   "level": 25
+  },
+  {
+   "id": 1082026,
+   "name": "Mithril Wolfskin",
+   "npc_pays": 3000,
+   "level": 25
+  },
+  {
+   "id": 3015036,
+   "name": "Miwok Chief's Chair",
+   "npc_pays": 1
+  },
+  {
+   "id": 3015031,
+   "name": "Mochi Ice Cream Chair",
+   "npc_pays": 1
+  },
+  {
+   "id": 2070002,
+   "name": "Mokbi Throwing Stars",
+   "npc_pays": 1000
+  },
+  {
+   "id": 1422003,
+   "name": "Monkey Wrench",
+   "npc_pays": 5500,
+   "level": 25
+  },
+  {
+   "id": 4031045,
+   "name": "Monster Card",
+   "npc_pays": 1
+  },
+  {
+   "id": 3000053,
+   "name": "Moon Bunny Statue",
+   "npc_pays": 500
+  },
+  {
+   "id": 4001023,
+   "name": "Moon Bunny's Rice Cake",
+   "npc_pays": 1
+  },
+  {
+   "id": 4010107,
+   "name": "Moon Rock",
+   "npc_pays": 2000
+  },
+  {
+   "id": 3015013,
+   "name": "Moon Star Chair",
+   "npc_pays": 1
+  },
+  {
+   "id": 4000088,
+   "name": "Motor",
+   "npc_pays": 37
+  },
+  {
+   "id": 1462003,
+   "name": "Mountain Crossbow",
+   "npc_pays": 5500,
+   "level": 25
+  },
+  {
+   "id": 4031111,
+   "name": "Mrs. Ming Ming's Cooking Recipe",
+   "npc_pays": 1
+  },
+  {
+   "id": 2020018,
+   "name": "Mrs. Ming Ming's Stew",
+   "npc_pays": 48
+  },
+  {
+   "id": 4000150,
+   "name": "MT-09's Fuel",
+   "npc_pays": 540
+  },
+  {
+   "id": 3000056,
+   "name": "Mushmom Balloon",
+   "npc_pays": 500
+  },
+  {
+   "id": 4000048,
+   "name": "Mushmom Spore",
+   "npc_pays": 400
+  },
+  {
+   "id": 3992002,
+   "name": "Mushroom Ornament",
+   "npc_pays": 75
+  },
+  {
+   "id": 4000003,
+   "name": "Mushroom Spore",
+   "npc_pays": 3
+  },
+  {
+   "id": 3015038,
+   "name": "Music Box",
+   "npc_pays": 1
+  },
+  {
+   "id": 2430045,
+   "name": "Mystery Palette Exchange Coupon",
+   "npc_pays": 1
+  },
+  {
+   "id": 1092005,
+   "name": "Mystic Shield",
+   "npc_pays": 4400,
+   "level": 22
+  },
+  {
+   "id": 2430002,
+   "name": "Natalie's Fashion Box (F)",
+   "npc_pays": 1
+  },
+  {
+   "id": 2430001,
+   "name": "Natalie's Fashion Box (M)",
+   "npc_pays": 1
+  },
+  {
+   "id": 4000035,
+   "name": "Nependeath Seed",
+   "npc_pays": 42
+  },
+  {
+   "id": 4000099,
+   "name": "Nependeath Seed",
+   "npc_pays": 42
+  },
+  {
+   "id": 4031109,
+   "name": "Nick's Ring",
+   "npc_pays": 1
+  },
+  {
+   "id": 1092007,
+   "name": "Nimble Wristguard",
+   "npc_pays": 4400,
+   "level": 22
+  },
+  {
+   "id": 3000049,
+   "name": "No Biking Sign",
+   "npc_pays": 10
+  },
+  {
+   "id": 3000038,
+   "name": "No Smoking Sign",
+   "npc_pays": 10
+  },
+  {
+   "id": 3000015,
+   "name": "Oak Barrel",
+   "npc_pays": 10
+  },
+  {
+   "id": 3000007,
+   "name": "Oak Bench",
+   "npc_pays": 10
+  },
+  {
+   "id": 3000000,
+   "name": "Oak Window",
+   "npc_pays": 10
+  },
+  {
+   "id": 1082019,
+   "name": "Ocean Mesana",
+   "npc_pays": 3000,
+   "level": 25
+  },
+  {
+   "id": 4080004,
+   "name": "Octopus & Mushroom Omok Set",
+   "npc_pays": 1
+  },
+  {
+   "id": 4000012,
+   "name": "Octopus Leg",
+   "npc_pays": 12
+  },
+  {
+   "id": 4031116,
+   "name": "Old Chief Stan's Hammer",
+   "npc_pays": 1
+  },
+  {
+   "id": 1302009,
+   "name": "Old Gladius",
+   "npc_pays": 1,
+   "level": null
+  },
+  {
+   "id": 4001005,
+   "name": "Old Gold Watch",
+   "npc_pays": 1
+  },
+  {
+   "id": 4031103,
+   "name": "Old Map Piece (1/4)",
+   "npc_pays": 1
+  },
+  {
+   "id": 4031104,
+   "name": "Old Map Piece (2/4)",
+   "npc_pays": 1
+  },
+  {
+   "id": 4031105,
+   "name": "Old Map Piece (3/4)",
+   "npc_pays": 1
+  },
+  {
+   "id": 4031106,
+   "name": "Old Map Piece (4/4)",
+   "npc_pays": 1
+  },
+  {
+   "id": 1102000,
+   "name": "Old Raggedy Cape",
+   "npc_pays": 3750,
+   "level": 25
+  },
+  {
+   "id": 4031100,
+   "name": "Old Ring",
+   "npc_pays": 1
+  },
+  {
+   "id": 4031102,
+   "name": "Old Ring",
+   "npc_pays": 1
+  },
+  {
+   "id": 4031101,
+   "name": "Old Ring",
+   "npc_pays": 1
+  },
+  {
+   "id": 1002053,
+   "name": "Old Wisconsin",
+   "npc_pays": 1000,
+   "level": 17
+  },
+  {
+   "id": 1382003,
+   "name": "Old Wooden Staff",
+   "npc_pays": 3500,
+   "level": 20
+  },
+  {
+   "id": 3015042,
+   "name": "Olivia's Chair",
+   "npc_pays": 1
+  },
+  {
+   "id": 4031048,
+   "name": "Omok Piece: Mushroom",
+   "npc_pays": 1
+  },
+  {
+   "id": 4031057,
+   "name": "Omok Piece: Mushroom",
+   "npc_pays": 1
+  },
+  {
+   "id": 4031060,
+   "name": "Omok Piece: Mushroom",
+   "npc_pays": 1
+  },
+  {
+   "id": 4031054,
+   "name": "Omok Piece: Octopus",
+   "npc_pays": 1
+  },
+  {
+   "id": 4031059,
+   "name": "Omok Piece: Octopus",
+   "npc_pays": 1
+  },
+  {
+   "id": 4031063,
+   "name": "Omok Piece: Octopus",
+   "npc_pays": 1
+  },
+  {
+   "id": 4031051,
+   "name": "Omok Piece: Pig",
+   "npc_pays": 1
+  },
+  {
+   "id": 4031056,
+   "name": "Omok Piece: Pig",
+   "npc_pays": 1
+  },
+  {
+   "id": 4031062,
+   "name": "Omok Piece: Pig",
+   "npc_pays": 1
+  },
+  {
+   "id": 4031047,
+   "name": "Omok Piece: Slime",
+   "npc_pays": 1
+  },
+  {
+   "id": 4031050,
+   "name": "Omok Piece: Slime",
+   "npc_pays": 1
+  },
+  {
+   "id": 4031053,
+   "name": "Omok Piece: Slime",
+   "npc_pays": 1
+  },
+  {
+   "id": 4031046,
+   "name": "Omok Table",
+   "npc_pays": 1
+  },
+  {
+   "id": 4031049,
+   "name": "Omok Table",
+   "npc_pays": 1
+  },
+  {
+   "id": 4031052,
+   "name": "Omok Table",
+   "npc_pays": 1
+  },
+  {
+   "id": 4031055,
+   "name": "Omok Table",
+   "npc_pays": 1
+  },
+  {
+   "id": 4031058,
+   "name": "Omok Table",
+   "npc_pays": 1
+  },
+  {
+   "id": 4031061,
+   "name": "Omok Table",
+   "npc_pays": 1
+  },
+  {
+   "id": 4130000,
+   "name": "One-Handed Weapon Crafting Catalyst",
+   "npc_pays": 1000
+  },
+  {
+   "id": 4020104,
+   "name": "Opal",
+   "npc_pays": 800
+  },
+  {
+   "id": 4020004,
+   "name": "Opal Ore",
+   "npc_pays": 160
+  },
+  {
+   "id": 2010004,
+   "name": "Orange",
+   "npc_pays": 5
+  },
+  {
+   "id": 1072029,
+   "name": "Orange High Boots",
+   "npc_pays": 1200,
+   "level": 20
+  },
+  {
+   "id": 2020009,
+   "name": "Orange Juice",
+   "npc_pays": 54
+  },
+  {
+   "id": 1041005,
+   "name": "Orange Lolica Armor",
+   "npc_pays": 1000,
+   "level": 10
+  },
+  {
+   "id": 4000009,
+   "name": "Orange Mushroom Cap",
+   "npc_pays": 8
+  },
+  {
+   "id": 2430018,
+   "name": "Orange Mushroom Package",
+   "npc_pays": 1
+  },
+  {
+   "id": 2430021,
+   "name": "Orange Mushroom to Zakum Upgrade Package",
+   "npc_pays": 1
+  },
+  {
+   "id": 2000001,
+   "name": "Orange Potion",
+   "npc_pays": 15
+  },
+  {
+   "id": 1040024,
+   "name": "Orange Split Piece",
+   "npc_pays": 2000,
+   "level": 20
+  },
+  {
+   "id": 1040014,
+   "name": "Orange Sporty T-Shirt",
+   "npc_pays": 1200,
+   "level": 12
+  },
+  {
+   "id": 3992012,
+   "name": "Orange Star Miniature Bulb",
+   "npc_pays": 75
+  },
+  {
+   "id": 1072059,
+   "name": "Orange Whitebottom Boots",
+   "npc_pays": 1560,
+   "level": 26
+  },
+  {
+   "id": 4001010,
+   "name": "Orbis Rock Scroll",
+   "npc_pays": 1000
+  },
+  {
+   "id": 1002089,
+   "name": "Orihalcon Burgonet Helm",
+   "npc_pays": 1600,
+   "level": 25
+  },
+  {
+   "id": 4010105,
+   "name": "Orihalcon Ingot",
+   "npc_pays": 500
+  },
+  {
+   "id": 1040031,
+   "name": "Orihalcon Master Sergeant",
+   "npc_pays": 2500,
+   "level": 25
+  },
+  {
+   "id": 1060024,
+   "name": "Orihalcon Master Sergeant Kilt",
+   "npc_pays": 2000,
+   "level": 25
+  },
+  {
+   "id": 1082030,
+   "name": "Orihalcon Missel",
+   "npc_pays": 3600,
+   "level": 30
+  },
+  {
+   "id": 4010005,
+   "name": "Orihalcon Ore",
+   "npc_pays": 100
+  },
+  {
+   "id": 3000061,
+   "name": "Painting of Rotten Mushmom",
+   "npc_pays": 500
+  },
+  {
+   "id": 3000059,
+   "name": "Painting of Shade",
+   "npc_pays": 500
+  },
+  {
+   "id": 3000060,
+   "name": "Painting of Zombie Mushmom",
+   "npc_pays": 500
+  },
+  {
+   "id": 3994010,
+   "name": "Pale Maple Leaf",
+   "npc_pays": 1
+  },
+  {
+   "id": 2430046,
+   "name": "Palette Cleanser Exchange Coupon",
+   "npc_pays": 1
+  },
+  {
+   "id": 3015011,
+   "name": "Palm Tree Beach Chair",
+   "npc_pays": 1
+  },
+  {
+   "id": 1092002,
+   "name": "Pan Lid",
+   "npc_pays": 2000,
+   "level": 10
+  },
+  {
+   "id": 4000086,
+   "name": "Panda Doll",
+   "npc_pays": 36
+  },
+  {
+   "id": 4001012,
+   "name": "Paper Document",
+   "npc_pays": 1
+  },
+  {
+   "id": 4000157,
+   "name": "Pelvic Bone",
+   "npc_pays": 63
+  },
+  {
+   "id": 4000121,
+   "name": "Pepe Beak",
+   "npc_pays": 60
+  },
+  {
+   "id": 4160000,
+   "name": "Pet Ability Transfer Scroll",
+   "npc_pays": 5000
+  },
+  {
+   "id": 2120000,
+   "name": "Pet Food",
+   "npc_pays": 15
+  },
+  {
+   "id": 2120001,
+   "name": "Pet Food",
+   "npc_pays": 15
+  },
+  {
+   "id": 1412002,
+   "name": "Pickaxe",
+   "npc_pays": 4500,
+   "level": 20
+  },
+  {
+   "id": 4003004,
+   "name": "Piece of Ice",
+   "npc_pays": 400
+  },
+  {
+   "id": 4080003,
+   "name": "Pig & Mushroom Omok Set",
+   "npc_pays": 1
+  },
+  {
+   "id": 4080005,
+   "name": "Pig & Octopus Omok Set",
+   "npc_pays": 1
+  },
+  {
+   "id": 1322014,
+   "name": "Pig Illustrated",
+   "npc_pays": 5500,
+   "level": 25
+  },
+  {
+   "id": 3992003,
+   "name": "Pig Ornament",
+   "npc_pays": 75
+  },
+  {
+   "id": 4000008,
+   "name": "Pig's Head",
+   "npc_pays": 7
+  },
+  {
+   "id": 4000010,
+   "name": "Pig's Ribbon",
+   "npc_pays": 10
+  },
+  {
+   "id": 4031025,
+   "name": "Pink Anthurium",
+   "npc_pays": 1000
+  },
+  {
+   "id": 1041018,
+   "name": "Pink Arianne",
+   "npc_pays": 1500,
+   "level": 15
+  },
+  {
+   "id": 1061014,
+   "name": "Pink Arianne Skirt",
+   "npc_pays": 1200,
+   "level": 15
+  },
+  {
+   "id": 3015008,
+   "name": "Pink Beach Chair",
+   "npc_pays": 100
+  },
+  {
+   "id": 1061000,
+   "name": "Pink Cotton Boxers",
+   "npc_pays": 1,
+   "level": null
+  },
+  {
+   "id": 1002107,
+   "name": "Pink Jester",
+   "npc_pays": 1800,
+   "level": 30
+  },
+  {
+   "id": 1002039,
+   "name": "Pink Moon Conehat",
+   "npc_pays": 900,
+   "level": 15
+  },
+  {
+   "id": 4001019,
+   "name": "Pink Primrose Seed",
+   "npc_pays": 1
+  },
+  {
+   "id": 1041035,
+   "name": "Pink Qi Pao",
+   "npc_pays": 2000,
+   "level": 20
+  },
+  {
+   "id": 3010007,
+   "name": "Pink Seal Cushion",
+   "npc_pays": 1
+  },
+  {
+   "id": 3992011,
+   "name": "Pink Star Miniature Bulb",
+   "npc_pays": 75
+  },
+  {
+   "id": 1041014,
+   "name": "Pink Starry Shirt",
+   "npc_pays": 1200,
+   "level": 12
+  },
+  {
+   "id": 1041000,
+   "name": "Pink Tank Top",
+   "npc_pays": 1,
+   "level": null
+  },
+  {
+   "id": 3015018,
+   "name": "Pink Teddy Chair",
+   "npc_pays": 1
+  },
+  {
+   "id": 4031042,
+   "name": "Pink Viola",
+   "npc_pays": 1000
+  },
+  {
+   "id": 1072060,
+   "name": "Pink Whitebottom Boots",
+   "npc_pays": 1560,
+   "level": 26
+  },
+  {
+   "id": 2020003,
+   "name": "Pizza",
+   "npc_pays": 25
+  },
+  {
+   "id": 4000091,
+   "name": "Plane Controller",
+   "npc_pays": 38
+  },
+  {
+   "id": 4031069,
+   "name": "Plant Fossil",
+   "npc_pays": 1
+  },
+  {
+   "id": 4031072,
+   "name": "Plant Sample",
+   "npc_pays": 1
+  },
+  {
+   "id": 4000090,
+   "name": "Plastic Crown",
+   "npc_pays": 38
+  },
+  {
+   "id": 4000103,
+   "name": "Plateon's Helmet",
+   "npc_pays": 44
+  },
+  {
+   "id": 1322010,
+   "name": "Plunger",
+   "npc_pays": 4500,
+   "level": 25
+  },
+  {
+   "id": 1322009,
+   "name": "Pointed Shovel",
+   "npc_pays": 3900,
+   "level": 22
+  },
+  {
+   "id": 4000064,
+   "name": "Poisonous Mushroom",
+   "npc_pays": 500
+  },
+  {
+   "id": 3015054,
+   "name": "Polar Bear Chair",
+   "npc_pays": 1
+  },
+  {
+   "id": 1442000,
+   "name": "Pole Arm",
+   "npc_pays": 2500,
+   "level": 10
+  },
+  {
+   "id": 3015044,
+   "name": "Poor Ribbon Pig Chair",
+   "npc_pays": 1
+  },
+  {
+   "id": 3000018,
+   "name": "Portrait of Helena",
+   "npc_pays": 10
+  },
+  {
+   "id": 3000044,
+   "name": "Portrait of the Dark Lord",
+   "npc_pays": 10
+  },
+  {
+   "id": 3000009,
+   "name": "Potted Sunflower",
+   "npc_pays": 10
+  },
+  {
+   "id": 4003020,
+   "name": "Power Crystal",
+   "npc_pays": 5000
+  },
+  {
+   "id": 4003015,
+   "name": "Power Crystal Ore",
+   "npc_pays": 2000
+  },
+  {
+   "id": 2000005,
+   "name": "Power Elixir",
+   "npc_pays": 2500
+  },
+  {
+   "id": 4003008,
+   "name": "Processed Cloth",
+   "npc_pays": 10
+  },
+  {
+   "id": 4003006,
+   "name": "Processed Leather",
+   "npc_pays": 10
+  },
+  {
+   "id": 4003009,
+   "name": "Processed Parchment",
+   "npc_pays": 10
+  },
+  {
+   "id": 4003001,
+   "name": "Processed Wood",
+   "npc_pays": 10
+  },
+  {
+   "id": 4000087,
+   "name": "Propeller",
+   "npc_pays": 36
+  },
+  {
+   "id": 1302019,
+   "name": "Pumpkin Basket",
+   "npc_pays": 1,
+   "level": 10
+  },
+  {
+   "id": 2022000,
+   "name": "Pure Water",
+   "npc_pays": 112
+  },
+  {
+   "id": 1041016,
+   "name": "Purple Arianne",
+   "npc_pays": 1500,
+   "level": 15
+  },
+  {
+   "id": 1061012,
+   "name": "Purple Arianne Skirt",
+   "npc_pays": 1200,
+   "level": 15
+  },
+  {
+   "id": 3000034,
+   "name": "Purple Barstool",
+   "npc_pays": 10
+  },
+  {
+   "id": 1051002,
+   "name": "Purple Doroness Robe",
+   "npc_pays": 4500,
+   "level": 25
+  },
+  {
+   "id": 1061044,
+   "name": "Purple Fairy Skirt",
+   "npc_pays": 2400,
+   "level": 30
+  },
+  {
+   "id": 1041050,
+   "name": "Purple Fairy Top",
+   "npc_pays": 3000,
+   "level": 30
+  },
+  {
+   "id": 1072032,
+   "name": "Purple Jewelry Boots",
+   "npc_pays": 1200,
+   "level": 20
+  },
+  {
+   "id": 1082011,
+   "name": "Purple Morrican",
+   "npc_pays": 2400,
+   "level": 20
+  },
+  {
+   "id": 4001018,
+   "name": "Purple Primrose Seed",
+   "npc_pays": 1
+  },
+  {
+   "id": 1061031,
+   "name": "Purple Qi Pao Pants",
+   "npc_pays": 1600,
+   "level": 20
+  },
+  {
+   "id": 1061034,
+   "name": "Purple Qi Pao Skirt",
+   "npc_pays": 1760,
+   "level": 22
+  },
+  {
+   "id": 1041033,
+   "name": "Purple Shivermail",
+   "npc_pays": 2000,
+   "level": 20
+  },
+  {
+   "id": 1061028,
+   "name": "Purple Shivermail Skirt",
+   "npc_pays": 1600,
+   "level": 20
+  },
+  {
+   "id": 1041028,
+   "name": "Purple Split",
+   "npc_pays": 2000,
+   "level": 20
+  },
+  {
+   "id": 1041055,
+   "name": "Purple Steal",
+   "npc_pays": 3000,
+   "level": 30
+  },
+  {
+   "id": 1061050,
+   "name": "Purple Steal Pants",
+   "npc_pays": 2400,
+   "level": 30
+  },
+  {
+   "id": 1072035,
+   "name": "Rabbit Huntertop",
+   "npc_pays": 1200,
+   "level": 20
+  },
+  {
+   "id": 3015029,
+   "name": "Rabbit Sofa",
+   "npc_pays": 100
+  },
+  {
+   "id": 4000052,
+   "name": "Raffle Petal",
+   "npc_pays": 40
+  },
+  {
+   "id": 4000056,
+   "name": "Rafflesia Petal",
+   "npc_pays": 47
+  },
+  {
+   "id": 2210000,
+   "name": "Rainbow-colored Snail Shell",
+   "npc_pays": 100
+  },
+  {
+   "id": 4000076,
+   "name": "Rat Trap",
+   "npc_pays": 32
+  },
+  {
+   "id": 1332000,
+   "name": "Razor",
+   "npc_pays": 250,
+   "level": 5
+  },
+  {
+   "id": 4000107,
+   "name": "Receiving Apparatus",
+   "npc_pays": 46
+  },
+  {
+   "id": 3990020,
+   "name": "Red \" + \"",
+   "npc_pays": 50
+  },
+  {
+   "id": 3990021,
+   "name": "Red \" - \"",
+   "npc_pays": 50
+  },
+  {
+   "id": 3991000,
+   "name": "Red \"A\"",
+   "npc_pays": 50
+  },
+  {
+   "id": 3991001,
+   "name": "Red \"C\"",
+   "npc_pays": 50
+  },
+  {
+   "id": 3991002,
+   "name": "Red \"E\"",
+   "npc_pays": 50
+  },
+  {
+   "id": 3991003,
+   "name": "Red \"H\"",
+   "npc_pays": 50
+  },
+  {
+   "id": 3991004,
+   "name": "Red \"I\"",
+   "npc_pays": 50
+  },
+  {
+   "id": 3991005,
+   "name": "Red \"M\"",
+   "npc_pays": 50
+  },
+  {
+   "id": 3991006,
+   "name": "Red \"P\"",
+   "npc_pays": 50
+  },
+  {
+   "id": 3991007,
+   "name": "Red \"R\"",
+   "npc_pays": 50
+  },
+  {
+   "id": 3991008,
+   "name": "Red \"S\"",
+   "npc_pays": 50
+  },
+  {
+   "id": 3991009,
+   "name": "Red \"T\"",
+   "npc_pays": 50
+  },
+  {
+   "id": 3991010,
+   "name": "Red \"X\"",
+   "npc_pays": 50
+  },
+  {
+   "id": 3991011,
+   "name": "Red \"Y\"",
+   "npc_pays": 50
+  },
+  {
+   "id": 1060040,
+   "name": "Red / Gold Stealer Pants",
+   "npc_pays": 2400,
+   "level": 30
+  },
+  {
+   "id": 1072042,
+   "name": "Red Ankle-strap Sandals",
+   "npc_pays": 1260,
+   "level": 21
+  },
+  {
+   "id": 1002021,
+   "name": "Red Apprentice Hat",
+   "npc_pays": 600,
+   "level": 10
+  },
+  {
+   "id": 3992017,
+   "name": "Red Ball Ornament",
+   "npc_pays": 75
+  },
+  {
+   "id": 1002012,
+   "name": "Red Bandana",
+   "npc_pays": 600,
+   "level": 10
+  },
+  {
+   "id": 1002073,
+   "name": "Red Baseball Cap",
+   "npc_pays": 1300,
+   "level": 22
+  },
+  {
+   "id": 2022001,
+   "name": "Red Bean Porridge",
+   "npc_pays": 40
+  },
+  {
+   "id": 2020013,
+   "name": "Red Bean Sundae",
+   "npc_pays": 225
+  },
+  {
+   "id": 1041042,
+   "name": "Red Bennis Chainmail (Female)",
+   "npc_pays": 2500,
+   "level": 25
+  },
+  {
+   "id": 1040035,
+   "name": "Red Bennis Chainmail (Male)",
+   "npc_pays": 2500,
+   "level": 25
+  },
+  {
+   "id": 1322004,
+   "name": "Red Brick",
+   "npc_pays": 2500,
+   "level": 15
+  },
+  {
+   "id": 3992027,
+   "name": "Red Candle",
+   "npc_pays": 75
+  },
+  {
+   "id": 3992030,
+   "name": "Red Candy Canes",
+   "npc_pays": 75
+  },
+  {
+   "id": 4031064,
+   "name": "Red Cape",
+   "npc_pays": 1
+  },
+  {
+   "id": 3010005,
+   "name": "Red Chair",
+   "npc_pays": 500
+  },
+  {
+   "id": 3015051,
+   "name": "Red Christmas Recharger Chair",
+   "npc_pays": 1
+  },
+  {
+   "id": 1061009,
+   "name": "Red Cloth Pants (Female)",
+   "npc_pays": 800,
+   "level": 10
+  },
+  {
+   "id": 1060008,
+   "name": "Red Cloth Pants (Male)",
+   "npc_pays": 800,
+   "level": 10
+  },
+  {
+   "id": 1041011,
+   "name": "Red Cloth Vest (Female)",
+   "npc_pays": 1000,
+   "level": 10
+  },
+  {
+   "id": 1040010,
+   "name": "Red Cloth Vest (Male)",
+   "npc_pays": 1000,
+   "level": 10
+  },
+  {
+   "id": 1032005,
+   "name": "Red Cross Earrings",
+   "npc_pays": 3750,
+   "level": 25
+  },
+  {
+   "id": 1092010,
+   "name": "Red Cross Shield",
+   "npc_pays": 6000,
+   "level": 30
+  },
+  {
+   "id": 1082013,
+   "name": "Red Diros",
+   "npc_pays": 2400,
+   "level": 20
+  },
+  {
+   "id": 1051003,
+   "name": "Red Doroness Robe",
+   "npc_pays": 4500,
+   "level": 25
+  },
+  {
+   "id": 4003012,
+   "name": "Red Dye",
+   "npc_pays": 250
+  },
+  {
+   "id": 1072038,
+   "name": "Red Enamel Boots",
+   "npc_pays": 1200,
+   "level": 20
+  },
+  {
+   "id": 1051006,
+   "name": "Red Engrit",
+   "npc_pays": 5400,
+   "level": 30
+  },
+  {
+   "id": 1002046,
+   "name": "Red Feather Hat",
+   "npc_pays": 900,
+   "level": 15
+  },
+  {
+   "id": 1322019,
+   "name": "Red Flowery Tube",
+   "npc_pays": 1,
+   "level": 25
+  },
+  {
+   "id": 3992033,
+   "name": "Red Fruit Leaves",
+   "npc_pays": 75
+  },
+  {
+   "id": 1002024,
+   "name": "Red Ghetto Beanie",
+   "npc_pays": 600,
+   "level": 10
+  },
+  {
+   "id": 3992005,
+   "name": "Red Gift-Box Ornament",
+   "npc_pays": 75
+  },
+  {
+   "id": 1040048,
+   "name": "Red Gold Stealer",
+   "npc_pays": 3000,
+   "level": 30
+  },
+  {
+   "id": 1002115,
+   "name": "Red Guise",
+   "npc_pays": 1800,
+   "level": 30
+  },
+  {
+   "id": 1002112,
+   "name": "Red Hawkeye",
+   "npc_pays": 1800,
+   "level": 30
+  },
+  {
+   "id": 1002003,
+   "name": "Red Headband",
+   "npc_pays": 300,
+   "level": 5
+  },
+  {
+   "id": 1002092,
+   "name": "Red Hunter",
+   "npc_pays": 1500,
+   "level": 25
+  },
+  {
+   "id": 1072070,
+   "name": "Red Hunter Boots",
+   "npc_pays": 1800,
+   "level": 30
+  },
+  {
+   "id": 1040044,
+   "name": "Red Hunter's Armor",
+   "npc_pays": 3000,
+   "level": 30
+  },
+  {
+   "id": 1060036,
+   "name": "Red Hunter's Pants",
+   "npc_pays": 2400,
+   "level": 30
+  },
+  {
+   "id": 1061047,
+   "name": "Red Huntress Pants",
+   "npc_pays": 2400,
+   "level": 30
+  },
+  {
+   "id": 1040040,
+   "name": "Red Hwarang Shirt",
+   "npc_pays": 3000,
+   "level": 30
+  },
+  {
+   "id": 1072053,
+   "name": "Red Jack Boots",
+   "npc_pays": 1500,
+   "level": 25
+  },
+  {
+   "id": 1072033,
+   "name": "Red Jewelry Boots",
+   "npc_pays": 1200,
+   "level": 20
+  },
+  {
+   "id": 1050004,
+   "name": "Red Kendo Robe",
+   "npc_pays": 3600,
+   "level": 20
+  },
+  {
+   "id": 1041025,
+   "name": "Red Lamelle",
+   "npc_pays": 2000,
+   "level": 20
+  },
+  {
+   "id": 1072055,
+   "name": "Red Lappy Boots",
+   "npc_pays": 1500,
+   "level": 25
+  },
+  {
+   "id": 1002068,
+   "name": "Red Loosecap",
+   "npc_pays": 1200,
+   "level": 20
+  },
+  {
+   "id": 1082031,
+   "name": "Red Lutia",
+   "npc_pays": 3600,
+   "level": 30
+  },
+  {
+   "id": 1072066,
+   "name": "Red Magic Shoes",
+   "npc_pays": 1800,
+   "level": 30
+  },
+  {
+   "id": 2020020,
+   "name": "Red Malady's Candy",
+   "npc_pays": 1
+  },
+  {
+   "id": 1060030,
+   "name": "Red Martial Arts Pants",
+   "npc_pays": 2400,
+   "level": 30
+  },
+  {
+   "id": 3992013,
+   "name": "Red Miniature Bulb",
+   "npc_pays": 75
+  },
+  {
+   "id": 1041023,
+   "name": "Red Nightshift",
+   "npc_pays": 1500,
+   "level": 15
+  },
+  {
+   "id": 1061019,
+   "name": "Red Nightshift Pants",
+   "npc_pays": 1200,
+   "level": 15
+  },
+  {
+   "id": 1072021,
+   "name": "Red Ninja Sandals",
+   "npc_pays": 900,
+   "level": 15
+  },
+  {
+   "id": 3990009,
+   "name": "Red No. 0",
+   "npc_pays": 50
+  },
+  {
+   "id": 3990000,
+   "name": "Red No. 1",
+   "npc_pays": 50
+  },
+  {
+   "id": 3990001,
+   "name": "Red No. 2",
+   "npc_pays": 50
+  },
+  {
+   "id": 3990002,
+   "name": "Red No. 3",
+   "npc_pays": 50
+  },
+  {
+   "id": 3990003,
+   "name": "Red No. 4",
+   "npc_pays": 50
+  },
+  {
+   "id": 3990004,
+   "name": "Red No. 5",
+   "npc_pays": 50
+  },
+  {
+   "id": 3990005,
+   "name": "Red No. 6",
+   "npc_pays": 50
+  },
+  {
+   "id": 3990006,
+   "name": "Red No. 7",
+   "npc_pays": 50
+  },
+  {
+   "id": 3990007,
+   "name": "Red No. 8",
+   "npc_pays": 50
+  },
+  {
+   "id": 3990008,
+   "name": "Red No. 9",
+   "npc_pays": 50
+  },
+  {
+   "id": 1040027,
+   "name": "Red Pao",
+   "npc_pays": 2000,
+   "level": 20
+  },
+  {
+   "id": 1060020,
+   "name": "Red Pao Bottoms",
+   "npc_pays": 1600,
+   "level": 20
+  },
+  {
+   "id": 2000000,
+   "name": "Red Potion",
+   "npc_pays": 5
+  },
+  {
+   "id": 2000007,
+   "name": "Red Potion",
+   "npc_pays": 5
+  },
+  {
+   "id": 1041034,
+   "name": "Red Qi Pao",
+   "npc_pays": 2000,
+   "level": 20
+  },
+  {
+   "id": 1061029,
+   "name": "Red Qi Pao Pants",
+   "npc_pays": 1600,
+   "level": 20
+  },
+  {
+   "id": 1061032,
+   "name": "Red Qi Pao Skirt",
+   "npc_pays": 1760,
+   "level": 22
+  },
+  {
+   "id": 1061021,
+   "name": "Red Ramel Skirt",
+   "npc_pays": 1600,
+   "level": 20
+  },
+  {
+   "id": 1002065,
+   "name": "Red Robin Hat",
+   "npc_pays": 1200,
+   "level": 20
+  },
+  {
+   "id": 3015002,
+   "name": "Red Round Chair",
+   "npc_pays": 1
+  },
+  {
+   "id": 1051004,
+   "name": "Red Sauna Robe",
+   "npc_pays": 5400,
+   "level": 30
+  },
+  {
+   "id": 1082023,
+   "name": "Red Savata",
+   "npc_pays": 3000,
+   "level": 25
+  },
+  {
+   "id": 1040022,
+   "name": "Red Sergeant",
+   "npc_pays": 2000,
+   "level": 20
+  },
+  {
+   "id": 1060017,
+   "name": "Red Sergeant Kilt",
+   "npc_pays": 1600,
+   "level": 20
+  },
+  {
+   "id": 1041039,
+   "name": "Red Shark",
+   "npc_pays": 2500,
+   "level": 25
+  },
+  {
+   "id": 1061037,
+   "name": "Red Shark Skirt",
+   "npc_pays": 2000,
+   "level": 25
+  },
+  {
+   "id": 1041032,
+   "name": "Red Shivermail",
+   "npc_pays": 2000,
+   "level": 20
+  },
+  {
+   "id": 1061027,
+   "name": "Red Shivermail Skirt",
+   "npc_pays": 1600,
+   "level": 20
+  },
+  {
+   "id": 1002002,
+   "name": "Red Skullcap",
+   "npc_pays": 300,
+   "level": 5
+  },
+  {
+   "id": 4000004,
+   "name": "Red Snail Shell",
+   "npc_pays": 4
+  },
+  {
+   "id": 1072079,
+   "name": "Red Snowshoes",
+   "npc_pays": 1800,
+   "level": 30
+  },
+  {
+   "id": 3992020,
+   "name": "Red Sock",
+   "npc_pays": 75
+  },
+  {
+   "id": 1041029,
+   "name": "Red Split",
+   "npc_pays": 2000,
+   "level": 20
+  },
+  {
+   "id": 3992008,
+   "name": "Red Star Miniature Bulb",
+   "npc_pays": 75
+  },
+  {
+   "id": 1002084,
+   "name": "Red Starry Bandana",
+   "npc_pays": 1500,
+   "level": 25
+  },
+  {
+   "id": 1041053,
+   "name": "Red Steal",
+   "npc_pays": 3000,
+   "level": 30
+  },
+  {
+   "id": 1061048,
+   "name": "Red Steal Pants",
+   "npc_pays": 2400,
+   "level": 30
+  },
+  {
+   "id": 1041015,
+   "name": "Red Striped T-Shirt",
+   "npc_pays": 1200,
+   "level": 12
+  },
+  {
+   "id": 1002010,
+   "name": "Red Swimming Cap",
+   "npc_pays": 450,
+   "level": 8
+  },
+  {
+   "id": 1002048,
+   "name": "Red Thief Hood",
+   "npc_pays": 900,
+   "level": 15
+  },
+  {
+   "id": 1002095,
+   "name": "Red Tiberian",
+   "npc_pays": 1500,
+   "level": 25
+  },
+  {
+   "id": 1092009,
+   "name": "Red Triangular Shield",
+   "npc_pays": 5000,
+   "level": 25
+  },
+  {
+   "id": 3015024,
+   "name": "Red Umbrella Chair",
+   "npc_pays": 1
+  },
+  {
+   "id": 1072058,
+   "name": "Red Whitebottom Boots",
+   "npc_pays": 1560,
+   "level": 26
+  },
+  {
+   "id": 1002061,
+   "name": "Red Wizardry Hat",
+   "npc_pays": 1200,
+   "level": 20
+  },
+  {
+   "id": 3992035,
+   "name": "Red-Ribboned Giftbox",
+   "npc_pays": 75
+  },
+  {
+   "id": 3994011,
+   "name": "Reddened Maple Leaf",
+   "npc_pays": 1
+  },
+  {
+   "id": 1332010,
+   "name": "Reef Claw",
+   "npc_pays": 5500,
+   "level": 30
+  },
+  {
+   "id": 2020015,
+   "name": "Reindeer Milk",
+   "npc_pays": 250
+  },
+  {
+   "id": 3020003,
+   "name": "Reinforced Safe",
+   "npc_pays": 100
+  },
+  {
+   "id": 3020001,
+   "name": "Reinforced Wooden Chest",
+   "npc_pays": 100
+  },
+  {
+   "id": 4031125,
+   "name": "Repaired Wooden Bow",
+   "npc_pays": 1
+  },
+  {
+   "id": 2030000,
+   "name": "Return Scroll - Nearest Town",
+   "npc_pays": 200
+  },
+  {
+   "id": 2030011,
+   "name": "Return Scroll - Nearest Town",
+   "npc_pays": 200
+  },
+  {
+   "id": 2030009,
+   "name": "Return Scroll to El Nath",
+   "npc_pays": 500
+  },
+  {
+   "id": 2030002,
+   "name": "Return Scroll to Ellinia",
+   "npc_pays": 250
+  },
+  {
+   "id": 2030007,
+   "name": "Return Scroll to Forgotten Hollow",
+   "npc_pays": 400
+  },
+  {
+   "id": 2030004,
+   "name": "Return Scroll to Henesys",
+   "npc_pays": 250
+  },
+  {
+   "id": 2030005,
+   "name": "Return Scroll to Kerning City",
+   "npc_pays": 250
+  },
+  {
+   "id": 2030001,
+   "name": "Return Scroll to Lith Harbor",
+   "npc_pays": 250
+  },
+  {
+   "id": 2030010,
+   "name": "Return Scroll to My Home",
+   "npc_pays": 150
+  },
+  {
+   "id": 2030008,
+   "name": "Return Scroll to Orbis",
+   "npc_pays": 500
+  },
+  {
+   "id": 2030003,
+   "name": "Return Scroll to Perion",
+   "npc_pays": 250
+  },
+  {
+   "id": 2030006,
+   "name": "Return Scroll to Sleepywood",
+   "npc_pays": 300
+  },
+  {
+   "id": 4000156,
+   "name": "Rib",
+   "npc_pays": 57
+  },
+  {
+   "id": 1002100,
+   "name": "Ribboned Pig Headband",
+   "npc_pays": 1600,
+   "level": 27
+  },
+  {
+   "id": 4031030,
+   "name": "Rina's Unagi Special",
+   "npc_pays": 550
+  },
+  {
+   "id": 3015043,
+   "name": "Roasted Relaxer",
+   "npc_pays": 1
+  },
+  {
+   "id": 4000148,
+   "name": "Rombot's Memory Card",
+   "npc_pays": 470
+  },
+  {
+   "id": 1061003,
+   "name": "Rookie Pants",
+   "npc_pays": 800,
+   "level": 10
+  },
+  {
+   "id": 3000012,
+   "name": "Rope-Wrapped Jug",
+   "npc_pays": 10
+  },
+  {
+   "id": 4000065,
+   "name": "Rotten Mushmom Cap",
+   "npc_pays": 600
+  },
+  {
+   "id": 3992001,
+   "name": "Rudolph Ornament",
+   "npc_pays": 75
+  },
+  {
+   "id": 3992038,
+   "name": "Ruldolph Santa Boots",
+   "npc_pays": 75
+  },
+  {
+   "id": 3000031,
+   "name": "Rustic Bed",
+   "npc_pays": 10
+  },
+  {
+   "id": 3020002,
+   "name": "Rusty Safe",
+   "npc_pays": 100
+  },
+  {
+   "id": 1452004,
+   "name": "Ryden",
+   "npc_pays": 6500,
+   "level": 30
+  },
+  {
+   "id": 1302002,
+   "name": "Sabre",
+   "npc_pays": 2500,
+   "level": 15
+  },
+  {
+   "id": 2020000,
+   "name": "Salad",
+   "npc_pays": 22
+  },
+  {
+   "id": 1062002,
+   "name": "Sandblasted Jeans",
+   "npc_pays": 1360,
+   "level": 17
+  },
+  {
+   "id": 3992000,
+   "name": "Santa Ornament",
+   "npc_pays": 75
+  },
+  {
+   "id": 2012002,
+   "name": "Sap of Ancient Tree",
+   "npc_pays": 300
+  },
+  {
+   "id": 4020105,
+   "name": "Sapphire",
+   "npc_pays": 600
+  },
+  {
+   "id": 4020005,
+   "name": "Sapphire Ore",
+   "npc_pays": 120
+  },
+  {
+   "id": 1382001,
+   "name": "Sapphire Staff",
+   "npc_pays": 2500,
+   "level": 15
+  },
+  {
+   "id": 1302003,
+   "name": "Saw",
+   "npc_pays": 2500,
+   "level": 15
+  },
+  {
+   "id": 1402005,
+   "name": "Scimitar",
+   "npc_pays": 6500,
+   "level": 30
+  },
+  {
+   "id": 4031115,
+   "name": "Scorched Arcon Scroll",
+   "npc_pays": 1
+  },
+  {
+   "id": 4003000,
+   "name": "Screw",
+   "npc_pays": 1
+  },
+  {
+   "id": 4130003,
+   "name": "Scroll Crafting Catalyst",
+   "npc_pays": 1000
+  },
+  {
+   "id": 4031065,
+   "name": "Scroll of Secrets",
+   "npc_pays": 1
+  },
+  {
+   "id": 1312003,
+   "name": "Scythe",
+   "npc_pays": 2500,
+   "level": 15
+  },
+  {
+   "id": 4000143,
+   "name": "Sealed Bottle",
+   "npc_pays": 95
+  },
+  {
+   "id": 4000138,
+   "name": "Sealed Teddy Bear",
+   "npc_pays": 85
+  },
+  {
+   "id": 4000129,
+   "name": "Sealed-up Grandpa Clock",
+   "npc_pays": 71
+  },
+  {
+   "id": 1092006,
+   "name": "Seclusion Wristguard",
+   "npc_pays": 4400,
+   "level": 22
+  },
+  {
+   "id": 4031032,
+   "name": "Secret Book",
+   "npc_pays": 150
+  },
+  {
+   "id": 4000151,
+   "name": "Seedling",
+   "npc_pays": 19
+  },
+  {
+   "id": 4000069,
+   "name": "Sentinel Shellpiece",
+   "npc_pays": 30
+  },
+  {
+   "id": 4080100,
+   "name": "Set of Match Cards",
+   "npc_pays": 1
+  },
+  {
+   "id": 3030002,
+   "name": "Sewing Machine",
+   "npc_pays": 100
+  },
+  {
+   "id": 2002013,
+   "name": "Sharpness Potion",
+   "npc_pays": 375
+  },
+  {
+   "id": 4031039,
+   "name": "Shumi's Coin",
+   "npc_pays": 50
+  },
+  {
+   "id": 4031040,
+   "name": "Shumi's Roll of Cash",
+   "npc_pays": 100
+  },
+  {
+   "id": 4031041,
+   "name": "Shumi's Sack of Cash",
+   "npc_pays": 1000
+  },
+  {
+   "id": 1060041,
+   "name": "Silver / Black Stealer Pants",
+   "npc_pays": 2400,
+   "level": 30
+  },
+  {
+   "id": 1072064,
+   "name": "Silver Battle Grieves",
+   "npc_pays": 1800,
+   "level": 30
+  },
+  {
+   "id": 1040049,
+   "name": "Silver Black Stealer",
+   "npc_pays": 3000,
+   "level": 30
+  },
+  {
+   "id": 1072077,
+   "name": "Silver Chain Boots",
+   "npc_pays": 1800,
+   "level": 30
+  },
+  {
+   "id": 4010104,
+   "name": "Silver Ingot",
+   "npc_pays": 400
+  },
+  {
+   "id": 1040018,
+   "name": "Silver Leather Hoodwear",
+   "npc_pays": 1500,
+   "level": 15
+  },
+  {
+   "id": 1040030,
+   "name": "Silver Master Sergeant",
+   "npc_pays": 2500,
+   "level": 25
+  },
+  {
+   "id": 1060023,
+   "name": "Silver Master Sergeant Kilt",
+   "npc_pays": 2000,
+   "level": 25
+  },
+  {
+   "id": 4010004,
+   "name": "Silver Ore",
+   "npc_pays": 80
+  },
+  {
+   "id": 1082038,
+   "name": "Silver Sylvia",
+   "npc_pays": 3600,
+   "level": 30
+  },
+  {
+   "id": 1072045,
+   "name": "Silver War Boots",
+   "npc_pays": 1500,
+   "level": 25
+  },
+  {
+   "id": 1072048,
+   "name": "Silver Wind Shoes",
+   "npc_pays": 1500,
+   "level": 25
+  },
+  {
+   "id": 1032000,
+   "name": "Single Earring",
+   "npc_pays": 2250,
+   "level": 15
+  },
+  {
+   "id": 4000154,
+   "name": "Skeledog's Bone",
+   "npc_pays": 44
+  },
+  {
+   "id": 3015022,
+   "name": "Skull Throne",
+   "npc_pays": 1
+  },
+  {
+   "id": 1002085,
+   "name": "Sky Blue Starry Bandana",
+   "npc_pays": 1500,
+   "level": 25
+  },
+  {
+   "id": 1302007,
+   "name": "Sky Blue Umbrella",
+   "npc_pays": 4900,
+   "level": 27
+  },
+  {
+   "id": 1041038,
+   "name": "Sky Shark",
+   "npc_pays": 2500,
+   "level": 25
+  },
+  {
+   "id": 1061036,
+   "name": "Sky Shark Skirt",
+   "npc_pays": 2000,
+   "level": 25
+  },
+  {
+   "id": 1041045,
+   "name": "Sky Sneak",
+   "npc_pays": 2500,
+   "level": 25
+  },
+  {
+   "id": 1061039,
+   "name": "Sky Sneak Pants",
+   "npc_pays": 2000,
+   "level": 25
+  },
+  {
+   "id": 3010003,
+   "name": "Sky-blue Wooden Chair",
+   "npc_pays": 500
+  },
+  {
+   "id": 4000153,
+   "name": "Slate",
+   "npc_pays": 24
+  },
+  {
+   "id": 4080000,
+   "name": "Slime & Mushroom Omok Set",
+   "npc_pays": 1
+  },
+  {
+   "id": 4080002,
+   "name": "Slime & Octopus Omok Set",
+   "npc_pays": 1
+  },
+  {
+   "id": 4080001,
+   "name": "Slime & Pig Omok Set",
+   "npc_pays": 1
+  },
+  {
+   "id": 4000007,
+   "name": "Slime Bubble",
+   "npc_pays": 50
+  },
+  {
+   "id": 3992004,
+   "name": "Slime Ornament",
+   "npc_pays": 75
+  },
+  {
+   "id": 3000051,
+   "name": "Small Barbed Wire Garden Plot",
+   "npc_pays": 10
+  },
+  {
+   "id": 4000092,
+   "name": "Small Egg",
+   "npc_pays": 39
+  },
+  {
+   "id": 3000025,
+   "name": "Small Garden Plot",
+   "npc_pays": 10
+  },
+  {
+   "id": 3000036,
+   "name": "Small Potted Vine",
+   "npc_pays": 10
+  },
+  {
+   "id": 4000101,
+   "name": "Small Spaceship",
+   "npc_pays": 42
+  },
+  {
+   "id": 1072013,
+   "name": "Smelly Gomushin",
+   "npc_pays": 660,
+   "level": 11
+  },
+  {
+   "id": 2002007,
+   "name": "Smithing Kit",
+   "npc_pays": 100
+  },
+  {
+   "id": 4031121,
+   "name": "Smooth Horn Marble",
+   "npc_pays": 1
+  },
+  {
+   "id": 2430017,
+   "name": "Snail Package",
+   "npc_pays": 1
+  },
+  {
+   "id": 4000001,
+   "name": "Snail Shell",
+   "npc_pays": 1
+  },
+  {
+   "id": 2430020,
+   "name": "Snail to Orange Mushroom Upgrade Package",
+   "npc_pays": 1
+  },
+  {
+   "id": 2430022,
+   "name": "Snail to Zakum Upgrade Package",
+   "npc_pays": 1
+  },
+  {
+   "id": 2002002,
+   "name": "Sniper Potion",
+   "npc_pays": 250
+  },
+  {
+   "id": 2070008,
+   "name": "Snowball",
+   "npc_pays": 500
+  },
+  {
+   "id": 4003003,
+   "name": "Soft Feather",
+   "npc_pays": 10
+  },
+  {
+   "id": 4000078,
+   "name": "Solid Horn",
+   "npc_pays": 33
+  },
+  {
+   "id": 1061004,
+   "name": "Sophia Pants",
+   "npc_pays": 800,
+   "level": 10
+  },
+  {
+   "id": 3015019,
+   "name": "Soul Teddy Chair",
+   "npc_pays": 100
+  },
+  {
+   "id": 4000095,
+   "name": "Space Food",
+   "npc_pays": 40
+  },
+  {
+   "id": 1432000,
+   "name": "Spear",
+   "npc_pays": 2500,
+   "level": 10
+  },
+  {
+   "id": 4031114,
+   "name": "Special Stirge Phobia Cure",
+   "npc_pays": 1
+  },
+  {
+   "id": 2002004,
+   "name": "Speed Potion",
+   "npc_pays": 250
+  },
+  {
+   "id": 4000066,
+   "name": "Spiderweb",
+   "npc_pays": 25
+  },
+  {
+   "id": 4003007,
+   "name": "Spool of Thread",
+   "npc_pays": 1
+  },
+  {
+   "id": 1422002,
+   "name": "Square Hammer",
+   "npc_pays": 4500,
+   "level": 20
+  },
+  {
+   "id": 1322006,
+   "name": "Square Shovel",
+   "npc_pays": 3100,
+   "level": 17
+  },
+  {
+   "id": 4000006,
+   "name": "Squishy Liquid",
+   "npc_pays": 6
+  },
+  {
+   "id": 1072128,
+   "name": "Squishy Shoes",
+   "npc_pays": 1590,
+   "level": 28
+  },
+  {
+   "id": 4031130,
+   "name": "Stamped Ledger",
+   "npc_pays": 1
+  },
+  {
+   "id": 1032008,
+   "name": "Star Earrings",
+   "npc_pays": 4500,
+   "level": 30
+  },
+  {
+   "id": 4000083,
+   "name": "Star Pixie's Starpiece",
+   "npc_pays": 35
+  },
+  {
+   "id": 4020109,
+   "name": "Star Rock",
+   "npc_pays": 4000
+  },
+  {
+   "id": 2897002,
+   "name": "Stark Face Coupon",
+   "npc_pays": 1
+  },
+  {
+   "id": 2542004,
+   "name": "Stark Hair Coupon",
+   "npc_pays": 1
+  },
+  {
+   "id": 2430034,
+   "name": "Stark Outfit Set",
+   "npc_pays": 1
+  },
+  {
+   "id": 2430035,
+   "name": "Stark's Clothes Selector Coupon",
+   "npc_pays": 1
+  },
+  {
+   "id": 2430037,
+   "name": "Stark's Gloves Selector Coupon",
+   "npc_pays": 1
+  },
+  {
+   "id": 2430036,
+   "name": "Stark's Shoes Selector Coupon",
+   "npc_pays": 1
+  },
+  {
+   "id": 1040016,
+   "name": "Steel Corporal",
+   "npc_pays": 1500,
+   "level": 15
+  },
+  {
+   "id": 1060013,
+   "name": "Steel Corporal Pants",
+   "npc_pays": 1200,
+   "level": 15
+  },
+  {
+   "id": 3000047,
+   "name": "Steel Drum",
+   "npc_pays": 10
+  },
+  {
+   "id": 1082002,
+   "name": "Steel Fingerless Gloves",
+   "npc_pays": 1800,
+   "level": 15
+  },
+  {
+   "id": 1051000,
+   "name": "Steel Fitted Mail",
+   "npc_pays": 2700,
+   "level": 15
+  },
+  {
+   "id": 1002055,
+   "name": "Steel Football Helmet",
+   "npc_pays": 1250,
+   "level": 20
+  },
+  {
+   "id": 1002036,
+   "name": "Steel Full Helm",
+   "npc_pays": 950,
+   "level": 15
+  },
+  {
+   "id": 1072015,
+   "name": "Steel Grieves",
+   "npc_pays": 900,
+   "level": 15
+  },
+  {
+   "id": 1472008,
+   "name": "Steel Guards",
+   "npc_pays": 6500,
+   "level": 30
+  },
+  {
+   "id": 1002030,
+   "name": "Steel Helmet",
+   "npc_pays": 750,
+   "level": 12
+  },
+  {
+   "id": 1472005,
+   "name": "Steel Igor",
+   "npc_pays": 4700,
+   "level": 20
+  },
+  {
+   "id": 3000010,
+   "name": "Steel Milk Can",
+   "npc_pays": 10
+  },
+  {
+   "id": 1082029,
+   "name": "Steel Missel",
+   "npc_pays": 3600,
+   "level": 30
+  },
+  {
+   "id": 1322001,
+   "name": "Steel Pipe",
+   "npc_pays": 1500,
+   "level": 10
+  },
+  {
+   "id": 1002102,
+   "name": "Steel Pride",
+   "npc_pays": 1850,
+   "level": 30
+  },
+  {
+   "id": 1060016,
+   "name": "Steel Sergeant Kilt",
+   "npc_pays": 1600,
+   "level": 20
+  },
+  {
+   "id": 1002078,
+   "name": "Steel Sharp Helm",
+   "npc_pays": 1300,
+   "level": 22
+  },
+  {
+   "id": 1092003,
+   "name": "Steel Shield",
+   "npc_pays": 3000,
+   "level": 15
+  },
+  {
+   "id": 1082037,
+   "name": "Steel Sylvia",
+   "npc_pays": 3600,
+   "level": 30
+  },
+  {
+   "id": 1472001,
+   "name": "Steel Titans",
+   "npc_pays": 3500,
+   "level": 15
+  },
+  {
+   "id": 2070005,
+   "name": "Steely Throwing Knives",
+   "npc_pays": 10000
+  },
+  {
+   "id": 4000068,
+   "name": "Sticky Spiderweb",
+   "npc_pays": 28
+  },
+  {
+   "id": 4003002,
+   "name": "Stiff Feather",
+   "npc_pays": 10
+  },
+  {
+   "id": 1332006,
+   "name": "Stinger",
+   "npc_pays": 3900,
+   "level": 22
+  },
+  {
+   "id": 4000017,
+   "name": "Stirge Wing",
+   "npc_pays": 20
+  },
+  {
+   "id": 1092000,
+   "name": "Stolen Fence",
+   "npc_pays": 1000,
+   "level": 5
+  },
+  {
+   "id": 3015045,
+   "name": "Stone Golem Hand Chair",
+   "npc_pays": 1
+  },
+  {
+   "id": 4000043,
+   "name": "Stone Golem Rubble",
+   "npc_pays": 56
+  },
+  {
+   "id": 3040000,
+   "name": "Straw Training Dummy",
+   "npc_pays": 100
+  },
+  {
+   "id": 3000021,
+   "name": "Strawberry Patch",
+   "npc_pays": 10
+  },
+  {
+   "id": 1442002,
+   "name": "Studded Polearm",
+   "npc_pays": 4500,
+   "level": 20
+  },
+  {
+   "id": 4031073,
+   "name": "Stuffed Drake Skull",
+   "npc_pays": 1
+  },
+  {
+   "id": 4031075,
+   "name": "Stump's Teardrop",
+   "npc_pays": 1
+  },
+  {
+   "id": 3000057,
+   "name": "Stumpy Figure",
+   "npc_pays": 500
+  },
+  {
+   "id": 2070000,
+   "name": "Subi Throwing Stars",
+   "npc_pays": 250
+  },
+  {
+   "id": 2100007,
+   "name": "Summoning New-Type Balrog",
+   "npc_pays": 1
+  },
+  {
+   "id": 2020016,
+   "name": "Sunrise Dew",
+   "npc_pays": 300
+  },
+  {
+   "id": 2020017,
+   "name": "Sunset Dew",
+   "npc_pays": 375
+  },
+  {
+   "id": 2002012,
+   "name": "Supreme Dexterity Potion",
+   "npc_pays": 300
+  },
+  {
+   "id": 2002011,
+   "name": "Supreme Sniper Potion",
+   "npc_pays": 300
+  },
+  {
+   "id": 4000094,
+   "name": "Table Clock",
+   "npc_pays": 40
+  },
+  {
+   "id": 4000028,
+   "name": "Tablecloth",
+   "npc_pays": 34
+  },
+  {
+   "id": 2002009,
+   "name": "Tailoring Kit",
+   "npc_pays": 100
+  },
+  {
+   "id": 3000022,
+   "name": "Tall Sunflower",
+   "npc_pays": 10
+  },
+  {
+   "id": 4000147,
+   "name": "Tanathos Strap",
+   "npc_pays": 108
+  },
+  {
+   "id": 4000046,
+   "name": "Tauromacis Horn",
+   "npc_pays": 70
+  },
+  {
+   "id": 4000047,
+   "name": "Taurospear Horn",
+   "npc_pays": 75
+  },
+  {
+   "id": 3015030,
+   "name": "Teddy Bear Bed",
+   "npc_pays": 5000
+  },
+  {
+   "id": 4000072,
+   "name": "Teddy's Cotton",
+   "npc_pays": 30
+  },
+  {
+   "id": 4000075,
+   "name": "Teddy's Yellow Ribbon",
+   "npc_pays": 32
+  },
+  {
+   "id": 4031108,
+   "name": "The Book of Ancient",
+   "npc_pays": 1
+  },
+  {
+   "id": 4031094,
+   "name": "The First Piece of an Ancient Scroll",
+   "npc_pays": 1
+  },
+  {
+   "id": 3015001,
+   "name": "The First Trial",
+   "npc_pays": 1
+  },
+  {
+   "id": 3992021,
+   "name": "The gingerbread man",
+   "npc_pays": 75
+  },
+  {
+   "id": 3992022,
+   "name": "The gingerbread woman",
+   "npc_pays": 75
+  },
+  {
+   "id": 4001004,
+   "name": "The Girl Next Door",
+   "npc_pays": 150
+  },
+  {
+   "id": 3010000,
+   "name": "The Green Relaxer",
+   "npc_pays": 1
+  },
+  {
+   "id": 4001013,
+   "name": "The Key",
+   "npc_pays": 1
+  },
+  {
+   "id": 4006000,
+   "name": "The Magic Rock",
+   "npc_pays": 1
+  },
+  {
+   "id": 3010002,
+   "name": "The Red Relaxer",
+   "npc_pays": 1
+  },
+  {
+   "id": 3015007,
+   "name": "The Red Relaxer",
+   "npc_pays": 1
+  },
+  {
+   "id": 4031095,
+   "name": "The Second Piece of an Ancient Scroll",
+   "npc_pays": 1
+  },
+  {
+   "id": 4160001,
+   "name": "The Snail Legend",
+   "npc_pays": 1
+  },
+  {
+   "id": 2375000,
+   "name": "The Songs of Solomon",
+   "npc_pays": 1
+  },
+  {
+   "id": 3015021,
+   "name": "The Stirge Seat",
+   "npc_pays": 1
+  },
+  {
+   "id": 4006001,
+   "name": "The Summoning Rock",
+   "npc_pays": 1
+  },
+  {
+   "id": 4031096,
+   "name": "The Third Piece of an Ancient Scroll",
+   "npc_pays": 1
+  },
+  {
+   "id": 3010001,
+   "name": "The Yellow Relaxer",
+   "npc_pays": 1
+  },
+  {
+   "id": 4031036,
+   "name": "Ticket to Construction Site B1",
+   "npc_pays": 1
+  },
+  {
+   "id": 4031037,
+   "name": "Ticket to Construction Site B2",
+   "npc_pays": 1
+  },
+  {
+   "id": 4031038,
+   "name": "Ticket to Construction Site B3",
+   "npc_pays": 1
+  },
+  {
+   "id": 4031084,
+   "name": "Ticket to Ellinia (Basic)",
+   "npc_pays": 1
+  },
+  {
+   "id": 4031085,
+   "name": "Ticket to Ellinia (Regular)",
+   "npc_pays": 1
+  },
+  {
+   "id": 4031086,
+   "name": "Ticket to Ludibrium (Basic)",
+   "npc_pays": 1
+  },
+  {
+   "id": 4031087,
+   "name": "Ticket to Ludibrium (Regular)",
+   "npc_pays": 1
+  },
+  {
+   "id": 4031082,
+   "name": "Ticket to Orbis (Basic)",
+   "npc_pays": 1
+  },
+  {
+   "id": 4031083,
+   "name": "Ticket to Orbis (Regular)",
+   "npc_pays": 1
+  },
+  {
+   "id": 2070004,
+   "name": "Tobi Throwing Stars",
+   "npc_pays": 2500
+  },
+  {
+   "id": 3000020,
+   "name": "Tomato Tree",
+   "npc_pays": 10
+  },
+  {
+   "id": 4020106,
+   "name": "Topaz",
+   "npc_pays": 400
+  },
+  {
+   "id": 4020006,
+   "name": "Topaz Ore",
+   "npc_pays": 80
+  },
+  {
+   "id": 4031118,
+   "name": "Torn Ledger Pages",
+   "npc_pays": 1
+  },
+  {
+   "id": 4031122,
+   "name": "Torn Note",
+   "npc_pays": 1
+  },
+  {
+   "id": 4000037,
+   "name": "Tortie Shell",
+   "npc_pays": 46
+  },
+  {
+   "id": 4000074,
+   "name": "Toy Drum",
+   "npc_pays": 31
+  },
+  {
+   "id": 4000080,
+   "name": "Toy Duckling",
+   "npc_pays": 34
+  },
+  {
+   "id": 4000093,
+   "name": "Toy Trojan Sword",
+   "npc_pays": 39
+  },
+  {
+   "id": 4001016,
+   "name": "Transparent Item",
+   "npc_pays": 1
+  },
+  {
+   "id": 4031066,
+   "name": "Treasure Scroll",
+   "npc_pays": 1
+  },
+  {
+   "id": 4000005,
+   "name": "Tree Branch",
+   "npc_pays": 5
+  },
+  {
+   "id": 1332002,
+   "name": "Triangular Zamadar",
+   "npc_pays": 1500,
+   "level": 10
+  },
+  {
+   "id": 1332004,
+   "name": "Triple-Tipped Zamadar",
+   "npc_pays": 2900,
+   "level": 17
+  },
+  {
+   "id": 3015047,
+   "name": "TV Recliner",
+   "npc_pays": 1
+  },
+  {
+   "id": 1412003,
+   "name": "Two-Handed Axe",
+   "npc_pays": 5500,
+   "level": 25
+  },
+  {
+   "id": 1402002,
+   "name": "Two-Handed Sword",
+   "npc_pays": 4500,
+   "level": 20
+  },
+  {
+   "id": 4130001,
+   "name": "Two-Handed Weapon Crafting Catalyst",
+   "npc_pays": 1000
+  },
+  {
+   "id": 2022003,
+   "name": "Unagi",
+   "npc_pays": 100
+  },
+  {
+   "id": 4031137,
+   "name": "Very Dry Branch",
+   "npc_pays": 1
+  },
+  {
+   "id": 4000142,
+   "name": "Viking Sail",
+   "npc_pays": 93
+  },
+  {
+   "id": 1302004,
+   "name": "Viking Sword",
+   "npc_pays": 3500,
+   "level": 20
+  },
+  {
+   "id": 4001003,
+   "name": "VIP Mirror",
+   "npc_pays": 500
+  },
+  {
+   "id": 4031113,
+   "name": "Vitamin Gummy",
+   "npc_pays": 1
+  },
+  {
+   "id": 2020011,
+   "name": "W Ramen",
+   "npc_pays": 200
+  },
+  {
+   "id": 3000041,
+   "name": "Wall Fan",
+   "npc_pays": 10
+  },
+  {
+   "id": 1452000,
+   "name": "War Bow",
+   "npc_pays": 2500,
+   "level": 10
+  },
+  {
+   "id": 1322013,
+   "name": "War Hammer",
+   "npc_pays": 5500,
+   "level": 30
+  },
+  {
+   "id": 1060029,
+   "name": "Warfare Pants",
+   "npc_pays": 2080,
+   "level": 26
+  },
+  {
+   "id": 2002000,
+   "name": "Warrior Potion",
+   "npc_pays": 250
+  },
+  {
+   "id": 3015012,
+   "name": "Warrior Throne",
+   "npc_pays": 400
+  },
+  {
+   "id": 2010006,
+   "name": "Watermelon",
+   "npc_pays": 192
+  },
+  {
+   "id": 2002005,
+   "name": "Weaponcrafting Kit",
+   "npc_pays": 100
+  },
+  {
+   "id": 3030001,
+   "name": "Weaponcrafting Station",
+   "npc_pays": 100
+  },
+  {
+   "id": 1032002,
+   "name": "Weighted Earrings",
+   "npc_pays": 3000,
+   "level": 20
+  },
+  {
+   "id": 2430023,
+   "name": "Well-Loved Avatar Set",
+   "npc_pays": 1
+  },
+  {
+   "id": 4000133,
+   "name": "Werewolf Toenail",
+   "npc_pays": 75
+  },
+  {
+   "id": 3000019,
+   "name": "Wheat Sheaves",
+   "npc_pays": 10
+  },
+  {
+   "id": 1002011,
+   "name": "White Bandana",
+   "npc_pays": 600,
+   "level": 10
+  },
+  {
+   "id": 1050009,
+   "name": "White Doros Robe",
+   "npc_pays": 4500,
+   "level": 25
+  },
+  {
+   "id": 4003011,
+   "name": "White Dye",
+   "npc_pays": 250
+  },
+  {
+   "id": 4000120,
+   "name": "White Fang Tail",
+   "npc_pays": 59
+  },
+  {
+   "id": 1082018,
+   "name": "White Fingerless Gloves",
+   "npc_pays": 3000,
+   "level": 25
+  },
+  {
+   "id": 1072011,
+   "name": "White Gomushin",
+   "npc_pays": 660,
+   "level": 11
+  },
+  {
+   "id": 1050005,
+   "name": "White Kendo Robe",
+   "npc_pays": 3600,
+   "level": 20
+  },
+  {
+   "id": 1072068,
+   "name": "White Magic Shoes",
+   "npc_pays": 1800,
+   "level": 30
+  },
+  {
+   "id": 1060033,
+   "name": "White Martial Arts Pants",
+   "npc_pays": 2400,
+   "level": 30
+  },
+  {
+   "id": 1072024,
+   "name": "White Ninja Sandals",
+   "npc_pays": 900,
+   "level": 15
+  },
+  {
+   "id": 2000002,
+   "name": "White Potion",
+   "npc_pays": 35
+  },
+  {
+   "id": 3015003,
+   "name": "White Seal Cushion",
+   "npc_pays": 5000
+  },
+  {
+   "id": 1060018,
+   "name": "White Split Pants",
+   "npc_pays": 1600,
+   "level": 20
+  },
+  {
+   "id": 1061024,
+   "name": "White Split Skirt",
+   "npc_pays": 1600,
+   "level": 20
+  },
+  {
+   "id": 4031044,
+   "name": "White Viola",
+   "npc_pays": 1000
+  },
+  {
+   "id": 1050013,
+   "name": "White Wizard Robe",
+   "npc_pays": 5400,
+   "level": 30
+  },
+  {
+   "id": 4000021,
+   "name": "Wild Boar Tooth",
+   "npc_pays": 25
+  },
+  {
+   "id": 4000045,
+   "name": "Wild Kargo Eye",
+   "npc_pays": 62
+  },
+  {
+   "id": 4031070,
+   "name": "Winston's Recommendation",
+   "npc_pays": 1
+  },
+  {
+   "id": 4031139,
+   "name": "Winter Supply Bundle",
+   "npc_pays": 1
+  },
+  {
+   "id": 4003021,
+   "name": "Wisdom Crystal",
+   "npc_pays": 5000
+  },
+  {
+   "id": 4003016,
+   "name": "Wisdom Crystal Ore",
+   "npc_pays": 2000
+  },
+  {
+   "id": 4031012,
+   "name": "Witchgrass Leaf",
+   "npc_pays": 1
+  },
+  {
+   "id": 1382004,
+   "name": "Wizard Staff",
+   "npc_pays": 4500,
+   "level": 25
+  },
+  {
+   "id": 2070001,
+   "name": "Wolbi Throwing Stars",
+   "npc_pays": 500
+  },
+  {
+   "id": 2002006,
+   "name": "Woodcrafting Kit",
+   "npc_pays": 100
+  },
+  {
+   "id": 1402001,
+   "name": "Wooden Baseball Bat",
+   "npc_pays": 3500,
+   "level": 15
+  },
+  {
+   "id": 3000033,
+   "name": "Wooden Bench",
+   "npc_pays": 10
+  },
+  {
+   "id": 4000152,
+   "name": "Wooden Board",
+   "npc_pays": 23
+  },
+  {
+   "id": 1092001,
+   "name": "Wooden Buckler",
+   "npc_pays": 2000,
+   "level": 10
+  },
+  {
+   "id": 1422000,
+   "name": "Wooden Mallet",
+   "npc_pays": 2500,
+   "level": 10
+  },
+  {
+   "id": 3000011,
+   "name": "Wooden Scrub Brush",
+   "npc_pays": 10
+  },
+  {
+   "id": 1382000,
+   "name": "Wooden Staff",
+   "npc_pays": 1500,
+   "level": 10
+  },
+  {
+   "id": 1402000,
+   "name": "Wooden Sword",
+   "npc_pays": 2500,
+   "level": 10
+  },
+  {
+   "id": 2070009,
+   "name": "Wooden Top",
+   "npc_pays": 500
+  },
+  {
+   "id": 3015017,
+   "name": "Wooden Tub",
+   "npc_pays": 1
+  },
+  {
+   "id": 1372000,
+   "name": "Wooden Wand",
+   "npc_pays": 1500,
+   "level": 10
+  },
+  {
+   "id": 3030003,
+   "name": "Woodworking Station",
+   "npc_pays": 100
+  },
+  {
+   "id": 1082000,
+   "name": "Work Gloves",
+   "npc_pays": 1200,
+   "level": 10
+  },
+  {
+   "id": 3015034,
+   "name": "World's End",
+   "npc_pays": 1
+  },
+  {
+   "id": 3020000,
+   "name": "Worn Wooden Chest",
+   "npc_pays": 100
+  },
+  {
+   "id": 4000073,
+   "name": "Worn-Out Goggle",
+   "npc_pays": 31
+  },
+  {
+   "id": 1041021,
+   "name": "Yellow Able Armor",
+   "npc_pays": 1500,
+   "level": 15
+  },
+  {
+   "id": 1041019,
+   "name": "Yellow Arianne",
+   "npc_pays": 1500,
+   "level": 15
+  },
+  {
+   "id": 1061015,
+   "name": "Yellow Arianne Skirt",
+   "npc_pays": 1200,
+   "level": 15
+  },
+  {
+   "id": 1041010,
+   "name": "Yellow Avelin",
+   "npc_pays": 1000,
+   "level": 10
+  },
+  {
+   "id": 1061008,
+   "name": "Yellow Avelin Skirt",
+   "npc_pays": 800,
+   "level": 10
+  },
+  {
+   "id": 3992019,
+   "name": "Yellow Ball Ornament",
+   "npc_pays": 75
+  },
+  {
+   "id": 1002014,
+   "name": "Yellow Bandana",
+   "npc_pays": 600,
+   "level": 10
+  },
+  {
+   "id": 1002075,
+   "name": "Yellow Baseball Cap",
+   "npc_pays": 1300,
+   "level": 22
+  },
+  {
+   "id": 1072005,
+   "name": "Yellow Basic Boots",
+   "npc_pays": 600,
+   "level": 10
+  },
+  {
+   "id": 1041043,
+   "name": "Yellow Bennis Chainmail",
+   "npc_pays": 2500,
+   "level": 25
+  },
+  {
+   "id": 3000024,
+   "name": "Yellow Butterfly",
+   "npc_pays": 10
+  },
+  {
+   "id": 3992029,
+   "name": "Yellow Candle",
+   "npc_pays": 75
+  },
+  {
+   "id": 3992032,
+   "name": "Yellow Candy Canes",
+   "npc_pays": 75
+  },
+  {
+   "id": 3010006,
+   "name": "Yellow Chair",
+   "npc_pays": 5000
+  },
+  {
+   "id": 1050008,
+   "name": "Yellow Doros Robe",
+   "npc_pays": 4500,
+   "level": 25
+  },
+  {
+   "id": 4003013,
+   "name": "Yellow Dye",
+   "npc_pays": 250
+  },
+  {
+   "id": 1051008,
+   "name": "Yellow Engrit",
+   "npc_pays": 5400,
+   "level": 30
+  },
+  {
+   "id": 3992034,
+   "name": "Yellow Fruit Leaves",
+   "npc_pays": 75
+  },
+  {
+   "id": 3992007,
+   "name": "Yellow Gift-Box Ornament",
+   "npc_pays": 75
+  },
+  {
+   "id": 1002006,
+   "name": "Yellow Headband",
+   "npc_pays": 300,
+   "level": 5
+  },
+  {
+   "id": 1002033,
+   "name": "Yellow Metal Gear",
+   "npc_pays": 950,
+   "level": 15
+  },
+  {
+   "id": 3992015,
+   "name": "Yellow Miniature Bulb",
+   "npc_pays": 75
+  },
+  {
+   "id": 1072022,
+   "name": "Yellow Ninja Sandals",
+   "npc_pays": 900,
+   "level": 15
+  },
+  {
+   "id": 4001021,
+   "name": "Yellow Primrose Seed",
+   "npc_pays": 1
+  },
+  {
+   "id": 1032003,
+   "name": "Yellow Square",
+   "npc_pays": 3000,
+   "level": 20
+  },
+  {
+   "id": 1002086,
+   "name": "Yellow Starry Bandana",
+   "npc_pays": 1500,
+   "level": 25
+  },
+  {
+   "id": 1002051,
+   "name": "Yellow Thief Hood",
+   "npc_pays": 900,
+   "level": 15
+  },
+  {
+   "id": 4000100,
+   "name": "Yellow Toy Block",
+   "npc_pays": 42
+  },
+  {
+   "id": 1072049,
+   "name": "Yellow Wind Shoes",
+   "npc_pays": 1500,
+   "level": 25
+  },
+  {
+   "id": 3992037,
+   "name": "Yellow-Ribboned Giftbox",
+   "npc_pays": 75
+  },
+  {
+   "id": 4000125,
+   "name": "Yeti Horn",
+   "npc_pays": 65
+  },
+  {
+   "id": 2430019,
+   "name": "Zakum Package",
+   "npc_pays": 1
+  },
+  {
+   "id": 4000123,
+   "name": "Zombie Teddy Bear",
+   "npc_pays": 63
+  },
+  {
+   "id": 4000119,
+   "name": "Zombie's Lost Gold Tooth",
+   "npc_pays": 58
+  },
+  {
+   "id": 4000118,
+   "name": "Zombie's Lost Tooth",
+   "npc_pays": 57
+  },
+  {
+   "id": 2897004,
+   "name": "\u00dcbel Face Coupon",
+   "npc_pays": 1
+  },
+  {
+   "id": 2542006,
+   "name": "\u00dcbel Hair Coupon",
+   "npc_pays": 1
+  },
+  {
+   "id": 2430039,
+   "name": "\u00dcbel Outfit Set",
+   "npc_pays": 1
+  }
+ ]
+}

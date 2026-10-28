@@ -1,0 +1,5 @@
+.venv/
+__pycache__/
+debug/
+.claude/
+data/fetch_cache.json
