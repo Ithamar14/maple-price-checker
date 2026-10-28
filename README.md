@@ -12,10 +12,10 @@ reads game memory or sends input, so you keep playing normally.
 1. Install [Python 3.10–3.12](https://www.python.org/downloads/windows/) and tick
    **"Add python.exe to PATH"** in the installer.
 2. Download this repo (green **Code** button → **Download ZIP**) and unzip it.
-3. Double-click **`run.bat`**. The first start installs what it needs (1–2 minutes);
+3. Double-click **`price_checker.bat`**. The first start installs what it needs (1–2 minutes);
    after that it starts right away.
 
-Options can be passed to `run.bat`, e.g. `run.bat --min-profit 500`.
+Options can be passed to `price_checker.bat`, e.g. `price_checker.bat --min-profit 500`.
 
 ## Price data
 
@@ -24,7 +24,7 @@ to level 30. It comes from [MapleStory Quest](https://maplestory.quest), which r
 the MapleStory Classic World client (Grand Launch build, 21 October 2026). Thanks to them
 for the data.
 
-To refresh it after a game patch, delete `data/prices.json` and run `run.bat`, or run
+To refresh it after a game patch, delete `data/prices.json` and run `price_checker.bat`, or run
 `.venv\Scripts\python fetch_prices.py`. That takes about 25 minutes. It goes slowly to be
 polite to the site, and you can stop it and run it again to continue. Use
 `--max-equip-level 50` to keep more equipment, or `0` for none. Many beginner equips

@@ -22,7 +22,7 @@ import signal
 import sys
 import threading
 import time
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 
 import cv2
@@ -35,6 +35,8 @@ HERE = Path(__file__).parent
 PRICES_FILE = HERE / "data" / "prices.json"
 MANUAL_FILE = HERE / "data" / "manual_prices.json"
 DEBUG_DIR = HERE / "debug"
+
+cv2.setNumThreads(2)  # the default (all cores) burns CPU for little gain on these small jobs
 
 user32 = ctypes.windll.user32
 try:
@@ -172,22 +174,32 @@ class StoreFinder:
     """Finds an open player store by its BUY ITEM / LEAVE STORE buttons (fast template match),
     so only the item list next to them needs OCR."""
 
-    # Cut from a 2560x1440 screenshot; the game UI is smaller in a smaller window. The match
-    # only holds within ~0.01 of the right size, so each frame tries a few sizes near the
-    # expected one (window height / 1440, or the last size that worked), and every
-    # SWEEP_EVERY seconds without a match it tries every size.
+    # Cut from a 2560x1440 screenshot; the game UI is smaller in a smaller window. Each frame
+    # tries a few sizes near the expected one (window height / 1440, or the last size that
+    # worked), and every SWEEP_EVERY seconds without a match it tries every size.
+    # To stay cheap, sizes are first tried on a shrunken copy of the frame (template about
+    # COARSE_WIDTH px wide), and only the best spot is confirmed at full resolution.
     TEMPLATE = HERE / "templates" / "store_buttons.png"
     REF_HEIGHT = 1440
     # item list area in template pixels, relative to the top-left of the matched buttons
     LIST_BOX = (-270, 105, 130, 580)
-    ALL_SCALES = [round(s, 2) for s in np.arange(0.35, 1.31, 0.01)]
+    ALL_SCALES = [round(s, 2) for s in np.arange(0.35, 1.31, 0.02)]
     SWEEP_EVERY = 30.0
+    COARSE_WIDTH = 40
+    COARSE_THRESHOLD = 0.5
 
     def __init__(self, threshold=0.7):
         self.tpl = cv2.imread(str(self.TEMPLATE), cv2.IMREAD_GRAYSCALE)
         self.threshold = threshold
         self.last_scale = None
         self.last_sweep = 0.0
+        self.last_scores = None  # (coarse, confirmed), for tuning
+
+    def _shrink_factor(self, scale):
+        for d in (0.25, 0.33, 0.5):
+            if self.tpl.shape[1] * scale * d >= self.COARSE_WIDTH:
+                return d
+        return 1.0
 
     def _match(self, gray, scale):
         tpl = self.tpl if scale == 1 else cv2.resize(self.tpl, None, fx=scale, fy=scale, interpolation=cv2.INTER_AREA)
@@ -206,18 +218,39 @@ class StoreFinder:
         if time.monotonic() - self.last_sweep > self.SWEEP_EVERY:
             self.last_sweep = time.monotonic()
             order += self.ALL_SCALES
-        best = (0, None, None)
+
+        # cheap pass on shrunken copies of the frame
+        shrunk = {}
+        best = (0, None, None, None)
         for s in order:
-            score, loc = self._match(gray, s)
+            d = self._shrink_factor(s)
+            if d not in shrunk:
+                shrunk[d] = gray if d == 1 else cv2.resize(gray, None, fx=d, fy=d, interpolation=cv2.INTER_AREA)
+            score, loc = self._match(shrunk[d], s * d)
             if score > best[0]:
-                best = (score, loc, s)
-            if score >= 0.85:  # clearly it, stop searching
-                break
-        score, loc, s = best
+                best = (score, loc, s, d)
+        coarse, loc, s, d = best
+        self.last_scores = (round(coarse, 3), None)
+        if coarse < self.COARSE_THRESHOLD:
+            return None
+
+        # confirm at full resolution in a small area around the cheap pass's best spot
+        # (the shrunken pass can be ~0.05 off on size, so try that range; the area is tiny)
+        pad = int(4 / d) + 6
+        th, tw = (round(v * (s + 0.06)) for v in self.tpl.shape)
+        rx, ry = max(0, int(loc[0] / d) - pad), max(0, int(loc[1] / d) - pad)
+        area = gray[ry:ry + th + 2 * pad, rx:rx + tw + 2 * pad]
+        best = (0, None, None)
+        for s2 in sorted(np.arange(s - 0.05, s + 0.051, 0.01), key=lambda v: abs(v - s)):
+            score, loc2 = self._match(area, round(s2, 2))
+            if score > best[0]:
+                best = (score, loc2, round(s2, 2))
+        score, loc2, s = best
+        self.last_scores = (round(coarse, 3), round(score, 3))
         if score < self.threshold:
             return None
         self.last_scale = s
-        x, y = loc
+        x, y = rx + loc2[0], ry + loc2[1]
         dx0, dy0, dx1, dy1 = (round(d * s) for d in self.LIST_BOX)
         h, w = gray.shape
         return (max(0, x + dx0), max(0, y + dy0), min(w, x + dx1), min(h, y + dy1)), s
@@ -231,7 +264,7 @@ def scan(bgr, reader, finder, db, min_profit, full_fallback):
         crop = bgr[y0:y1, x0:x1]
         if s < 0.95:  # small UI: enlarge the list to the size OCR was tuned on
             crop = cv2.resize(crop, None, fx=1 / s, fy=1 / s, interpolation=cv2.INTER_CUBIC)
-        lines = reader.read(crop)
+        lines = reader.read_cached(crop)
         for l in lines:
             if s < 0.95:
                 l.x0 *= s; l.x1 *= s; l.y0 *= s; l.y1 *= s
@@ -246,8 +279,22 @@ def scan(bgr, reader, finder, db, min_profit, full_fallback):
 
 class Reader:
     def __init__(self, scale):
-        self.ocr = RapidOCR()
+        # Game text is horizontal (no angle classifier needed) and big enough to read at its
+        # own size. Two threads and no inter-op pool keep a read at ~1 CPU-second instead of ~8.
+        threads = {f"{p}{k}": v for p in ("", "det_", "rec_", "cls_")
+                   for k, v in (("intra_op_num_threads", 2), ("inter_op_num_threads", 1))}
+        self.ocr = RapidOCR(use_cls=False, det_limit_type="max", det_limit_side_len=960, **threads)
         self.scale = scale
+        self._last = (None, [])
+
+    def read_cached(self, img):
+        """Like read(), but reuses the last result while the image hasn't changed
+        (a store you're looking at mostly sits still)."""
+        prev, lines = self._last
+        if prev is None or prev.shape != img.shape or cv2.absdiff(prev, img).mean() > 2:
+            lines = self.read(img)
+            self._last = (img.copy(), lines)
+        return [replace(l) for l in lines]
 
     def read(self, bgr):
         img = bgr
@@ -349,15 +396,24 @@ class Overlay:
         user32.SetWindowLongW(hwnd, GWL_EXSTYLE, style | 0x80000 | 0x20 | 0x80 | 0x08000000)
         user32.SetWindowDisplayAffinity(hwnd, 0x11)  # keep the overlay out of our own screenshots
         self.geom = None
+        self.drawn = None
+        self.last_topmost = 0.0
 
-    def draw(self, region, store, priced, deals, ocr_time, paused, waiting_for=None):
+    def draw(self, region, store, priced, deals, paused, waiting_for=None):
+        if time.monotonic() - self.last_topmost > 2:  # the game can push us behind it
+            self.root.attributes("-topmost", True)
+            self.last_topmost = time.monotonic()
         if region is None:  # game not found: just a status strip in the corner of the main screen
             region = {"left": 0, "top": 0, "width": 600, "height": 40}
         geom = f"{region['width']}x{region['height']}+{region['left']}+{region['top']}"
+        # repainting a full-screen see-through window is the costly part, so only do it on change
+        content = (geom, store, [(h.name, h.asking, h.box) for h in priced], len(deals), paused, waiting_for)
+        if content == self.drawn:
+            return
+        self.drawn = content
         if geom != self.geom:
             self.root.geometry(geom)
             self.geom = geom
-        self.root.attributes("-topmost", True)
         c = self.canvas
         c.delete("all")
         if paused:
@@ -365,7 +421,7 @@ class Overlay:
         elif waiting_for:
             status = f"price checker: waiting for {waiting_for}..."
         else:
-            status = f"store: {'yes' if store else 'no'} | {len(priced)} priced | {len(deals)} deals | {ocr_time:.1f}s"
+            status = f"store: {'yes' if store else 'no'} | {len(priced)} priced | {len(deals)} deals"
         c.create_text(9, 9, text=status, anchor="nw", fill="black", font=("Segoe UI", 10, "bold"))
         c.create_text(8, 8, text=status, anchor="nw", fill="#7CFC00", font=("Segoe UI", 10, "bold"))
         if paused:
@@ -519,7 +575,7 @@ def main():
             pass
         if last[0]:
             region, store, priced, deals, took, waiting_for = last[0]
-            overlay.draw(region, store, priced, deals, took, paused.is_set(), waiting_for)
+            overlay.draw(region, store, priced, deals, paused.is_set(), waiting_for)
         overlay.root.after(100, tick)
 
     print("watching... F8 = pause/resume, Ctrl+C here = quit")
