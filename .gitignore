@@ -4,3 +4,5 @@ debug/
 logs/
 .claude/
 data/fetch_cache.json
+data/market_prices.json
+data/prices_lvl30_backup.json

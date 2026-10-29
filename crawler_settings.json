@@ -1,9 +1,32 @@
 {
-  "_help": "The crawler only buys an item when its profit (NPC pays - asking price, per item) is at least min_profit for the highest price_from the asking price reaches. never_buy: items whose name contains any of these words (any case) are always skipped. Edit freely.",
+  "_help": "The crawler only buys an item when its profit (NPC pays - asking price, per item) is at least min_profit for the highest price_from the asking price reaches. min_total_profit: a purchase is skipped unless quantity x profit per item reaches this (for a market deal the profit is an estimate: selling at the 24h median, minus the 3% shop fee). never_buy: items whose name contains any of these words (any case) are always skipped. skip_shops_with: shops whose sign contains any of these (any case, spaces ignored) aren't opened at all. market: items checked against Free Market prices from MeowDB; a listing at least below_24h_median_percent under the item's median price of the last 24 hours is a market deal, if that median comes from at least min_reports_24h reports. Market deals on items in auto_buy are bought like NPC deals; all others stop on the purchase window for you to press OK or Cancel. Every market buy is logged to logs/market_buys.txt with its break-even selling price. Edit freely.",
   "buy_rules": [
     {"price_from": 0, "min_profit": 1},
     {"price_from": 1000, "min_profit": 50},
     {"price_from": 10000, "min_profit": 500}
   ],
-  "never_buy": ["arrow"]
+  "min_total_profit": 50,
+  "never_buy": ["arrow"],
+  "skip_shops_with": ["nx"],
+  "market": {
+    "below_24h_median_percent": 30,
+    "min_reports_24h": 5,
+    "auto_buy": [
+      "Iron Ore", "Stiff Feather", "Leather", "Processed Wood", "Firewood",
+      "Animal Fur Bundle", "Fragment of Magic", "Tree Branch", "Leaf", "Screw",
+      "Adamantium Ore", "Amethyst Ore", "Aquamarine Ore", "Black Crystal Ore", "Bronze Ore",
+      "Dark Crystal Ore", "Dexterity Crystal Ore", "Diamond Ore", "Emerald Ore", "Fire Ore",
+      "Garnet Ore", "Gold Ore", "Luck Crystal Ore", "Mithril Ore", "Opal Ore",
+      "Orihalcon Ore", "Power Crystal Ore", "Sapphire Ore", "Silver Ore", "Topaz Ore",
+      "Wisdom Crystal Ore"
+    ],
+    "items": [
+      "Iron Ore", "Stiff Feather", "Leather",
+      "Processed Wood", "Firewood", "Animal Fur Bundle", "Fragment of Magic", "Tree Branch", "Leaf", "Screw",
+      "Adamantium Ore", "Amethyst Ore", "Aquamarine Ore", "Black Crystal Ore", "Bronze Ore",
+      "Dark Crystal Ore", "Dexterity Crystal Ore", "Diamond Ore", "Emerald Ore", "Fire Ore",
+      "Garnet Ore", "Gold Ore", "Luck Crystal Ore", "Mithril Ore", "Opal Ore", "Orihalcon Ore",
+      "Power Crystal Ore", "Sapphire Ore", "Silver Ore", "Topaz Ore", "Wisdom Crystal Ore"
+    ]
+  }
 }

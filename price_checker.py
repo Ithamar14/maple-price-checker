@@ -29,7 +29,9 @@ import cv2
 import mss
 import numpy as np
 from rapidfuzz import fuzz, process
-from rapidocr_onnxruntime import RapidOCR
+from rapidocr import RapidOCR
+
+import market
 
 HERE = Path(__file__).parent
 PRICES_FILE = HERE / "data" / "prices.json"
@@ -283,11 +285,29 @@ class Reader:
     def __init__(self, scale):
         # Game text is horizontal (no angle classifier needed) and big enough to read at its
         # own size. Two threads and no inter-op pool keep a read at ~1 CPU-second instead of ~8.
-        threads = {f"{p}{k}": v for p in ("", "det_", "rec_", "cls_")
-                   for k, v in (("intra_op_num_threads", 2), ("inter_op_num_threads", 1))}
-        self.ocr = RapidOCR(use_cls=False, det_limit_type="max", det_limit_side_len=960, **threads)
+        self.ocr = RapidOCR(params={
+            "Global.use_cls": False,
+            "Global.log_level": "error",  # not "text detection result is empty" for every blank area
+            "Det.limit_type": "max",
+            "Det.limit_side_len": 960,
+            "EngineConfig.onnxruntime.intra_op_num_threads": 2,
+            "EngineConfig.onnxruntime.inter_op_num_threads": 1,
+        })
         self.scale = scale
         self._last = (None, [])
+
+    def detect(self, img):
+        """[(box, text, score)] for every text line found in img."""
+        # per-call flags stick on the engine, so always pass all of them
+        out = self.ocr(img, use_det=True, use_cls=False, use_rec=True)
+        if getattr(out, "boxes", None) is None or out.txts is None:
+            return []
+        return list(zip(out.boxes, out.txts, out.scores))
+
+    def recognize(self, img):
+        """[(text, score)] for img read as a single line, skipping text detection."""
+        out = self.ocr(img, use_det=False, use_cls=False, use_rec=True)
+        return list(zip(out.txts or (), out.scores or ()))
 
     def read_cached(self, img):
         """Like read(), but reuses the last result while the image hasn't changed
@@ -302,9 +322,8 @@ class Reader:
         img = bgr
         if self.scale != 1:
             img = cv2.resize(bgr, None, fx=self.scale, fy=self.scale, interpolation=cv2.INTER_CUBIC)
-        result, _ = self.ocr(img)
         lines = []
-        for box, text, score in result or []:
+        for box, text, score in self.detect(img):
             xs = [p[0] / self.scale for p in box]
             ys = [p[1] / self.scale for p in box]
             lines.append(Line(text, min(xs), min(ys), max(xs), max(ys)))
@@ -373,9 +392,68 @@ def find_window(target):
     return best
 
 
+def trim_bars(bgr, region, last=None):
+    """Cut the black bars off a capture. In full screen on a screen that isn't 16:9 (e.g.
+    1920x1200), the game draws a 16:9 picture with black bars around it; everything (UI size,
+    positions, clicks) has to be measured inside the picture. Returns (picture, its screen region).
+    A frame that's all black (loading) reuses last, the (top, bottom, left, right) bars before."""
+    h, w = bgr.shape[:2]
+    rows = bgr.max(axis=(1, 2)) > 8
+    cols = bgr.max(axis=(0, 2)) > 8
+    if rows.sum() < h * 0.5 or cols.sum() < w * 0.5:  # mostly black: loading, not bars
+        bars = last or (0, 0, 0, 0)
+    else:
+        bars = (int(rows.argmax()), int(rows[::-1].argmax()), int(cols.argmax()), int(cols[::-1].argmax()))
+        # real bars are even and centred; anything else is just a dark edge of the map
+        if abs(bars[0] - bars[1]) > 2 or bars[0] < 8:
+            bars = (0, 0) + bars[2:]
+        if abs(bars[2] - bars[3]) > 2 or bars[2] < 8:
+            bars = bars[:2] + (0, 0)
+    top, bottom, left, right = bars
+    picture = bgr[top:h - bottom, left:w - right]
+    inner = {"left": region["left"] + left, "top": region["top"] + top,
+             "width": w - left - right, "height": h - top - bottom}
+    return picture, inner, bars
+
+
 def find_region(target):
     found = find_window(target)
     return found[1] if found else None
+
+
+class MarketPrices:
+    """Free Market prices for the items listed under "market" in crawler_settings.json (see
+    market.py): a label for each listing, and which ones are market deals, that is at least
+    percent under the item's median price of the last 24 hours."""
+
+    COLOR = "#c040ff"
+
+    def __init__(self, prices, percent, min_reports):
+        self.prices, self.percent, self.min_reports = prices, percent, min_reports
+
+    def label(self, hit):
+        m = self.prices.get(hit.name)
+        if not m or not m.get("median_24h"):
+            return ""
+        return f" | FM 24h median {m['median_24h']:,} ({100 * (hit.asking - m['median_24h']) / m['median_24h']:+.0f}%)"
+
+    def is_deal(self, hit):
+        limit = market.deal_limit(self.prices.get(hit.name), self.percent, self.min_reports)
+        return limit is not None and hit.asking <= limit
+
+
+def load_market(args):
+    """MarketPrices, after the same questions the crawler asks (download new prices? how far
+    under the median?), or None with --no-market or when there's nothing to compare with."""
+    cfg = market.load_settings()
+    if args.no_market or not cfg.get("items"):
+        return None
+    prices = market.prepare(cfg["items"])
+    if not prices:
+        return None
+    percent = args.market_percent or market.ask_percent(cfg.get("below_24h_median_percent", 30))
+    print(f"  market deals: {percent:g}% or more under the 24h median (purple boxes)")
+    return MarketPrices(prices, percent, cfg.get("min_reports_24h", 5))
 
 
 # ---------------------------------------------------------------- overlay
@@ -406,7 +484,9 @@ class Overlay:
         self.drawn = None
         self.last_topmost = 0.0
 
-    def draw(self, region, store, priced, deals, paused, waiting_for=None):
+    def begin(self, region, content):
+        """Cover region and clear the canvas, unless content is what's already drawn there.
+        Returns False when there's nothing to redraw."""
         if time.monotonic() - self.last_topmost > 2:  # the game can push us behind it
             self.root.attributes("-topmost", True)
             self.last_topmost = time.monotonic()
@@ -414,44 +494,53 @@ class Overlay:
             region = {"left": 0, "top": 0, "width": 600, "height": 40}
         geom = f"{region['width']}x{region['height']}+{region['left']}+{region['top']}"
         # repainting a full-screen see-through window is the costly part, so only do it on change
-        content = (geom, store, [(h.name, h.asking, h.box) for h in priced], len(deals), paused, waiting_for)
-        if content == self.drawn:
-            return
-        self.drawn = content
+        if (geom, content) == self.drawn:
+            return False
+        self.drawn = (geom, content)
         if geom != self.geom:
             self.root.geometry(geom)
             self.geom = geom
-        c = self.canvas
-        c.delete("all")
+        self.canvas.delete("all")
+        return True
+
+    def text(self, x, y, text, color, anchor="nw"):
+        """Text with a black shadow, readable on any background."""
+        self.canvas.create_text(x + 1, y + 1, text=text, anchor=anchor, fill="black", font=("Segoe UI", 10, "bold"))
+        self.canvas.create_text(x, y, text=text, anchor=anchor, fill=color, font=("Segoe UI", 10, "bold"))
+
+    def draw(self, region, store, priced, deals, paused, waiting_for=None, fm=None):
+        content = (store, [(h.name, h.asking, h.box) for h in priced], len(deals), paused, waiting_for)
+        if not self.begin(region, content):
+            return
         if paused:
             status = "price checker paused (F8)"
         elif waiting_for:
             status = f"price checker: waiting for {waiting_for}..."
         else:
             status = f"store: {'yes' if store else 'no'} | {len(priced)} priced | {len(deals)} deals"
-        c.create_text(9, 9, text=status, anchor="nw", fill="black", font=("Segoe UI", 10, "bold"))
-        c.create_text(8, 8, text=status, anchor="nw", fill="#7CFC00", font=("Segoe UI", 10, "bold"))
+            if fm:
+                status += f" | {sum(1 for h in priced if h not in deals and fm.is_deal(h))} market deals"
+        self.text(8, 8, status, "#7CFC00")
         if paused:
             return
-        # yellow = recognised single-item listing, red = buy it
+        # yellow = recognised single-item listing, red = buy it (NPC deal), purple = market deal
         for h in priced:
             x0, y0, x1, y1 = h.box
-            color = "#ff2020" if h in deals else "#ffd800"
-            c.create_rectangle(x0 - 4, y0 - 4, x1 + 4, y1 + 4, outline=color, width=3)
-            label = f"{h.profit:+,} (NPC {h.npc_pays:,})"
-            c.create_text(x1 + 9, (y0 + y1) / 2 + 1, text=label, anchor="w", fill="black", font=("Segoe UI", 10, "bold"))
-            c.create_text(x1 + 8, (y0 + y1) / 2, text=label, anchor="w", fill=color, font=("Segoe UI", 10, "bold"))
+            color = "#ff2020" if h in deals else MarketPrices.COLOR if fm and fm.is_deal(h) else "#ffd800"
+            self.canvas.create_rectangle(x0 - 4, y0 - 4, x1 + 4, y1 + 4, outline=color, width=3)
+            label = f"{h.profit:+,} (NPC {h.npc_pays:,})" + (fm.label(h) if fm else "")
+            self.text(x1 + 8, (y0 + y1) / 2, label, color, anchor="w")
 
 
 # ---------------------------------------------------------------- debug output
 
-def save_debug(bgr, lines, priced, deals, name="last_frame"):
+def save_debug(bgr, lines, priced, deals, name="last_frame", fm=None):
     DEBUG_DIR.mkdir(exist_ok=True)
     img = bgr.copy()
     for l in lines:
         cv2.rectangle(img, (int(l.x0), int(l.y0)), (int(l.x1), int(l.y1)), (180, 180, 180), 1)
     for h in priced:
-        color = (32, 32, 255) if h in deals else (0, 216, 255)
+        color = (32, 32, 255) if h in deals else (255, 64, 192) if fm and fm.is_deal(h) else (0, 216, 255)
         cv2.rectangle(img, (int(h.box[0]), int(h.box[1])), (int(h.box[2]), int(h.box[3])), color, 2)
     cv2.imwrite(str(DEBUG_DIR / f"{name}.png"), img)
     with open(DEBUG_DIR / f"{name}.txt", "w", encoding="utf-8") as f:
@@ -460,14 +549,16 @@ def save_debug(bgr, lines, priced, deals, name="last_frame"):
             f.write(f"  [{int(l.x0)},{int(l.y0)}] {l.text!r}\n")
         f.write("\nSingle-item listings (bundles and sold-out rows are skipped):\n")
         for h in priced:
-            f.write(f"  {h.name}: asking {h.asking:,}, NPC pays {h.npc_pays:,}, profit {h.profit:,}\n")
+            f.write(f"  {h.name}: asking {h.asking:,}, NPC pays {h.npc_pays:,}, profit {h.profit:,}"
+                    f"{fm.label(h) if fm else ''}{' MARKET DEAL' if fm and h not in deals and fm.is_deal(h) else ''}\n")
 
 
-def report(store, priced, deals):
+def report(store, priced, deals, fm=None):
     print(f"store detected: {store}, {len(priced)} single-item listings read")
     for h in priced:
-        tag = "DEAL" if h in deals else "    "
-        print(f"  {tag} {h.name}: asking {h.asking:,}, NPC pays {h.npc_pays:,} ({h.profit:+,})")
+        tag = "DEAL  " if h in deals else "MARKET" if fm and fm.is_deal(h) else "      "
+        print(f"  {tag} {h.name}: asking {h.asking:,}, NPC pays {h.npc_pays:,} ({h.profit:+,})"
+              f"{fm.label(h) if fm else ''}")
 
 
 # ---------------------------------------------------------------- main
@@ -486,8 +577,11 @@ def main():
     ap.add_argument("--debug", action="store_true", help="save debug/last_frame.png + .txt every scan")
     ap.add_argument("--image", help="analyze one screenshot instead of watching the screen")
     ap.add_argument("--list-windows", action="store_true")
+    ap.add_argument("--market-percent", type=market.parse_percent,
+                    help="a market deal is this many %% under the 24h median (asked if not given)")
+    ap.add_argument("--no-market", action="store_true", help="don't compare with Free Market prices")
     args = ap.parse_args()
-    sys.stdout.reconfigure(line_buffering=True)
+    sys.stdout.reconfigure(line_buffering=True, errors="replace")  # OCR text can hold characters the console can't show
 
     if args.list_windows:
         for _, t, exe in visible_windows():
@@ -497,6 +591,7 @@ def main():
         raise SystemExit("no price data yet: run  python fetch_prices.py  first")
 
     db = PriceDB(PRICES_FILE, args.match)
+    fm = load_market(args)
     reader = Reader(args.scale)
     finder = StoreFinder()
 
@@ -507,8 +602,8 @@ def main():
         lines, store, priced, deals = scan(bgr, reader, finder, db, args.min_profit, True)
         print(f"store buttons found: {finder.find(bgr) is not None}")
         print(f"OCR: {len(lines)} lines in {time.perf_counter() - t:.2f}s")
-        report(store, priced, deals)
-        save_debug(bgr, lines, priced, deals, Path(args.image).stem + "_checked")
+        report(store, priced, deals, fm)
+        save_debug(bgr, lines, priced, deals, Path(args.image).stem + "_checked", fm)
         print(f"annotated copy + OCR text written to {DEBUG_DIR}")
         return
 
@@ -532,13 +627,19 @@ def main():
 
         t0 = time.perf_counter()
         bgr = np.ascontiguousarray(np.array(sct.grab(region))[:, :, :3])
+        bgr, region, state["bars"] = trim_bars(bgr, region, state.get("bars"))
+        bgr = np.ascontiguousarray(bgr)
         lines, store, priced, deals = scan(bgr, reader, finder, db, args.min_profit, args.full_scan)
         if args.debug:
-            save_debug(bgr, lines, priced, deals)
-        current = {(h.name, h.asking) for h in deals}
+            save_debug(bgr, lines, priced, deals, fm=fm)
+        market_deals = [h for h in priced if fm and h not in deals and fm.is_deal(h)]
+        current = {(h.name, h.asking) for h in deals + market_deals}
         for h in deals:
             if (h.name, h.asking) not in state["announced"]:
                 print(f"DEAL {h.name}: asking {h.asking:,}, NPC pays {h.npc_pays:,} (+{h.profit:,})")
+        for h in market_deals:
+            if (h.name, h.asking) not in state["announced"]:
+                print(f"MARKET DEAL {h.name}: asking {h.asking:,}{fm.label(h)}")
         state["announced"] = current
         return (region, store, priced, deals, time.perf_counter() - t0, None)
 
@@ -582,7 +683,7 @@ def main():
             pass
         if last[0]:
             region, store, priced, deals, took, waiting_for = last[0]
-            overlay.draw(region, store, priced, deals, paused.is_set(), waiting_for)
+            overlay.draw(region, store, priced, deals, paused.is_set(), waiting_for, fm)
         overlay.root.after(100, tick)
 
     print("watching... F8 = pause/resume, Ctrl+C here = quit")

@@ -5,7 +5,7 @@ Only the per-item pages are fetched, which the site's robots.txt allows.
 Progress is cached so the script can be stopped and resumed.
 
 Usage:
-    python fetch_prices.py                       # everything, equipment up to level 30
+    python fetch_prices.py                       # everything, equipment up to level 40
     python fetch_prices.py --max-equip-level 50
     python fetch_prices.py --max-equip-level 0   # no equipment
 """
@@ -75,7 +75,7 @@ def parse_item(page):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--max-equip-level", type=int, default=30,
+    ap.add_argument("--max-equip-level", type=int, default=40,
                     help="keep equipment up to this required level (0 = skip equipment)")
     ap.add_argument("--workers", type=int, default=2)
     ap.add_argument("--delay", type=float, default=0.75, help="seconds between requests per worker")

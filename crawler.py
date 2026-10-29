@@ -21,12 +21,15 @@ import argparse
 import csv
 import ctypes
 import json
+import math
 import ctypes.wintypes as wt
 import re
+import signal
 import sys
 import threading
 import time
 import winsound
+from collections import Counter
 from datetime import datetime
 from pathlib import Path
 
@@ -34,6 +37,7 @@ import cv2
 import mss
 import numpy as np
 
+import market
 import price_checker as pc
 
 HERE = Path(__file__).parent
@@ -53,8 +57,22 @@ QUANTITY_OK = (320, 149)            # OK button, from the quantity dialog's matc
 TOTAL_LINE = (-20, -34, 290, -4)    # "The total price is X mesos." above "Will you make the purchase?"
 TOTAL_OK = (228, 100)
 SINGLE_OK = (265, 112)              # OK in "Are you sure you want to buy it?", from its matched text
+# the game's notice when the quantity is more than it allows: "You may only enter a number
+# equal to or lower than 199." (OCR may run words together, so spaces are optional)
+QUANTITY_REFUSED_RE = re.compile(r"only\s*enter\s*a\s*number.*?lower\s*than\s*([\d,.]+)", re.I)
 TOTAL_RE = re.compile(r"total\s*price\s*is\s*([\d,.]+)\s*meso", re.I)
-CH1_CELL = (64, 128)                # from the "CHANGE CHANNEL" title to CH.1's centre
+# The game draws its own cursor, so it shows up in screenshots: left on the store buttons, the
+# store stops being recognised. After every click it goes here (fractions of the game window):
+# the chat bar at the bottom, where no shop sign, store or dialog is ever looked for.
+PARK_AT = (0.35, 0.93)
+STOCK_VOTES = 3                     # of the 12 reads of a stock number, how many must agree
+MAX_BUYS_PER_LISTING = 3            # a stack whose stock was read low gets topped up, at most this often
+FROZEN_AFTER = 3.0                  # seconds of identical screen captures before warning that capture is stuck
+SHOP_FEE = 0.03                     # a player shop keeps 3% of each sale ("will be deducted from sales")
+MARKET_CONFIRM_WAIT = 120.0        # seconds the purchase window waits for you on a market deal
+SHOP_OPEN_WAIT = 6.0               # seconds to wait for a store to open after double-clicking its sign
+NO_SHOPS_WAIT = 10.0              # seconds to wait for shops after a channel change before moving on
+CH1_CELL = (64, 128)               # from the "CHANGE CHANNEL" title to CH.1's centre
 CH_STEP = (131, 41)                 # cell spacing; 8 channels per row
 CH_HIGHLIGHT_PATCH = (-45, -30, 6)  # x range and +-y around a cell centre to read its colour
 
@@ -226,14 +244,121 @@ class Screen:
     def __init__(self, hwnd):
         self.hwnd = hwnd
         self.sct = getattr(mss, "MSS", mss.mss)()
-        self.region = pc.client_rect(hwnd)
+        self.region = pc.client_rect(hwnd)  # the game picture on screen, without black bars
+        self.bars = None
+        self.last_small = None
+        self.unchanged_since = time.monotonic()
+        self.warned_frozen = False
 
     def grab(self):
-        self.region = pc.client_rect(self.hwnd)
-        return np.ascontiguousarray(np.array(self.sct.grab(self.region))[:, :, :3])
+        window = pc.client_rect(self.hwnd)
+        frame = np.array(self.sct.grab(window))[:, :, :3]
+        frame, self.region, self.bars = pc.trim_bars(frame, window, self.bars)
+        self.check_frozen(frame)
+        return np.ascontiguousarray(frame)
+
+    def check_frozen(self, frame):
+        """The game picture always moves a little (characters, effects, chat). If captures stay
+        exactly the same for FROZEN_AFTER seconds, Windows is handing out an old picture, which
+        happens with borderless full screen and "fullscreen optimizations": warn once."""
+        small = frame[::16, ::16].copy()
+        if self.last_small is None or small.shape != self.last_small.shape or (small != self.last_small).any():
+            self.last_small = small
+            self.unchanged_since = time.monotonic()
+            return
+        if not self.warned_frozen and time.monotonic() - self.unchanged_since > FROZEN_AFTER:
+            self.warned_frozen = True
+            print("\n  WARNING: the screen capture of MapleStory isn't updating, so the crawler is working from\n"
+                  "  an old picture. This happens in full screen mode. Fix: right-click MapleStory.exe >\n"
+                  "  Properties > Compatibility > tick 'Disable fullscreen optimizations', restart the game.\n"
+                  "  Or play in a (large) window instead of full screen.\n")
 
     def to_screen(self, x, y):
         return int(self.region["left"] + x), int(self.region["top"] + y)
+
+
+# ---------------------------------------------------------------- what to show on screen
+
+SHOP = "#00e5ff"        # shop signs found in the room
+TARGET = "#ff40ff"      # the shop / channel being worked on
+FOUND = "#7CFC00"       # store window, dialogs, channel window
+SEEN = "#a0a0a0"        # any other text OCR read
+SKIPPED = "#ff8c00"     # a shop skipped because of its name
+LISTED = "#ffd800"      # a recognised single-item listing
+MARKET = "#c040ff"      # a listing far below its Free Market price: waits for you to confirm
+DEAL = "#ff2020"        # a listing that passes the buy rules
+READING = "#4da6ff"     # a spot read for a number (stock, mesos, total)
+CLICK = "#ffffff"
+
+
+class Marks:
+    """What the crawler sees and does, for the overlay to draw. The crawler runs on a worker
+    thread and the overlay on the main one, so everything goes through a lock.
+
+    Each layer is a list of ("box", (x0, y0, x1, y1), color, label) or
+    ("cross", (x, y), color, label), in game-window pixels."""
+
+    def __init__(self):
+        self.lock = threading.Lock()
+        self.layers = {}  # name -> (items, expires at or None)
+        self.action = "starting"
+        self.info = ""
+
+    def set(self, layer, items, ttl=None):
+        items = tuple((kind, tuple(int(v) for v in where), color, label) for kind, where, color, label in items)
+        with self.lock:
+            self.layers[layer] = (items, time.monotonic() + ttl if ttl else None)
+
+    def clear(self, *layers):
+        with self.lock:
+            for layer in layers:
+                self.layers.pop(layer, None)
+
+    def doing(self, action):
+        with self.lock:
+            self.action = action
+
+    def tell(self, info):
+        with self.lock:
+            self.info = info
+
+    def snapshot(self):
+        now = time.monotonic()
+        with self.lock:
+            items = tuple(i for items, expires in self.layers.values() if expires is None or expires > now
+                          for i in items)
+            return self.action, self.info, items
+
+
+def box(x0, y0, x1, y1, color, label="", below=False):
+    """below: put the label under the box instead of to its right (where another label may be)."""
+    return ("box_below" if below else "box", (x0, y0, x1, y1), color, label)
+
+
+class CrawlOverlay(pc.Overlay):
+    def draw_marks(self, region, marks):
+        action, info, items = marks.snapshot()
+        if not self.begin(region, (action, info, items)):
+            return
+        c = self.canvas
+        self.text(8, 8, f"crawler: {action}", FOUND)
+        if info:
+            self.text(8, 28, info, FOUND)
+        x0, y0, x1, y1 = c.bbox("all")  # dark strip behind the status, so it reads over the minimap
+        c.tag_lower(c.create_rectangle(x0 - 6, y0 - 4, x1 + 6, y1 + 4, fill="#101010", outline=""))
+        for kind, where, color, label in items:
+            if kind == "cross":
+                x, y = where
+                c.create_line(x - 12, y, x + 13, y, fill=color, width=2)
+                c.create_line(x, y - 12, x, y + 13, fill=color, width=2)
+                c.create_oval(x - 6, y - 6, x + 6, y + 6, outline=color, width=2)
+                lx, ly = x + 14, y - 14
+            else:
+                x0, y0, x1, y1 = where
+                c.create_rectangle(x0, y0, x1, y1, outline=color, width=1 if color == SEEN else 2)
+                lx, ly = (x0, y1 + 10) if kind == "box_below" else (x1 + 6, (y0 + y1) / 2)
+            if label:
+                self.text(lx, ly, label, color, anchor="w")
 
 
 def load_template(name, color=False):
@@ -259,6 +384,28 @@ def best_match(img, tpl, scales):
     return best
 
 
+def fine_match(gray, tpl, center, spread=0.08):
+    """best_match for scales within +-spread (relative) of center. Text-only templates (dialog
+    titles) only match within about 0.5% of their true size, which at a small UI scale is far
+    finer than 0.01, so this tries 1% steps and then refines the best one in 0.2% steps."""
+    n = round(spread * 100)
+    best = best_match(gray, tpl, [center * (1 + k / 100) for k in range(-n, n + 1)])
+    if best[2] is None:
+        return best
+    return max(best, best_match(gray, tpl, [best[2] * (1 + k / 500) for k in range(-5, 6)]), key=lambda b: b[0])
+
+
+def eights_as_zeros(text):
+    """The stock digits 0 and 8 look alike and get mixed up (100 read as 180), and reading a
+    stack too high makes the game refuse the purchase. So a read counts for itself and for every
+    version of it with some of its 8s as 0s: '180' also votes for 100. With the lowest agreed
+    value winning, a mix-up can only ever make it buy too few."""
+    options = {""}
+    for d in text:
+        options = {o + c for o in options for c in (("8", "0") if d == "8" else (d,))}
+    return {int(o) for o in options if not o.startswith("0")}  # a stock number never starts with 0
+
+
 def near(s, spread=0.03, step=0.01):
     return sorted({round(s + d, 2) for d in np.arange(-spread, spread + 1e-9, step)}, key=lambda v: abs(v - s))
 
@@ -282,7 +429,8 @@ class Crawler:
         self.quantity_dialog = load_template("buy_quantity.png")
         self.total_dialog = load_template("buy_total.png")
         self.single_dialog = load_template("buy_single.png")
-        self.quantity_scale = None
+        self.dialog_scale = None  # UI scale the dialog templates matched at, once one has
+        self.dialog_scores = {}   # template name -> (best score, scale) of its last search
         self.ui_scale = None
         self.controls = None
         LOG_DIR.mkdir(exist_ok=True)
@@ -290,9 +438,18 @@ class Crawler:
         settings = json.loads(SETTINGS_FILE.read_text("utf-8"))
         self.buy_rules = sorted((r["price_from"], r["min_profit"]) for r in settings["buy_rules"])
         self.never_buy = [w.lower() for w in settings.get("never_buy", [])]
+        self.min_total_profit = settings.get("min_total_profit", 50)
+        self.skip_shops_with = [pc.norm(w) for w in settings.get("skip_shops_with", []) if pc.norm(w)]
+        market_cfg = market.load_settings()
+        self.market_items = market_cfg.get("items", [])
+        self.market_below = market_cfg.get("below_24h_median_percent", 30)
+        self.market_min_reports = market_cfg.get("min_reports_24h", 5)
+        self.market_auto = set(market_cfg.get("auto_buy", []))  # market deals bought without asking you
+        self.market = {}  # name -> Free Market prices, after load_market()
         self.budget = 0
         self.spent = 0
-        self.bought = []  # (name, quantity, paid, npc value)
+        self.bought = []  # (name, quantity, paid, value, "npc" or "market")
+        self.marks = Marks()
 
     def required_profit(self, asking):
         """Minimum profit per item the buy rules ask for at this price."""
@@ -302,11 +459,34 @@ class Crawler:
                 need = min_profit
         return need  # None: below every rule, never buy
 
+    def profit_each(self, hit, market=False):
+        """Profit per item: what an NPC pays minus the price, or for a market deal, what selling
+        it at today's 24h median brings after the shop fee, minus the price (an estimate)."""
+        if market:
+            return int(self.market[hit.name]["median_24h"] * (1 - SHOP_FEE)) - hit.asking
+        return hit.profit
+
     def worth_buying(self, hit):
         if any(w in hit.name.lower() for w in self.never_buy):
             return False
         need = self.required_profit(hit.asking)
         return need is not None and hit.profit >= need
+
+    def load_market(self):
+        """Ask about and load the Free Market price dump (see market.py)."""
+        if self.market_items:
+            self.market = market.prepare(self.market_items)
+
+    def market_limit(self, name):
+        """The highest asking price that's a market deal for this item, or None when there's no
+        trustworthy price: a deal is below_24h_median_percent under the median price of the last
+        24 hours, and that median has to come from at least min_reports_24h reports."""
+        return market.deal_limit(self.market.get(name), self.market_below, self.market_min_reports)
+
+    def market_deal(self, hit):
+        limit = self.market_limit(hit.name)
+        return (limit is not None and hit.asking <= limit
+                and not any(w in hit.name.lower() for w in self.never_buy))
 
     # ---- helpers
 
@@ -317,7 +497,70 @@ class Crawler:
         return origin[0] + offset[0] * s, origin[1] + offset[1] * s
 
     def click_frame(self, x, y, double=False):
+        self.marks.set("click", [("cross", (x, y), CLICK, "double-click" if double else "click")], ttl=1.5)
         self.controls.click(*self.screen.to_screen(x, y), double=double)
+        if self.args.debug:
+            self.save_click(x, y)
+        self.park_mouse()
+
+    def save_click(self, x, y):
+        """debug/clicks/NN.png: the screen right after a click, with where it aimed (red) and
+        where Windows says the cursor actually is (green). If they differ, input is misplaced."""
+        pt = wt.POINT()
+        user32.GetCursorPos(ctypes.byref(pt))
+        cx, cy = pt.x - self.screen.region["left"], pt.y - self.screen.region["top"]
+        img = self.screen.grab().copy()
+        cv2.drawMarker(img, (int(x), int(y)), (0, 0, 255), cv2.MARKER_CROSS, 40, 2)
+        cv2.drawMarker(img, (int(cx), int(cy)), (0, 255, 0), cv2.MARKER_TILTED_CROSS, 30, 2)
+        cv2.putText(img, f"{self.marks.action} | aimed ({x:.0f},{y:.0f}) cursor ({cx},{cy}) | "
+                    f"window {self.screen.region}", (10, img.shape[0] - 20),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 255), 2)
+        folder = pc.DEBUG_DIR / "clicks"
+        folder.mkdir(parents=True, exist_ok=True)
+        self.clicks_saved = getattr(self, "clicks_saved", 0) + 1
+        cv2.imwrite(str(folder / f"{self.clicks_saved % 40:02d}.png"), img)  # keeps the last 40
+        print(f"    [debug] click {self.clicks_saved}: aimed ({x:.0f},{y:.0f}), cursor at ({cx},{cy})")
+
+    def park_mouse(self):
+        """Move the cursor out of the way (see PARK_AT) and let the game redraw."""
+        r = self.screen.region
+        self.controls.move(*self.screen.to_screen(r["width"] * PARK_AT[0], r["height"] * PARK_AT[1]))
+        self.controls.wait(0.15)
+
+    def doing(self, action):
+        self.marks.doing(action)
+
+    def update_info(self):
+        npc = [b for b in self.bought if b[4] == "npc"]
+        mkt = [b for b in self.bought if b[4] == "market"]
+        value, paid = sum(b[3] for b in npc), sum(b[2] for b in npc)
+        info = (f"budget {self.budget:,} | spent {self.spent:,} | bought {sum(b[1] for b in self.bought)} items\n"
+                f"profit {value - paid:+,} once sold to an NPC (worth {value:,})")
+        if mkt:
+            info += (f"\nmarket buys: {sum(b[1] for b in mkt)} items for {sum(b[2] for b in mkt):,}, "
+                     f"~{sum(b[3] for b in mkt):,} at today's median")
+        self.marks.tell(info)
+
+    def mark_dialog(self, layer, found, tpl, label):
+        """Box a matched dialog (found = ((x, y), scale)), or clear its mark when it's gone."""
+        if not found:
+            self.marks.clear(layer)
+            return
+        (x, y), s = found
+        th, tw = tpl.shape[:2]
+        self.marks.set(layer, [box(x, y, x + tw * s, y + th * s, FOUND, label)])
+
+    def find_store(self, frame):
+        """finder.find, also boxing the store window (or clearing what was marked in it once it's gone)."""
+        found = self.finder.find(frame)
+        if not found:
+            self.marks.clear("store", "listings", "stock", "mesos", "recheck")
+            return None
+        (x, y), s = self.finder.last_loc, self.finder.last_scale
+        th, tw = self.finder.tpl.shape[:2]
+        self.marks.set("store", [box(x, y, x + tw * s, y + th * s, FOUND, "store buttons"),
+                                 box(*found[0], FOUND)])
+        return found
 
     def wait_for(self, test, timeout, interval=0.15):
         end = time.monotonic() + timeout
@@ -342,7 +585,7 @@ class Crawler:
     # ---- shops in the room
 
     def find_shops(self, frame):
-        """Click points of every shop sign on screen, top row first."""
+        """(click point, coin icon box) of every shop sign on screen, top row first."""
         s = self.scale_guess(frame)
         if self.ui_scale is None:  # settle the UI scale once, on a clearly matching coin icon
             v, _, best = max((best_match(frame, c, near(s)) for c in self.coins), key=lambda b: b[0])
@@ -351,55 +594,154 @@ class Crawler:
         h, w = frame.shape[:2]
         points = []
         for coin in self.coins:
-            res = cv2.matchTemplate(frame, scaled(coin, s), cv2.TM_CCOEFF_NORMED)
+            tpl = scaled(coin, s)
+            res = cv2.matchTemplate(frame, tpl, cv2.TM_CCOEFF_NORMED)
             ys, xs = np.where(res >= SIGN_THRESHOLD)
             for x, y in sorted(zip(xs, ys), key=lambda p: -res[p[1], p[0]]):
-                if all(abs(x - a) > 30 * s or abs(y - b) > 30 * s for a, b in points):
-                    points.append((int(x), int(y)))
-        clicks = []
-        for x, y in points:
+                if all(abs(x - a) > 30 * s or abs(y - b) > 30 * s for a, b, _ in points):
+                    points.append((int(x), int(y), tpl.shape[:2]))
+        shops = []
+        for x, y, (th, tw) in points:
             cx, cy = self.at((x, y), SIGN_CLICK, s)
+            cy = max(cy, min(y, 12))  # a sign cut off at the top: click the strip of it still showing
             if 10 < cx < w - 10 and 10 < cy < h * 0.9:  # keep clear of the edges and the bottom bar
-                clicks.append((cx, cy))
-        return sorted(clicks, key=lambda p: (round(p[1] / (60 * s)), p[0]))
+                shops.append(((cx, cy), (x, y, x + tw, y + th)))
+        shops.sort(key=lambda p: (round(p[0][1] / (60 * s)), p[0][0]))
+        self.marks.set("shops", [box(*coin, SHOP, str(i)) for i, (_, coin) in enumerate(shops, 1)])
+        return shops
 
     def crawl_room(self, channel):
         frame = self.screen.grab()
-        if self.finder.find(frame):
+        if self.find_store(frame):
             print("  a store is already open, leaving it first")
             self.leave_store()
             frame = self.screen.grab()
+        self.doing("looking for shops")
         shops = self.find_shops(frame)
         print(f"[channel {channel}] {len(shops)} shops on screen")
-        for i, (x, y) in enumerate(shops, 1):
+        names = self.read_shop_names(frame, shops)
+        for i, ((x, y), coin) in enumerate(shops, 1):
             self.controls.check()
-            print(f"  shop {i}/{len(shops)}")
-            self.click_frame(x, y, double=True)
-            _, opened = self.wait_for(lambda f: self.finder.find(f), 3.0)
-            if not opened:
-                print("    didn't open (full, closed, or missed); skipping")
+            self.handle_late_store(channel)
+            skip = next((w for w in self.skip_shops_with if w in pc.norm(names[i - 1])), None)
+            if skip:
+                print(f"  shop {i}/{len(shops)} '{names[i - 1]}': name has '{skip}'; skipped")
                 continue
+            print(f"  shop {i}/{len(shops)} '{names[i - 1]}'")
+            self.marks.set("target", [box(*coin, TARGET, f"shop {i}/{len(shops)}")])
+            self.doing(f"opening shop {i}/{len(shops)}")
+            self.click_frame(x, y, double=True)
+            self.doing(f"waiting for shop {i}/{len(shops)} to open")
+            started = time.monotonic()
+            _, opened = self.wait_for(self.find_store, SHOP_OPEN_WAIT)
+            if not opened:
+                print(f"    didn't open within {SHOP_OPEN_WAIT:.0f}s (full, closed, or missed); skipping")
+                continue
+            print(f"    opened after {time.monotonic() - started:.1f}s")
             self.controls.wait(0.4)  # let the list draw
+            self.read_store(channel)
+            self.leave_store()
+        self.handle_late_store(channel)
+        self.marks.clear("target")
+
+    def read_shop_names(self, frame, shops):
+        """The text on each shop's sign (sitting above its coin icon), for skipping shops by
+        name before opening them. Shops to skip are boxed orange on the overlay, with a red box
+        where the skip word was read; --debug also saves all of it to debug/shop_names.png."""
+        if not self.skip_shops_with:
+            return [""] * len(shops)
+        self.doing(f"reading the names of {len(shops)} shops")
+        s = self.scale_guess(frame)
+        zoom = 1.5 / s
+        # a skip word matches with anything but letters/digits between its letters ("N X", "N.X")
+        patterns = [(w, re.compile(r"[^a-z0-9]*".join(map(re.escape, w)), re.I)) for w in self.skip_shops_with]
+        names, marks, areas = [], [], []
+        for i, (_, (x0, y0, x1, y1)) in enumerate(shops, 1):
+            nx0, ny0, nx1, ny1 = max(0, x0 - 12 * s), max(0, y0 - 78 * s), x0 + 210 * s, y0 - 4 * s
+            crop = frame[int(ny0):int(ny1), int(nx0):int(nx1)]
+            lines = []
+            if crop.size:
+                big = cv2.resize(crop, None, fx=zoom, fy=zoom, interpolation=cv2.INTER_CUBIC)
+                lines = sorted(self.reader.detect(big), key=lambda d: d[0][0][1])  # top line first
+            name = " ".join(t for _, t, _ in lines)
+            names.append(name)
+            areas.append(((nx0, ny0, nx1, ny1), name))
+            hits = []
+            for word, pattern in patterns:
+                for quad, text, _ in lines:
+                    for m in pattern.finditer(text):
+                        # OCR boxes whole lines, so place the letters by their position in the line
+                        lx0, ly0 = min(p[0] for p in quad), min(p[1] for p in quad)
+                        lx1, ly1 = max(p[0] for p in quad), max(p[1] for p in quad)
+                        per_char = (lx1 - lx0) / max(1, len(text))
+                        hits.append(box(nx0 + (lx0 + m.start() * per_char) / zoom - 2, ny0 + ly0 / zoom - 2,
+                                        nx0 + (lx0 + m.end() * per_char) / zoom + 2, ny0 + ly1 / zoom + 2,
+                                        DEAL, word))
+            if hits:
+                marks.append(box(nx0, ny0, nx1, y1, SKIPPED, f"{i} skip", below=True))
+                marks.extend(hits)
+            else:
+                marks.append(box(x0, y0, x1, y1, SHOP, str(i)))
+        self.marks.set("shops", marks)
+        if self.args.debug:
+            self.save_shop_names(frame, areas, marks)
+        return names
+
+    def save_shop_names(self, frame, areas, marks):
+        """debug/shop_names.png: every sign area read (grey) with the text read there, skipped
+        shops (orange) and where the skip word was seen (red)."""
+        img = frame.copy()
+        bgr = lambda h: (int(h[5:7], 16), int(h[3:5], 16), int(h[1:3], 16))
+        for (x0, y0, x1, y1), name in areas:
+            cv2.rectangle(img, (int(x0), int(y0)), (int(x1), int(y1)), (160, 160, 160), 1)
+            cv2.putText(img, name.encode("ascii", "replace").decode() or "(nothing read)",
+                        (int(x0), int(y0) - 4), cv2.FONT_HERSHEY_SIMPLEX, 0.45, (255, 255, 0), 1)
+        for _, where, color, label in marks:
+            if color in (SKIPPED, DEAL):
+                x0, y0, x1, y1 = (int(v) for v in where)
+                cv2.rectangle(img, (x0, y0), (x1, y1), bgr(color), 2)
+                cv2.putText(img, label, (x0, y1 + 16), cv2.FONT_HERSHEY_SIMPLEX, 0.5, bgr(color), 2)
+        pc.DEBUG_DIR.mkdir(exist_ok=True)
+        cv2.imwrite(str(pc.DEBUG_DIR / "shop_names.png"), img)
+        print(f"    [debug] shop names read: {[a[1] for a in areas]} (debug\\shop_names.png)")
+
+    def handle_late_store(self, channel):
+        """A store can open after the bot stopped waiting for it. Clicking on to the next shop
+        through it would go wrong, so read it and leave it first."""
+        if self.find_store(self.screen.grab()):
+            print("    a store opened late; reading it and leaving before going on")
+            self.controls.wait(0.4)
             self.read_store(channel)
             self.leave_store()
 
     # ---- inside a store
 
     def read_store(self, channel):
-        handled = set()
+        done = set()  # listings finished with: skipped, failed, or bought MAX_BUYS_PER_LISTING times
+        buys = Counter()
         last_page = None
-        for _ in range(60):  # pages; a store holds far fewer
+        for _ in range(200):  # pages and purchases; a store needs far fewer
             frame = self.screen.grab()
-            found = self.finder.find(frame)
+            found = self.find_store(frame)
             if not found:
                 return
             (lx0, ly0, lx1, ly1), _ = found  # the item list
+            self.doing("reading the store's listings")
             lines, _, singles, _ = pc.scan(frame, self.reader, self.finder, self.db, 1, False)
-            new = [d for d in singles if self.worth_buying(d) and (d.name, d.asking) not in handled]
-            if new:
-                deal = new[0]
-                handled.add((deal.name, deal.asking))
-                self.buy(deal, frame, channel)
+            self.mark_listings(lines, singles)
+            # NPC deals (guaranteed profit) are bought on their own; market deals wait for you
+            npc = [d for d in singles if self.worth_buying(d) and (d.name, d.asking) not in done]
+            mkt = [d for d in singles if not self.worth_buying(d) and self.market_deal(d)
+                   and (d.name, d.asking) not in done]
+            if npc or mkt:
+                deal = (npc or mkt)[0]
+                key = (deal.name, deal.asking)
+                # a listing that's still there (not grey) after a purchase has stock left, because its
+                # stock number was read low: it gets bought again (a stack it can't read is skipped)
+                buys[key] += 1
+                ask = not npc and deal.name not in self.market_auto
+                if not self.buy(deal, frame, channel, market=not npc, ask_you=ask) or buys[key] >= MAX_BUYS_PER_LISTING:
+                    done.add(key)
                 continue  # the list changes after a purchase: read this page again
             page = tuple(l.text for l in lines)
             if page == last_page:
@@ -407,75 +749,140 @@ class Crawler:
             if sum(1 for l in lines if pc.LISTING_RE.match(l.text)) < 5:
                 return  # the list shows 6 rows; fewer means it all fits and there's nothing to scroll
             last_page = page
+            self.doing("scrolling the store list")
             self.controls.wheel(*self.screen.to_screen((lx0 + lx1) / 2, (ly0 + ly1) / 2))
-            self.controls.wait(0.35)
+            self.park_mouse()
+            self.controls.wait(0.2)
+
+    def mark_listings(self, lines, singles):
+        """Grey box on every OCR line; yellow on recognised single items, red on ones it would buy."""
+        items = [box(l.x0, l.y0, l.x1, l.y1, SEEN) for l in lines]
+        for h in singles:
+            x0, y0, x1, y1 = h.box
+            buy = self.worth_buying(h)
+            label = f"{h.profit:+,} (NPC {h.npc_pays:,}){' BUY' if buy else ''}"
+            color = DEAL if buy else LISTED
+            m = self.market.get(h.name)
+            if m and m.get("median_24h"):
+                below = 100 * (h.asking - m["median_24h"]) / m["median_24h"]
+                label += f" | FM 24h median {m['median_24h']:,} ({below:+.0f}%)"
+                if not buy and self.market_deal(h):
+                    color = MARKET
+                    label += " MARKET DEAL: " + ("AUTO-BUY" if h.name in self.market_auto else "ASKS YOU")
+            items.append(box(x0 - 4, y0 - 4, x1 + 4, y1 + 4, color, label))
+        self.marks.set("listings", items)
 
     def read_stock(self, frame, hit):
         """The small number in the bottom-left of the item's icon: how many are for sale.
-        None when it can't be read confidently."""
+        None when it can't be read.
+
+        In a small game window these digits are only a few pixels tall, and a single read is
+        often unsure or even confidently wrong (48 read as 43), so it's read 12 ways (crop, zoom,
+        padding) and a value needs STOCK_VOTES of them to agree. When two values both do, the
+        lower one wins: buying too few just means buying again, too many could misfire."""
         s = self.finder.last_scale or 1
         x0, _, _, y1 = hit.box
-        crop = frame[max(0, int(y1 - 24 * s)):int(y1 + 2 * s), max(0, int(x0 - 80 * s)):max(0, int(x0 - 35 * s))]
-        if crop.size == 0:
+        cx0, cy0, cx1, cy1 = max(0, x0 - 80 * s), max(0, y1 - 24 * s), max(0, x0 - 35 * s), y1 + 2 * s
+        votes = Counter()
+        for px, py in ((0, 0), (4 * s / 0.53, 3 * s / 0.53)):
+            crop = frame[max(0, int(cy0 - py)):int(cy1 + py), max(0, int(cx0 - px)):int(cx1 + px)]
+            if crop.size == 0:
+                continue
+            for zoom in (3, 4, 6):
+                big = cv2.resize(crop, None, fx=zoom / s, fy=zoom / s, interpolation=cv2.INTER_CUBIC)
+                for img in (big, cv2.copyMakeBorder(big, 12, 12, 12, 12, cv2.BORDER_REPLICATE)):
+                    # the spot is known, so skip text detection (it misses these outlined digits)
+                    for text, score in self.reader.recognize(img):
+                        if score >= 0.6 and re.fullmatch(r"\d+", text):
+                            for n in eights_as_zeros(text):
+                                votes[n] += 1
+        agreed = [n for n, count in votes.items() if count >= STOCK_VOTES]
+        stock = min(agreed) if agreed else None
+        self.marks.set("stock", [box(cx0, cy0, cx1, cy1, READING, f"stock {stock if stock else '?'}", below=True)])
+        return stock
+
+    def match_dialog(self, frame, name, tpl, threshold=0.7):
+        """((x, y), scale) of a dialog's title template on screen, or None. All dialogs share
+        the UI scale, so once one has matched, the others are only searched close to its size;
+        before that, around the store buttons' size. The best score is kept for debugging."""
+        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        center = self.dialog_scale or self.finder.last_scale or self.scale_guess(frame)
+        v, loc, s = fine_match(gray, tpl, center, 0.01 if self.dialog_scale else 0.08)
+        self.dialog_scores[name] = (round(float(v), 3), s and round(float(s), 4))
+        if v < threshold:
             return None
-        big = cv2.resize(crop, None, fx=3 / s, fy=3 / s, interpolation=cv2.INTER_CUBIC)
-        # the spot is known, so skip text detection (it misses these outlined digits)
-        result = self.reader.ocr(big, use_det=False, use_cls=False, use_rec=True)[0] or []
-        for text, score in result:
-            if score >= 0.75 and re.fullmatch(r"\d+", text):
-                return int(text)
-        return None
+        self.dialog_scale = s
+        return loc, s
 
     def find_quantity_dialog(self, frame):
-        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-        scales = [self.quantity_scale] if self.quantity_scale else near(self.scale_guess(frame), 0.1, 0.02)
-        v, loc, s = best_match(gray, self.quantity_dialog, scales)
-        if v >= 0.7:
-            self.quantity_scale = s
-            return loc
-        return None
+        found = self.match_dialog(frame, "quantity", self.quantity_dialog)
+        self.mark_dialog("quantity", found, self.quantity_dialog, "quantity window")
+        return found
 
     def find_single_dialog(self, frame):
         """'Are you sure you want to buy it?': what an unstackable item asks instead of a quantity."""
-        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-        base = self.quantity_scale or self.scale_guess(frame)
-        v, loc, s = best_match(gray, self.single_dialog, near(base, 0.02))
-        return (loc, s) if v >= 0.7 else None
+        found = self.match_dialog(frame, "single", self.single_dialog)
+        self.mark_dialog("single", found, self.single_dialog, "'are you sure?' window")
+        return found
 
     def find_total_dialog(self, frame):
-        """The second confirmation ("The total price is X mesos. Will you make the purchase?").
-        Same dialog style as the quantity one, so it uses that one's scale when known."""
-        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-        base = self.quantity_scale or self.scale_guess(frame)
-        v, loc, s = best_match(gray, self.total_dialog, near(base, 0.02))
-        return (loc, s) if v >= 0.7 else None
+        """The second confirmation ("The total price is X mesos. Will you make the purchase?")."""
+        found = self.match_dialog(frame, "total", self.total_dialog)
+        self.mark_dialog("total", found, self.total_dialog, "'total price' window")
+        return found
+
+    def read_quantity_refused(self, frame):
+        """N from the game's "You may only enter a number equal to or lower than N." notice (it
+        appears instead of the total-price window when the quantity is more than it allows), or
+        None when that notice isn't on screen. Read with OCR in the middle of the screen, where
+        game notices open, so it doesn't depend on the window size."""
+        h, w = frame.shape[:2]
+        x0, y0, x1, y1 = int(w * 0.25), int(h * 0.2), int(w * 0.75), int(h * 0.75)
+        s = self.finder.last_scale or self.scale_guess(frame)
+        crop = frame[y0:y1, x0:x1]
+        if s < 0.95:
+            crop = cv2.resize(crop, None, fx=1 / s, fy=1 / s, interpolation=cv2.INTER_CUBIC)
+        text = " ".join(t for _, t, _ in self.reader.detect(crop))
+        m = QUANTITY_REFUSED_RE.search(text)
+        if not m:
+            return None
+        limit = int(re.sub(r"[,.]", "", m.group(1)))
+        self.marks.set("refused", [box(x0, y0, x1, y1, DEAL, f"game: at most {limit}", below=True)], ttl=3)
+        return limit
 
     def read_total(self, frame, dialog):
         (x, y), s = dialog
         x0, y0, x1, y1 = TOTAL_LINE
-        crop = frame[max(0, int(y + y0 * s)):int(y + y1 * s), max(0, int(x + x0 * s)):int(x + x1 * s)]
+        rx0, ry0, rx1, ry1 = max(0, x + x0 * s), max(0, y + y0 * s), x + x1 * s, y + y1 * s
+        crop = frame[int(ry0):int(ry1), int(rx0):int(rx1)]
         if crop.size == 0:
             return None
         big = cv2.resize(crop, None, fx=2 / s, fy=2 / s, interpolation=cv2.INTER_CUBIC)
-        text = " ".join(t for _, t, score in (self.reader.ocr(big)[0] or []) if score >= 0.8)
+        text = " ".join(t for _, t, score in self.reader.detect(big) if score >= 0.8)
         m = TOTAL_RE.search(text)
-        return int(re.sub(r"[,.]", "", m.group(1))) if m else None
+        total = int(re.sub(r"[,.]", "", m.group(1))) if m else None
+        self.marks.set("total_read", [box(rx0, ry0, rx1, ry1, READING,
+                                          f"total {total:,}" if total is not None else "total ?")])
+        return total
 
     def read_mesos(self, frame):
         """Your mesos, shown in the store window under the seller. None if not read confidently."""
-        if not self.finder.find(frame):
+        if not self.find_store(frame):
             return None
         (x, y), s = self.finder.last_loc, self.finder.last_scale
-        crop = frame[max(0, int(y + MESOS_BOX[1] * s)):int(y + MESOS_BOX[3] * s),
-                     max(0, int(x + MESOS_BOX[0] * s)):int(x + MESOS_BOX[2] * s)]
+        rx0, ry0 = max(0, x + MESOS_BOX[0] * s), max(0, y + MESOS_BOX[1] * s)
+        rx1, ry1 = x + MESOS_BOX[2] * s, y + MESOS_BOX[3] * s
+        crop = frame[int(ry0):int(ry1), int(rx0):int(rx1)]
         if crop.size == 0:
             return None
         big = cv2.resize(crop, None, fx=2 / s, fy=2 / s, interpolation=cv2.INTER_CUBIC)
-        result = self.reader.ocr(big)[0] or []
-        texts = [t for _, t, score in result if score >= 0.9]
-        if len(texts) != 1 or not re.fullmatch(r"[\d,.]+", texts[0]):
-            return None
-        return int(re.sub(r"[,.]", "", texts[0]))
+        texts = [t for _, t, score in self.reader.detect(big) if score >= 0.9]
+        mesos = None
+        if len(texts) == 1 and re.fullmatch(r"[\d,.]+", texts[0]):
+            mesos = int(re.sub(r"[,.]", "", texts[0]))
+        self.marks.set("mesos", [box(rx0, ry0, rx1, ry1, READING,
+                                     f"your mesos {mesos:,}" if mesos is not None else "your mesos ?")])
+        return mesos
 
     def confirm_listing(self, frame, deal):
         """Read the deal's row a second time, enlarged, and check it says the same thing:
@@ -483,27 +890,53 @@ class Crawler:
         s = self.finder.last_scale or 1
         x0, y0, x1, y1 = deal.box
         pad = 8 * s
-        crop = frame[max(0, int(y0 - pad)):int(y1 + pad), max(0, int(x0 - pad)):int(x1 + 60 * s)]
+        rx0, ry0, rx1, ry1 = max(0, x0 - pad), max(0, y0 - pad), x1 + 60 * s, y1 + pad
+        crop = frame[int(ry0):int(ry1), int(rx0):int(rx1)]
         big = cv2.resize(crop, None, fx=1.6 / s, fy=1.6 / s, interpolation=cv2.INTER_CUBIC)
         lines = self.reader.read(big)
+        agrees = False
         for l in lines:
             m = pc.LISTING_RE.match(l.text)
             name = pc.name_above(l, lines) if m else None
             if name and pc.to_int(m.group(1)) == 1 and pc.to_int(m.group(2)) == deal.asking:
                 item = self.db.lookup(name.text)
-                return bool(item) and item[0] == deal.name
-        return False
+                agrees = bool(item) and item[0] == deal.name
+                break
+        self.marks.set("recheck", [box(rx0, ry0, rx1, ry1, READING if agrees else DEAL,
+                                       "second read agrees" if agrees else "second read DISAGREES", below=True)])
+        return agrees
 
-    def buy(self, deal, frame, channel):
+    def buy(self, deal, frame, channel, market=False, ask_you=False):
+        """True if it bought (some of) the listing. market: a market deal rather than an NPC
+        one; ask_you: leave its final OK to you (market deals not on the auto_buy list)."""
+        try:
+            return self._buy(deal, frame, channel, market, ask_you)
+        finally:
+            self.marks.clear("quantity", "single", "total", "total_read", "stock", "recheck", "refused")
+            self.update_info()
+
+    def _buy(self, deal, frame, channel, market=False, ask_you=False):
         remaining = self.budget - self.spent
-        stock = self.read_stock(frame, deal) or 1
+        self.doing(f"{'market deal' if market else 'deal'} on {deal.name}: reading the stock")
+        # None when unreadable, which is normal for equipment (its icon shows no number). Which buy
+        # window opens settles it: "Are you sure?" means a single item; "How many?" means a stack
+        # whose size isn't known, and that gets cancelled rather than guessed at.
+        stock_read = self.read_stock(frame, deal)
+        stock = stock_read or 1
         quantity = min(stock, remaining // deal.asking)
-        print(f"  DEAL {deal.name}: asking {deal.asking:,}, NPC pays {deal.npc_pays:,} "
-              f"(+{deal.profit:,} each), stock {stock}")
+        if market:
+            median = self.market[deal.name]["median_24h"]
+            print(f"  MARKET DEAL {deal.name}: asking {deal.asking:,}, 24h median {median:,} "
+                  f"({100 * (deal.asking - median) / median:+.0f}%), stock {stock_read or 'not shown'}"
+                  f"{'; asks you' if ask_you else '; auto-buy'}")
+        else:
+            print(f"  DEAL {deal.name}: asking {deal.asking:,}, NPC pays {deal.npc_pays:,} "
+                  f"(+{deal.profit:,} each), stock {stock_read or 'not shown'}")
         if quantity < 1:
             print(f"    over budget ({remaining:,} left); skipped")
             self.log(channel, deal, 0, "over budget")
             return
+        self.doing("reading your mesos")
         before = self.read_mesos(frame)
         if before is None:
             print("    couldn't read your mesos, so the purchase couldn't be checked; skipped")
@@ -514,92 +947,241 @@ class Crawler:
             print(f"    not enough mesos ({before:,}); skipped")
             self.log(channel, deal, 0, "not enough mesos")
             return
+        total = quantity * self.profit_each(deal, market)
+        if total < self.min_total_profit:
+            print(f"    {quantity} x {self.profit_each(deal, market):+,} = {total:+,} profit, under the "
+                  f"{self.min_total_profit:,} minimum per purchase; skipped")
+            self.log(channel, deal, 0, f"total profit {total} < {self.min_total_profit}")
+            return
+        self.doing("double-checking the listing")
         if not self.confirm_listing(frame, deal):
             print("    a second read of the row disagreed; skipped to be safe")
             self.log(channel, deal, 0, "second read disagreed")
             return
 
         x0, y0, x1, y1 = deal.box
+        self.doing(f"selecting {deal.name}")
         self.click_frame((x0 + x1) / 2, (y0 + y1) / 2)  # select the row
         self.controls.wait(0.3)
         origin, s = self.finder.last_loc, self.finder.last_scale
+        selected = self.screen.grab()
+        self.dialog_scores = {}
+        self.doing("clicking BUY ITEM")
         self.click_frame(*self.at(origin, BUY_ITEM, s))
+        self.doing("waiting for the buy window")
         # stackable items ask "How many?"; single items go straight to "Are you sure?"
-        _, dialog = self.wait_for(lambda f: (q := self.find_quantity_dialog(f)) and ("quantity", q)
-                                  or (o := self.find_single_dialog(f)) and ("single", o), 3.0)
+        frame, dialog = self.wait_for(lambda f: (q := self.find_quantity_dialog(f)) and ("quantity", q)
+                                      or (o := self.find_single_dialog(f)) and ("single", o), 3.0)
         if not dialog:
-            print("    no buy window appeared; skipped")
+            pc.DEBUG_DIR.mkdir(exist_ok=True)
+            cv2.imwrite(str(pc.DEBUG_DIR / "buy_window_missing.png"), frame)
+            scores = ", ".join(f"{k} {v} at scale {sc}" for k, (v, sc) in self.dialog_scores.items())
+            print(f"    no buy window recognised; skipped (best matches: {scores}; "
+                  f"screenshot: debug\\buy_window_missing.png)")
             self.log(channel, deal, 0, "no buy window")
+            # if something did open, cancel it: nothing is spent before its last OK
+            if selected.shape == frame.shape and cv2.absdiff(selected, frame).mean() > 1.0:
+                self.doing("a window opened but wasn't recognised: pressing Esc to cancel it")
+                self.controls.key("esc")
+                self.controls.wait(0.5)
             return
         kind, where = dialog
+        if kind == "quantity" and stock_read is None:
+            self.doing("it's a stack, but its stock couldn't be read: cancelling")
+            self.controls.key("esc")  # Cancel: nothing is spent
+            _, closed = self.wait_for(lambda f: not self.find_quantity_dialog(f), 2.0)
+            if not closed:
+                raise Stop("the quantity window won't close")
+            print("    it's a stack, but its stock couldn't be read confidently; skipped")
+            self.log(channel, deal, 0, "stack size unreadable")
+            return
 
         if kind == "single":
             quantity = 1
             expected = deal.asking
-            self.controls.key("enter")  # OK
-            _, closed = self.wait_for(lambda f: not self.find_single_dialog(f), 2.0)
+            if ask_you:
+                if not self.wait_for_you(self.find_single_dialog, f"1 x {deal.name} for {expected:,}"):
+                    self.log(channel, deal, 0, "market deal: no answer, cancelled")
+                    return
+                closed = True
+            else:
+                self.doing(f"confirming the purchase of 1 for {expected:,}")
+                self.controls.key("enter")  # OK
+                _, closed = self.wait_for(lambda f: not self.find_single_dialog(f), 2.0)
             if not closed:
                 self.click_frame(*self.at(where[0], SINGLE_OK, where[1]))
                 _, closed = self.wait_for(lambda f: not self.find_single_dialog(f), 2.0)
                 if not closed:
                     raise Stop("the purchase confirmation won't close")
         else:
+            self.doing(f"entering quantity {quantity}")
             self.controls.key("end")
             self.controls.key("backspace", 6)
             self.controls.type_number(quantity)
+            self.doing("closing the quantity window")
             self.controls.key("enter")  # OK
             _, closed = self.wait_for(lambda f: not self.find_quantity_dialog(f), 2.0)
             if not closed:  # Enter didn't confirm: press the OK button
-                self.click_frame(*self.at(where, QUANTITY_OK, self.quantity_scale))
+                self.click_frame(*self.at(where[0], QUANTITY_OK, where[1]))
                 _, closed = self.wait_for(lambda f: not self.find_quantity_dialog(f), 2.0)
                 if not closed:
                     raise Stop("the quantity window won't close")
 
             # second confirmation: it states the total, so check it before saying yes
             expected = quantity * deal.asking
+            self.doing(f"checking the total price (expecting {expected:,})")
             frame, total_dialog = self.wait_for(self.find_total_dialog, 3.0)
             if not total_dialog:
-                raise Stop("the 'total price' confirmation didn't appear")
+                limit = self.read_quantity_refused(frame)
+                if limit is None:
+                    raise Stop("the 'total price' confirmation didn't appear")
+                # the game refused the quantity ("You may only enter a number equal to or lower
+                # than N"): nothing was bought; close the notice and skip the listing
+                self.doing(f"the game only allows up to {limit}: closing its notice and skipping")
+                print(f"    the game refused {quantity} (it allows at most {limit}); skipped")
+                self.controls.key("enter")  # the notice's OK
+                self.controls.wait(0.5)
+                if self.find_quantity_dialog(self.screen.grab()):
+                    self.controls.key("esc")  # Cancel the quantity window if it came back
+                    self.wait_for(lambda f: not self.find_quantity_dialog(f), 2.0)
+                if self.read_quantity_refused(self.screen.grab()) is not None:
+                    raise Stop("the game's 'you may only enter a number' notice won't close")
+                self.log(channel, deal, 0, f"game refused quantity {quantity} (max {limit})")
+                return
             total = self.read_total(frame, total_dialog)
             if total != expected:
+                self.doing(f"total read as {total}, expected {expected:,}: cancelling")
                 self.controls.key("esc")  # Cancel: nothing is spent
                 self.wait_for(lambda f: not self.find_total_dialog(f), 2.0)
                 print(f"    the game's total read as {total}, expected {expected:,}; cancelled")
                 self.log(channel, deal, 0, f"total {total} != expected {expected}, cancelled")
                 return
-            self.controls.key("enter")  # OK
-            _, closed = self.wait_for(lambda f: not self.find_total_dialog(f), 2.0)
+            if ask_you:
+                if not self.wait_for_you(self.find_total_dialog, f"{quantity} x {deal.name} for {expected:,}"):
+                    self.log(channel, deal, 0, "market deal: no answer, cancelled")
+                    return
+                closed = True
+            else:
+                self.doing(f"confirming the purchase of {quantity} for {expected:,}")
+                self.controls.key("enter")  # OK
+                _, closed = self.wait_for(lambda f: not self.find_total_dialog(f), 2.0)
             if not closed:
                 self.click_frame(*self.at(total_dialog[0], TOTAL_OK, total_dialog[1]))
                 _, closed = self.wait_for(lambda f: not self.find_total_dialog(f), 2.0)
                 if not closed:
                     raise Stop("the purchase confirmation won't close")
 
-        # check what was actually paid against what was expected
-        _, changed = self.wait_for(lambda f: (m := self.read_mesos(f)) is not None and m != before and (m,), 3.0, 0.3)
-        paid = before - changed[0] if changed else 0
-        if paid == expected:
-            self.spent += paid
-            self.bought.append((deal.name, quantity, paid, quantity * deal.npc_pays))
-            print(f"    BOUGHT {quantity} for {paid:,} (NPC value {quantity * deal.npc_pays:,}). "
-                  f"Budget left {self.budget - self.spent:,}")
-            self.log(channel, deal, quantity, f"bought for {paid}")
+        # check what was actually paid against what was expected. The mesos line is small and
+        # sometimes can't be read (or updates late), so the listing counts as proof too: it goes
+        # grey once its whole stock is sold, and otherwise its stock goes down by what was bought.
+        self.doing(f"checking the purchase went through (mesos should drop by {expected:,})")
+        was_grey = pc.is_faded(selected, pc.Line("", *deal.box))
+        sold = [False]
+
+        def mesos_changed(f):
+            if not sold[0] and not was_grey:
+                sold[0] = self.listing_sold(f, deal, stock_read, quantity)
+            m = self.read_mesos(f)
+            return m is not None and m != before and (m,)
+
+        frame, changed = self.wait_for(mesos_changed, 4.0, 0.3)
+        paid = before - changed[0] if changed else None
+        if paid == expected or (paid is None and sold[0]):
+            how = "" if paid is not None else " (your mesos couldn't be read; the store shows it sold)"
+            self.spent += expected
+            if market:
+                value = quantity * (self.market[deal.name].get("median_24h") or 0)
+                self.bought.append((deal.name, quantity, expected, value, "market"))
+                worth = f"about {value:,} at today's market median"
+                how += " (market deal, you confirmed)" if ask_you else " (market deal, auto-bought)"
+                self.log_market_buy(channel, deal, quantity, "you confirmed" if ask_you else "auto-bought")
+            else:
+                value = quantity * deal.npc_pays
+                self.bought.append((deal.name, quantity, expected, value, "npc"))
+                worth = f"NPC value {value:,}"
+                if self.market.get(deal.name, {}).get("median_24h"):  # a market item too: log it with the others
+                    self.log_market_buy(channel, deal, quantity, f"NPC deal, NPC pays {deal.npc_pays:,}")
+            print(f"    BOUGHT {quantity} for {expected:,}{how} ({worth}). Budget left {self.budget - self.spent:,}")
+            self.log(channel, deal, quantity, f"bought for {expected}{how}")
+            self.doing(f"bought {quantity} x {deal.name} for {expected:,}")
             winsound.MessageBeep(winsound.MB_OK)
             self.controls.wait(0.6)
+            return True
+        if ask_you and paid is None:
+            print("    nothing was paid: you cancelled (or it didn't go through)")
+            self.log(channel, deal, 0, "market deal: cancelled by you")
+            self.doing("market deal cancelled")
             return
+        pc.DEBUG_DIR.mkdir(exist_ok=True)
+        cv2.imwrite(str(pc.DEBUG_DIR / "purchase_unconfirmed.png"), frame)
         self.log(channel, deal, quantity, f"paid {paid}, expected {expected}")
-        if paid == 0:
-            raise Stop("the purchase didn't go through (inventory full? store changed?)")
+        if paid is None:
+            raise Stop("the purchase didn't show up in your mesos or the store (inventory full? store "
+                       "changed?); screenshot: debug\\purchase_unconfirmed.png")
         self.spent += max(paid, 0)
         raise Stop(f"mesos went down by {paid:,} but {expected:,} was expected; stopping to be safe")
 
+    def log_market_buy(self, channel, deal, quantity, how):
+        """logs/market_buys.txt: one line per market deal bought (auto-bought, or confirmed by
+        you), with the price to sell it back at without losing money (shops take SHOP_FEE of
+        every sale from the seller)."""
+        m = self.market[deal.name]
+        break_even = math.ceil(deal.asking / (1 - SHOP_FEE))
+        line = (f"{datetime.now():%Y-%m-%d %H:%M}  bought {quantity} x {deal.name} at {deal.asking:,} each "
+                f"({quantity * deal.asking:,} total, channel {channel}, {how}) - sell for at least {break_even:,} each "
+                f"to break even after the {SHOP_FEE:.0%} shop fee (today's market: low {m['low_24h']:,}, "
+                f"median {m['median_24h']:,})\n")
+        with open(LOG_DIR / "market_buys.txt", "a", encoding="utf-8") as f:
+            f.write(line)
+        print(f"    break even: sell for at least {break_even:,} each (logs\\market_buys.txt)")
+
+    def wait_for_you(self, find_dialog, what):
+        """Market deals aren't bought on the bot's own judgement: it leaves the purchase window
+        open for you to press OK (buy) or Cancel, and waits until the window has been gone for a
+        moment (a single frame without it may just be your cursor covering it). False if nobody
+        answered within MARKET_CONFIRM_WAIT; the purchase is then cancelled."""
+        self.doing(f"MARKET DEAL {what}: press OK to buy or Cancel (waiting for you)")
+        print(f"    waiting for you: press OK to buy, or Cancel (up to {MARKET_CONFIRM_WAIT:.0f}s), "
+              f"then let go of the mouse")
+        for _ in range(3):
+            winsound.MessageBeep(winsound.MB_ICONEXCLAMATION)
+            self.controls.wait(0.3)
+        end, gone_since = time.monotonic() + MARKET_CONFIRM_WAIT, None
+        while time.monotonic() < end:
+            if find_dialog(self.screen.grab()):
+                gone_since = None
+            elif gone_since is None:
+                gone_since = time.monotonic()
+            elif time.monotonic() - gone_since > 1.0:
+                self.park_mouse()  # your cursor may be on the store buttons, which hides the store
+                return True
+            self.controls.wait(0.25)
+        self.doing("no answer: cancelling the purchase")
+        print("    no answer; cancelled")
+        self.controls.key("esc")
+        self.wait_for(lambda f: not find_dialog(f), 2.0)
+        return False
+
+    def listing_sold(self, frame, deal, stock, quantity):
+        """Whether the store shows the purchase: the row went grey (its whole stock sold) or,
+        after buying part of a stack, its stock went down by exactly quantity."""
+        if pc.is_faded(frame, pc.Line("", *deal.box)):
+            self.marks.set("sold", [box(*deal.box, READING, "row went grey: sold", below=True)], ttl=3)
+            return True
+        if stock and quantity < stock and self.read_stock(frame, deal) == stock - quantity:
+            self.marks.set("sold", [box(*deal.box, READING, f"stock {stock} -> {stock - quantity}: sold",
+                                        below=True)], ttl=3)
+            return True
+        return False
+
     def leave_store(self):
         for _ in range(2):
-            if not self.finder.find(self.screen.grab()):
+            if not self.find_store(self.screen.grab()):
                 return
+            self.doing("closing the store window")
             origin, s = self.finder.last_loc, self.finder.last_scale
             self.click_frame(*self.at(origin, LEAVE_STORE, s))
-            _, gone = self.wait_for(lambda f: not self.finder.find(f), 3.0)
+            _, gone = self.wait_for(lambda f: not self.find_store(f), 3.0)
             if gone:
                 self.controls.wait(0.4)
                 return
@@ -608,9 +1190,11 @@ class Crawler:
     # ---- channels
 
     def find_channel_window(self, frame):
-        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-        v, loc, s = best_match(gray, self.channel_title, near(self.scale_guess(frame)))
-        return (loc, s) if v >= 0.8 else None
+        found = self.match_dialog(frame, "channel", self.channel_title, threshold=0.8)
+        self.mark_dialog("channel", found, self.channel_title, "channel window")
+        if not found:
+            self.marks.clear("channel_cell")
+        return found
 
     def highlighted_channel(self, frame, window):
         (tx, ty), s = window
@@ -627,23 +1211,33 @@ class Crawler:
         top, second = sat[ranked[0]], sat[ranked[1]]
         # blue (selected) cells are saturated, the others grey; only trust one clear winner
         if top < 60 or second > top * 0.6:
+            self.marks.clear("channel_cell")
             return None
+        r, c = divmod(ranked[0] - 1, 8)
+        x = tx + (CH1_CELL[0] + c * CH_STEP[0]) * s
+        y = ty + (CH1_CELL[1] + r * CH_STEP[1]) * s
+        hw, hh = CH_STEP[0] * s / 2, CH_STEP[1] * s / 2
+        self.marks.set("channel_cell", [box(x - hw, y - hh, x + hw, y + hh, TARGET, f"selected: CH {ranked[0]}")])
         return ranked[0]
 
     def change_channel(self, target):
         print(f"changing to channel {target}")
+        self.marks.clear("shops", "target")
+        self.doing(f"channel {target}: opening the game menu")
         self.controls.key("esc")      # game menu
         self.controls.wait(0.4)
+        self.doing(f"channel {target}: opening the channel window")
         self.controls.key("enter")    # its first entry: Change Channel
         frame, window = self.wait_for(self.find_channel_window, 2.5)
         if not window:
+            self.doing("closing the game menu")
             self.controls.key("esc")
             print("  the channel window didn't open with Esc -> Enter; stopping channel changes")
             return False
         # park the mouse away from the window: hovering a cell may highlight it too
-        h, w = frame.shape[:2]
-        self.controls.move(*self.screen.to_screen(w * 0.5, h * 0.04))
-        self.controls.wait(0.3)
+        self.doing(f"channel {target}: reading which channel is selected")
+        self.park_mouse()
+        self.controls.wait(0.15)
         frame = self.screen.grab()
 
         start = self.highlighted_channel(frame, window)
@@ -652,6 +1246,7 @@ class Crawler:
             return self.give_up_channel(frame, "couldn't tell which channel is selected")
         if start == target:
             # that's the channel we're on (crawled already); never press Enter without moving
+            self.doing(f"already on channel {target}: closing the channel window")
             self.controls.key("esc")
             self.wait_for(lambda f: not self.find_channel_window(f), 2.0)
             print(f"  already on channel {target}; skipping it")
@@ -659,6 +1254,7 @@ class Crawler:
         current = start
         while current != target:
             diff = target - current
+            self.doing(f"channel {target}: moving the selection (now on {current})")
             self.controls.key("down" if diff >= 8 else "up" if diff <= -8 else "right" if diff > 0 else "left")
             self.controls.wait(0.25)
             frame = self.screen.grab()
@@ -667,16 +1263,24 @@ class Crawler:
             if now is None or now == current:
                 return self.give_up_channel(frame, f"the arrow key didn't move the selection from {current}")
             current = now
+        self.doing(f"channel {target}: pressing Enter")
         self.controls.key("enter")
+        self.marks.clear("channel", "channel_cell")
 
         # it really changed only if the room goes away (loading) and then comes back
+        self.doing(f"channel {target}: waiting for the room to unload")
         _, left = self.wait_for(lambda f: f.mean() < 40 or not self.find_shops(f), 10.0, 0.3)
         if not left:
             return self.give_up_channel(self.screen.grab(), "pressed Enter but the channel didn't change")
-        _, loaded = self.wait_for(lambda f: len(self.find_shops(f)) > 0, 25.0, 0.5)
-        if not loaded:
-            print("  no shops visible after the change; stopping")
-            return False
+        self.doing(f"channel {target}: waiting for the room to load")
+        _, back = self.wait_for(lambda f: f.mean() >= 40, 25.0, 0.5)
+        if not back:
+            return self.give_up_channel(self.screen.grab(), "the room didn't come back after the channel change")
+        self.doing(f"channel {target}: waiting for the shops to appear")
+        _, shops = self.wait_for(lambda f: len(self.find_shops(f)) > 0, NO_SHOPS_WAIT, 0.5)
+        if not shops:
+            print(f"  no shops on channel {target} after {NO_SHOPS_WAIT:.0f}s; moving on")
+            return None
         self.controls.wait(1.5)  # let other players' stores finish appearing
         return True
 
@@ -684,6 +1288,7 @@ class Crawler:
         pc.DEBUG_DIR.mkdir(exist_ok=True)
         cv2.imwrite(str(pc.DEBUG_DIR / "channel_change_failed.png"), frame)
         if self.find_channel_window(frame):
+            self.doing("closing the channel window")
             self.controls.key("esc")
         print(f"  {why}; stopping (screenshot: debug\\channel_change_failed.png)")
         return False
@@ -692,16 +1297,20 @@ class Crawler:
 
     def dry_run(self):
         print("Switch to MapleStory now. Looking in 3 seconds... (nothing will be clicked)")
+        self.doing("dry run: switch to MapleStory, looking in 3 seconds")
         time.sleep(3)
         if user32.GetForegroundWindow() != self.hwnd:
             print("warning: MapleStory isn't the front window, so the screenshot shows whatever covers it")
         frame = self.screen.grab()
+        self.doing("dry run: looking for shops")
         shops = self.find_shops(frame)
         out = frame.copy()
-        for i, (x, y) in enumerate(shops, 1):
+        for i, ((x, y), _) in enumerate(shops, 1):
             cv2.circle(out, (int(x), int(y)), 14, (0, 0, 255), 3)
             cv2.putText(out, str(i), (int(x) + 16, int(y) + 8), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 3)
+        self.find_store(frame)
         lines, store, singles, _ = pc.scan(frame, self.reader, self.finder, self.db, 1, False)
+        self.mark_listings(lines, singles)
         deals = [d for d in singles if self.worth_buying(d)]
         pc.DEBUG_DIR.mkdir(exist_ok=True)
         cv2.imwrite(str(pc.DEBUG_DIR / "crawler_dry_run.png"), out)
@@ -712,39 +1321,76 @@ class Crawler:
             for d in deals:
                 print(f"  would buy {d.name}: asking {d.asking:,}, NPC pays {d.npc_pays:,}, "
                       f"stock {self.read_stock(frame, d)}, second read agrees: {self.confirm_listing(frame, d)}")
+            for d in singles:
+                if not self.worth_buying(d) and self.market_deal(d):
+                    how = "would buy it" if d.name in self.market_auto else "would ask you"
+                    print(f"  market deal ({how}): {d.name} asking {d.asking:,}, "
+                          f"24h median {self.market[d.name]['median_24h']:,}")
         print(f"marked screenshot: {pc.DEBUG_DIR / 'crawler_dry_run.png'}")
+        self.doing(f"dry run done: {len(shops)} shops, {len(deals)} deals in the open store (nothing clicked)")
 
-    def run(self, channels, budget):
+    def check_rights(self):
         if runs_with_more_rights(self.hwnd):
             raise SystemExit("MapleStory runs as administrator, so Windows would silently ignore the "
                              "crawler's clicks.\nStart it with crawler.bat (it asks for admin rights), or "
                              "run your terminal as administrator.")
+
+    def run(self, channels, budget):
         self.budget = budget
+        self.update_info()
         rules = ", ".join(f"from {p:,}: +{m:,}" for p, m in self.buy_rules)
         print(f"Budget {budget:,} mesos. Buys when profit per item is at least ({rules}).")
-        self.controls = Controls(self.hwnd, time.monotonic() + self.args.minutes * 60)
+        limit = self.args.minutes * 60 if self.args.minutes else float("inf")  # none: the rotation ends it
+        self.controls = Controls(self.hwnd, time.monotonic() + limit)
         print("Switch to MapleStory now. Starting in 3 seconds... (hold ESC for 1s to stop)")
+        self.doing("switch to MapleStory: starting in 3 seconds (hold ESC 1s to stop)")
         time.sleep(3)
+        started = time.monotonic()
+        visited = 0  # rooms crawled: the starting one, then each channel changed to
+
+        def channel_done(name, since):
+            print(f"  [channel {name}] done in {duration(time.monotonic() - since)} "
+                  f"(running {duration(time.monotonic() - started)})")
+
         try:
+            t = time.monotonic()
             self.crawl_room("start")
+            visited += 1
+            channel_done("start", t)
             for ch in channels:
+                t = time.monotonic()
                 changed = self.change_channel(ch)
-                if changed is None:  # already on it
-                    continue
-                if not changed:
+                if changed is False:
+                    summary = (f"stopped at channel {ch}: couldn't change channel "
+                               f"({visited} rooms in {duration(time.monotonic() - started)})")
                     break
-                self.crawl_room(ch)
-            print("done")
+                if changed:  # None: already on it (the starting channel), or no shops there
+                    self.crawl_room(ch)
+                    visited += 1
+                channel_done(ch, t)
+            else:
+                summary = (f"full rotation done: {len(channels)} channels ({visited} rooms crawled) "
+                           f"in {duration(time.monotonic() - started)}")
         except Stop as e:
-            print(f"stopped: {e}")
+            summary = f"stopped: {e} ({visited} rooms in {duration(time.monotonic() - started)})"
         finally:
             self.controls.stop.set()
-        value = sum(b[3] for b in self.bought)
-        print(f"\nBought {sum(b[1] for b in self.bought)} items for {self.spent:,} mesos "
-              f"(NPC value {value:,}, profit {value - self.spent:,} once sold). Budget left {self.budget - self.spent:,}.")
-        for name, qty, paid, npc in self.bought:
-            print(f"  {qty} x {name}: paid {paid:,}, NPC pays {npc:,}")
+            self.marks.clear("click", "target")
+        print(summary)
+        self.doing(summary)
+        print(f"\nBought {sum(b[1] for b in self.bought)} items for {self.spent:,} mesos. "
+              f"Budget left {self.budget - self.spent:,}.")
+        for name, qty, paid, value, kind in self.bought:
+            worth = f"NPC pays {value:,}" if kind == "npc" else f"~{value:,} at today's market median"
+            print(f"  {qty} x {name}: paid {paid:,}, {worth}")
         print(f"log: {self.log_path}")
+
+
+def duration(seconds):
+    """65 -> '1m 05s', 3725 -> '1h 02m 05s'."""
+    m, s = divmod(int(seconds), 60)
+    h, m = divmod(m, 60)
+    return f"{h}h {m:02d}m {s:02d}s" if h else f"{m}m {s:02d}s" if m else f"{s}s"
 
 
 def parse_channels(spec):
@@ -780,18 +1426,72 @@ def main():
     ap.add_argument("--budget", type=parse_mesos, help="most it may spend this session (asked if not given)")
     ap.add_argument("--channels", default="40-1", help="channels to visit after this room, in order (e.g. 40-1)")
     ap.add_argument("--no-channel-change", action="store_true", help="only crawl the current room")
-    ap.add_argument("--minutes", type=float, default=30, help="stop after this long")
+    ap.add_argument("--minutes", type=float, default=0,
+                    help="stop after this long (default: no limit, it stops after the last channel)")
     ap.add_argument("--match", type=int, default=88, help="item name match strictness 0-100")
     ap.add_argument("--window", default="maplestory.exe")
+    ap.add_argument("--market-percent", type=market.parse_percent,
+                    help="a market deal is this many %% under the 24h median (asked if not given)")
+    ap.add_argument("--no-overlay", action="store_true",
+                    help="don't draw what the crawler sees and does over the game")
+    ap.add_argument("--debug", action="store_true",
+                    help="save a screenshot of every click to debug/clicks (aimed vs actual cursor)")
     args = ap.parse_args()
-    sys.stdout.reconfigure(line_buffering=True)
+    sys.stdout.reconfigure(line_buffering=True, errors="replace")  # OCR text can hold characters the console can't show
 
     crawler = Crawler(args)
+    crawler.load_market()
+    if crawler.market:
+        crawler.market_below = args.market_percent or market.ask_percent(crawler.market_below)
+        asks = [n for n in crawler.market if n not in crawler.market_auto]
+        print(f"  market deals: {crawler.market_below:g}% or more under the 24h median; "
+              + (f"bought automatically except {len(asks)} you confirm ({', '.join(asks)})" if asks
+                 else "all bought automatically"))
     if args.dry_run:
-        crawler.dry_run()
+        job, linger = crawler.dry_run, 15.0
     else:
+        crawler.check_rights()
         budget = args.budget or ask_budget()
-        crawler.run([] if args.no_channel_change else parse_channels(args.channels), budget)
+        channels = [] if args.no_channel_change else parse_channels(args.channels)
+        job, linger = (lambda: crawler.run(channels, budget)), 5.0
+    if args.no_overlay:
+        job()
+        return
+
+    # the crawler works on a thread; the overlay (tkinter) has to stay on this one
+    finished = []
+
+    def work():
+        try:
+            job()
+        except Exception:
+            crawler.marks.doing("crashed: see the console")
+            raise
+        finally:
+            finished.append(time.monotonic())
+
+    overlay = CrawlOverlay()
+
+    def stop(*_):
+        if crawler.controls:
+            crawler.controls.stop_reason = "Ctrl+C"
+            crawler.controls.stop.set()
+        else:
+            overlay.root.after(0, overlay.root.destroy)
+
+    signal.signal(signal.SIGINT, stop)
+
+    def tick():
+        region = crawler.screen.region if user32.IsWindow(crawler.hwnd) else None  # marks are in picture pixels
+        overlay.draw_marks(region, crawler.marks)
+        if finished and time.monotonic() - finished[0] > linger:  # leave the last state up a moment
+            overlay.root.destroy()
+            return
+        overlay.root.after(100, tick)
+
+    threading.Thread(target=work, daemon=True).start()
+    tick()
+    overlay.root.mainloop()
 
 
 if __name__ == "__main__":

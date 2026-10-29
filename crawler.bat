@@ -19,6 +19,11 @@ if not exist ".venv\Scripts\python.exe" (
     python -m venv .venv || goto :error
     .venv\Scripts\python -m pip install -r requirements.txt || goto :error
 )
+rem older versions used a different OCR package: update a setup made by one of them
+.venv\Scripts\python -c "import rapidocr" >nul 2>&1 || (
+    echo Updating Python packages...
+    .venv\Scripts\python -m pip install -r requirements.txt || goto :error
+)
 
 echo Free Market crawler. Hold ESC for 1 second to stop it.
 .venv\Scripts\python crawler.py %*

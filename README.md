@@ -2,14 +2,18 @@
 
 Watches the game once a second. When a player store is open, it reads the listings with OCR
 and boxes every single-item listing it recognises in **yellow**, and in **red** any item a player is selling for less than an NPC will pay you for it.
-Buying it and selling it to an NPC is guaranteed profit.
+Buying it and selling it to an NPC is guaranteed profit. Items in the market list (see
+"Market deals" under the crawler) also show their Free Market median of the last 24 hours, and
+get a **purple** box when listed far enough under it. At startup it asks the same two questions
+as the crawler: download new market prices, and how far under the median counts as a deal
+(`--market-percent 30` skips that question, `--no-market` turns market prices off).
 
 It only looks at pixels (like a screenshot) and draws a click-through overlay. It never
 reads game memory or sends input, so you keep playing normally.
 
 ## Quick start (Windows)
 
-1. Install [Python 3.10–3.12](https://www.python.org/downloads/windows/) and tick
+1. Install [Python 3.10 or newer](https://www.python.org/downloads/windows/) and tick
    **"Add python.exe to PATH"** in the installer.
 2. Download this repo (green **Code** button → **Download ZIP**) and unzip it.
 3. Double-click **`price_checker.bat`**. The first start installs what it needs (1–2 minutes);
@@ -19,8 +23,8 @@ Options can be passed to `price_checker.bat`, e.g. `price_checker.bat --min-prof
 
 ## Price data
 
-`data/prices.json` holds what an NPC pays for 1,300+ items: use, etc, setup, and equipment up
-to level 30. It comes from [MapleStory Quest](https://maplestory.quest), which reads it out of
+`data/prices.json` holds what an NPC pays for 1,600 items: use, etc, setup, and equipment up
+to level 40. It comes from [MapleStory Quest](https://maplestory.quest), which reads it out of
 the MapleStory Classic World client (Grand Launch build, 21 October 2026). Thanks to them
 for the data.
 
@@ -84,6 +88,9 @@ pays, up to the full stock. After the room it changes channel with the keyboard
 - **Buy rules** in `crawler_settings.json`: the minimum profit per item depends on the price.
   The defaults are +1 under 1,000 mesos, +50 from 1,000, and +500 from 10,000, so it won't
   spend 9,999 to make 1.
+- **Minimum profit per purchase** (`min_total_profit`, default 50): quantity × profit per item
+  must reach it, so one item at +2 is skipped but 30 of them at +2 are bought. For market deals
+  the profit is estimated from selling at the 24h median after the 3% shop fee.
 - **Never-buy list** in the same file: items whose name contains any of these words are
   always skipped. The default is `"arrow"`, which covers every arrow for bows and crossbows.
 
@@ -97,9 +104,31 @@ pays, up to the full stock. After the room it changes channel with the keyboard
   exactly quantity × price. If they don't drop, for example with a full inventory, or drop
   by a different amount, **it stops**.
 - **ESC.** Hold ESC for 1 second to stop it at any time.
-- **Time limit.** It stops by itself after `--minutes` (default 30).
+- **End of the rotation.** It stops by itself after the last channel (40 down to 1 by default)
+  and says how long the whole rotation took; the console also shows the time per channel.
+  `--minutes 60` adds a time limit on top.
 - **Front window only.** It only acts while MapleStory is the front window; switch away and
   it pauses.
+
+**Overlay.** While it runs, it draws over the game what it sees and does, so you can follow along:
+the current action in the top-left corner (with budget and spending under it), and a box around
+everything it recognises: shop signs (cyan, numbered in the order it opens them; the one it's on in
+pink), the store window and dialogs (green), every line of text it read (grey), single-item listings
+(yellow, or red when it will buy them), the numbers it reads (stock, your mesos, the total; blue),
+the selected channel, and a crosshair wherever it clicks. The overlay is hidden from screenshots, so
+it never confuses the crawler itself.
+
+**Market deals (asks you first).** Items listed under `market` in `crawler_settings.json` (all
+ores, Stiff Feather and Leather to start with) are also compared with Free Market prices from
+[MeowDB](https://meowdb.com/msclassic). A listing at least 30% under the item's median price of
+the last 24 hours is a market deal, if that median comes from at least 5 player reports. Unlike NPC
+deals these aren't guaranteed profit, so unless an item is on the `auto_buy` list (which it
+buys like an NPC deal), the crawler sets up the purchase, beeps, and waits on the final purchase
+window for you to press OK or Cancel. Every market item bought (auto-bought, confirmed by you, or
+bought as an NPC deal) goes into `logs\market_buys.txt` with the price to sell it back at without
+losing money after the 3% shop fee. Prices are downloaded once into `data\market_prices.json`;
+at startup the crawler says how old they are and asks whether to download new ones (once a day
+is plenty, and keeps the load on MeowDB low).
 
 It doesn't walk around: stand somewhere that shows the shops you want. Everything it
 bought or skipped is logged to `logs\crawl_<date>.csv`, with a summary at the end.
@@ -118,7 +147,8 @@ is open, it also lists what it would buy and whether the second read agrees.
 | `--budget 250k` | session budget (otherwise it asks) |
 | `--channels 40-1` | channels to visit after the current room, in order |
 | `--no-channel-change` | only do the current room |
-| `--minutes 30` | session length |
+| `--minutes 60` | also stop after this long (default: no limit) |
+| `--no-overlay` | don't draw what it sees and does over the game |
 
 MapleStory runs as administrator, and Windows silently drops clicks and keys sent to it
 by normal programs. So `crawler.bat` asks for administrator rights when it starts (the

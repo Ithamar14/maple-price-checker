@@ -1,5 +1,7 @@
 mss
 numpy
 pillow
-rapidocr_onnxruntime
+opencv-python
+rapidocr>=3.10,<4
+onnxruntime
 rapidfuzz
