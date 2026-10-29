@@ -1,0 +1,9 @@
+{
+  "_help": "The crawler only buys an item when its profit (NPC pays - asking price, per item) is at least min_profit for the highest price_from the asking price reaches. never_buy: items whose name contains any of these words (any case) are always skipped. Edit freely.",
+  "buy_rules": [
+    {"price_from": 0, "min_profit": 1},
+    {"price_from": 1000, "min_profit": 50},
+    {"price_from": 10000, "min_profit": 500}
+  ],
+  "never_buy": ["arrow"]
+}

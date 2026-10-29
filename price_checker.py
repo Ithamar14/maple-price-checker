@@ -148,7 +148,7 @@ class Hit:
 
 
 def analyze(lines, bgr, db, min_profit):
-    """Return (store_seen, singles, deals). Bundles (N > 1) are ignored."""
+    """Return (store_seen, singles, deals). Bundles (N > 1) and sold-out rows are ignored."""
     singles = []
     for l in lines:
         m = LISTING_RE.match(l.text)
@@ -192,6 +192,7 @@ class StoreFinder:
         self.tpl = cv2.imread(str(self.TEMPLATE), cv2.IMREAD_GRAYSCALE)
         self.threshold = threshold
         self.last_scale = None
+        self.last_loc = None
         self.last_sweep = 0.0
         self.last_scores = None  # (coarse, confirmed), for tuning
 
@@ -251,6 +252,7 @@ class StoreFinder:
             return None
         self.last_scale = s
         x, y = rx + loc2[0], ry + loc2[1]
+        self.last_loc = (x, y)  # top-left of the matched buttons, for clicking them
         dx0, dy0, dx1, dy1 = (round(d * s) for d in self.LIST_BOX)
         h, w = gray.shape
         return (max(0, x + dx0), max(0, y + dy0), min(w, x + dx1), min(h, y + dy1)), s
@@ -358,17 +360,22 @@ def client_rect(hwnd):
     return {"left": pt.x, "top": pt.y, "width": r.right, "height": r.bottom}
 
 
-def find_region(target):
-    """Screen area of the largest window whose title or exe name contains target."""
+def find_window(target):
+    """(hwnd, screen area) of the largest window whose title or exe name contains target, or None."""
     target = target.lower()
     best = None
     for hwnd, t, exe in visible_windows():
         tl = t.lower()
         if (target in tl or target in exe.lower()) and not any(i in tl for i in IGNORE_TITLES) and not user32.IsIconic(hwnd):
             r = client_rect(hwnd)
-            if r["width"] > 100 and r["height"] > 100 and (best is None or r["width"] * r["height"] > best["width"] * best["height"]):
-                best = r
+            if r["width"] > 100 and r["height"] > 100 and (best is None or r["width"] * r["height"] > best[1]["width"] * best[1]["height"]):
+                best = (hwnd, r)
     return best
+
+
+def find_region(target):
+    found = find_window(target)
+    return found[1] if found else None
 
 
 # ---------------------------------------------------------------- overlay
