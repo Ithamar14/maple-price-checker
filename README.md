@@ -99,6 +99,26 @@ Useful options:
 .venv\Scripts\python price_checker.py --image printscreens\fullshopscreenshot.jpg
 ```
 
+## Crafting calculator
+
+Double-click **`craft_calculator.bat`**. It looks up market prices for every recipe's
+item and materials (asking first whether to update saved prices, same as the price checker),
+then opens **`craft_calculator.html`** in your browser with every recipe:
+
+- **Cost / craft**: the meso fee plus the materials at their 24-hour market median, or what
+  crafting a material yourself costs when that's cheaper.
+- **Sells for**: the market median after the 3% shop fee, or what an NPC pays, whichever is
+  more (or pick one).
+- **Profit / craft** and **Profit %**, sortable. Click a recipe for its materials, with a
+  **buy under** price for each: the most you can pay for it and still keep your margin.
+- Prices based on few market reports are marked **thin**; treat those as rough.
+
+Change the margin, filter and search on the page itself. Which disciplines it checks, the
+default margin, how many reports make a price trustworthy and the highest craft level
+(8, where the live game stops) are under `crafting` in
+`crawler_settings.json` (it starts with Arcforge only). Recipes come from
+[MapleStory Quest](https://maplestory.quest)'s item pages (`data/recipes.json`).
+
 ## Crawler (experimental)
 
 `crawler.bat` **takes control of your mouse and keyboard and spends your mesos**. It opens

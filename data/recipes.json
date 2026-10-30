@@ -1,0 +1,8737 @@
+{
+ "source": "https://maplestory.quest (item pages)",
+ "game": "MapleStory Classic World",
+ "fetched": "2026-10-30",
+ "recipes": [
+  {
+   "id": 4020102,
+   "name": "Aquamarine",
+   "discipline": "Arcforge",
+   "craft_level": 1,
+   "fee": 200,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4020002,
+     "name": "Aquamarine Ore",
+     "qty": 1
+    }
+   ]
+  },
+  {
+   "id": 4020100,
+   "name": "Garnet",
+   "discipline": "Arcforge",
+   "craft_level": 1,
+   "fee": 200,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4020000,
+     "name": "Garnet Ore",
+     "qty": 1
+    }
+   ]
+  },
+  {
+   "id": 4020103,
+   "name": "Emerald",
+   "discipline": "Arcforge",
+   "craft_level": 2,
+   "fee": 400,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4020003,
+     "name": "Emerald Ore",
+     "qty": 1
+    }
+   ]
+  },
+  {
+   "id": 2040000,
+   "name": "Hat Accuracy Scroll: Lesser",
+   "discipline": "Arcforge",
+   "craft_level": 2,
+   "fee": 10000,
+   "ingredients": [
+    {
+     "id": 4000063,
+     "name": "Fragment of Magic",
+     "qty": 10
+    },
+    {
+     "id": 4003009,
+     "name": "Processed Parchment",
+     "qty": 1
+    },
+    {
+     "id": 4020100,
+     "name": "Garnet",
+     "qty": 3
+    }
+   ],
+   "makes": 1
+  },
+  {
+   "id": 2040004,
+   "name": "Hat HP Scroll: Lesser",
+   "discipline": "Arcforge",
+   "craft_level": 2,
+   "fee": 10000,
+   "ingredients": [
+    {
+     "id": 4000063,
+     "name": "Fragment of Magic",
+     "qty": 10
+    },
+    {
+     "id": 4003009,
+     "name": "Processed Parchment",
+     "qty": 1
+    },
+    {
+     "id": 4020106,
+     "name": "Topaz",
+     "qty": 3
+    }
+   ],
+   "makes": 1
+  },
+  {
+   "id": 2040008,
+   "name": "Hat MP Scroll: Lesser",
+   "discipline": "Arcforge",
+   "craft_level": 2,
+   "fee": 10000,
+   "ingredients": [
+    {
+     "id": 4020103,
+     "name": "Emerald",
+     "qty": 3
+    },
+    {
+     "id": 4003009,
+     "name": "Processed Parchment",
+     "qty": 1
+    },
+    {
+     "id": 4000063,
+     "name": "Fragment of Magic",
+     "qty": 10
+    }
+   ],
+   "makes": 1
+  },
+  {
+   "id": 4003009,
+   "name": "Processed Parchment",
+   "discipline": "Arcforge",
+   "craft_level": 2,
+   "fee": 200,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4000049,
+     "name": "Leather",
+     "qty": 3
+    }
+   ]
+  },
+  {
+   "id": 4020106,
+   "name": "Topaz",
+   "discipline": "Arcforge",
+   "craft_level": 2,
+   "fee": 400,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4020006,
+     "name": "Topaz Ore",
+     "qty": 1
+    }
+   ]
+  },
+  {
+   "id": 3030005,
+   "name": "Arcane Station",
+   "discipline": "Arcforge",
+   "craft_level": 3,
+   "fee": 100000,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4010106,
+     "name": "Gold Ingot",
+     "qty": 5
+    },
+    {
+     "id": 4000063,
+     "name": "Fragment of Magic",
+     "qty": 50
+    },
+    {
+     "id": 4003001,
+     "name": "Processed Wood",
+     "qty": 20
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 20
+    }
+   ]
+  },
+  {
+   "id": 3000003,
+   "name": "Brass Candlestick",
+   "discipline": "Arcforge",
+   "craft_level": 3,
+   "fee": 15000,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4010100,
+     "name": "Bronze Ingot",
+     "qty": 10
+    },
+    {
+     "id": 4000063,
+     "name": "Fragment of Magic",
+     "qty": 10
+    }
+   ]
+  },
+  {
+   "id": 1382002,
+   "name": "Emerald Staff",
+   "discipline": "Arcforge",
+   "craft_level": 3,
+   "fee": 2500,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4010104,
+     "name": "Silver Ingot",
+     "qty": 3
+    },
+    {
+     "id": 4020103,
+     "name": "Emerald",
+     "qty": 2
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 9
+    }
+   ]
+  },
+  {
+   "id": 4020105,
+   "name": "Sapphire",
+   "discipline": "Arcforge",
+   "craft_level": 3,
+   "fee": 600,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4020005,
+     "name": "Sapphire Ore",
+     "qty": 1
+    }
+   ]
+  },
+  {
+   "id": 1382001,
+   "name": "Sapphire Staff",
+   "discipline": "Arcforge",
+   "craft_level": 3,
+   "fee": 2500,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4010104,
+     "name": "Silver Ingot",
+     "qty": 3
+    },
+    {
+     "id": 4020105,
+     "name": "Sapphire",
+     "qty": 2
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 9
+    }
+   ]
+  },
+  {
+   "id": 2040404,
+   "name": "Topwear HP Scroll: Lesser",
+   "discipline": "Arcforge",
+   "craft_level": 3,
+   "fee": 10000,
+   "ingredients": [
+    {
+     "id": 4000063,
+     "name": "Fragment of Magic",
+     "qty": 10
+    },
+    {
+     "id": 4003009,
+     "name": "Processed Parchment",
+     "qty": 1
+    },
+    {
+     "id": 4020106,
+     "name": "Topaz",
+     "qty": 3
+    }
+   ],
+   "makes": 1
+  },
+  {
+   "id": 2040408,
+   "name": "Topwear MP Scroll: Lesser",
+   "discipline": "Arcforge",
+   "craft_level": 3,
+   "fee": 10000,
+   "ingredients": [
+    {
+     "id": 4000063,
+     "name": "Fragment of Magic",
+     "qty": 10
+    },
+    {
+     "id": 4003009,
+     "name": "Processed Parchment",
+     "qty": 1
+    },
+    {
+     "id": 4020103,
+     "name": "Emerald",
+     "qty": 3
+    }
+   ],
+   "makes": 1
+  },
+  {
+   "id": 2040604,
+   "name": "Bottomwear HP Scroll: Lesser",
+   "discipline": "Arcforge",
+   "craft_level": 4,
+   "fee": 10000,
+   "ingredients": [
+    {
+     "id": 4000063,
+     "name": "Fragment of Magic",
+     "qty": 10
+    },
+    {
+     "id": 4003009,
+     "name": "Processed Parchment",
+     "qty": 1
+    },
+    {
+     "id": 4020106,
+     "name": "Topaz",
+     "qty": 3
+    }
+   ],
+   "makes": 1
+  },
+  {
+   "id": 2040608,
+   "name": "Bottomwear MP Scroll: Lesser",
+   "discipline": "Arcforge",
+   "craft_level": 4,
+   "fee": 10000,
+   "ingredients": [
+    {
+     "id": 4000063,
+     "name": "Fragment of Magic",
+     "qty": 10
+    },
+    {
+     "id": 4003009,
+     "name": "Processed Parchment",
+     "qty": 1
+    },
+    {
+     "id": 4020103,
+     "name": "Emerald",
+     "qty": 3
+    }
+   ],
+   "makes": 1
+  },
+  {
+   "id": 3000002,
+   "name": "Flower Bud Ceiling Light",
+   "discipline": "Arcforge",
+   "craft_level": 4,
+   "fee": 20000,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4010104,
+     "name": "Silver Ingot",
+     "qty": 5
+    },
+    {
+     "id": 4000024,
+     "name": "Fairy's Tentacle",
+     "qty": 25
+    },
+    {
+     "id": 4000063,
+     "name": "Fragment of Magic",
+     "qty": 10
+    }
+   ]
+  },
+  {
+   "id": 1372002,
+   "name": "Metal Wand",
+   "discipline": "Arcforge",
+   "craft_level": 4,
+   "fee": 3500,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4010101,
+     "name": "Iron Ingot",
+     "qty": 4
+    },
+    {
+     "id": 4000016,
+     "name": "Blue Mushroom Cap",
+     "qty": 30
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 12
+    }
+   ]
+  },
+  {
+   "id": 4020104,
+   "name": "Opal",
+   "discipline": "Arcforge",
+   "craft_level": 4,
+   "fee": 800,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4020004,
+     "name": "Opal Ore",
+     "qty": 1
+    }
+   ]
+  },
+  {
+   "id": 4020101,
+   "name": "Amethyst",
+   "discipline": "Arcforge",
+   "craft_level": 5,
+   "fee": 1000,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4020001,
+     "name": "Amethyst Ore",
+     "qty": 1
+    }
+   ]
+  },
+  {
+   "id": 1372003,
+   "name": "Ice Wand",
+   "discipline": "Arcforge",
+   "craft_level": 5,
+   "fee": 4500,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4010102,
+     "name": "Mithril Ingot",
+     "qty": 5
+    },
+    {
+     "id": 4003004,
+     "name": "Piece of Ice",
+     "qty": 1
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 15
+    }
+   ]
+  },
+  {
+   "id": 2040500,
+   "name": "Overall Armor DEF Scroll: Lesser",
+   "discipline": "Arcforge",
+   "craft_level": 5,
+   "fee": 10000,
+   "ingredients": [
+    {
+     "id": 4000063,
+     "name": "Fragment of Magic",
+     "qty": 10
+    },
+    {
+     "id": 4003009,
+     "name": "Processed Parchment",
+     "qty": 1
+    },
+    {
+     "id": 4020107,
+     "name": "Diamond",
+     "qty": 3
+    }
+   ],
+   "makes": 1
+  },
+  {
+   "id": 2040904,
+   "name": "Shield Accuracy Scroll: Lesser",
+   "discipline": "Arcforge",
+   "craft_level": 5,
+   "fee": 10000,
+   "ingredients": [
+    {
+     "id": 4000063,
+     "name": "Fragment of Magic",
+     "qty": 10
+    },
+    {
+     "id": 4003009,
+     "name": "Processed Parchment",
+     "qty": 1
+    },
+    {
+     "id": 4020100,
+     "name": "Garnet",
+     "qty": 3
+    }
+   ],
+   "makes": 1
+  },
+  {
+   "id": 2040900,
+   "name": "Shield DEF Scroll: Lesser",
+   "discipline": "Arcforge",
+   "craft_level": 5,
+   "fee": 10000,
+   "ingredients": [
+    {
+     "id": 4003009,
+     "name": "Processed Parchment",
+     "qty": 1
+    },
+    {
+     "id": 4000063,
+     "name": "Fragment of Magic",
+     "qty": 10
+    },
+    {
+     "id": 4020107,
+     "name": "Diamond",
+     "qty": 3
+    }
+   ],
+   "makes": 1
+  },
+  {
+   "id": 1382004,
+   "name": "Wizard Staff",
+   "discipline": "Arcforge",
+   "craft_level": 5,
+   "fee": 4500,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4010104,
+     "name": "Silver Ingot",
+     "qty": 5
+    },
+    {
+     "id": 4020106,
+     "name": "Topaz",
+     "qty": 1
+    },
+    {
+     "id": 4020101,
+     "name": "Amethyst",
+     "qty": 2
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 15
+    }
+   ]
+  },
+  {
+   "id": 4020108,
+   "name": "Black Crystal",
+   "discipline": "Arcforge",
+   "craft_level": 6,
+   "fee": 1200,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4020008,
+     "name": "Black Crystal Ore",
+     "qty": 1
+    }
+   ]
+  },
+  {
+   "id": 4020107,
+   "name": "Diamond",
+   "discipline": "Arcforge",
+   "craft_level": 6,
+   "fee": 1200,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4020007,
+     "name": "Diamond Ore",
+     "qty": 1
+    }
+   ]
+  },
+  {
+   "id": 1372004,
+   "name": "Mithril Wand",
+   "discipline": "Arcforge",
+   "craft_level": 6,
+   "fee": 5500,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4010102,
+     "name": "Mithril Ingot",
+     "qty": 6
+    },
+    {
+     "id": 4020102,
+     "name": "Aquamarine",
+     "qty": 4
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 18
+    }
+   ]
+  },
+  {
+   "id": 2040700,
+   "name": "Shoes Jump Scroll: Lesser",
+   "discipline": "Arcforge",
+   "craft_level": 6,
+   "fee": 10000,
+   "ingredients": [
+    {
+     "id": 4020102,
+     "name": "Aquamarine",
+     "qty": 3
+    },
+    {
+     "id": 4003009,
+     "name": "Processed Parchment",
+     "qty": 1
+    },
+    {
+     "id": 4000063,
+     "name": "Fragment of Magic",
+     "qty": 10
+    }
+   ],
+   "makes": 1
+  },
+  {
+   "id": 2040704,
+   "name": "Shoes Speed Scroll: Lesser",
+   "discipline": "Arcforge",
+   "craft_level": 6,
+   "fee": 10000,
+   "ingredients": [
+    {
+     "id": 4020101,
+     "name": "Amethyst",
+     "qty": 3
+    },
+    {
+     "id": 4003009,
+     "name": "Processed Parchment",
+     "qty": 1
+    },
+    {
+     "id": 4000063,
+     "name": "Fragment of Magic",
+     "qty": 10
+    }
+   ],
+   "makes": 1
+  },
+  {
+   "id": 2041004,
+   "name": "Cape Magic Def. Scroll: Lesser",
+   "discipline": "Arcforge",
+   "craft_level": 7,
+   "fee": 10000,
+   "ingredients": [
+    {
+     "id": 4020105,
+     "name": "Sapphire",
+     "qty": 3
+    },
+    {
+     "id": 4003009,
+     "name": "Processed Parchment",
+     "qty": 1
+    },
+    {
+     "id": 4000063,
+     "name": "Fragment of Magic",
+     "qty": 10
+    }
+   ],
+   "makes": 1
+  },
+  {
+   "id": 2041000,
+   "name": "Cape Weapon Def. Scroll: Lesser",
+   "discipline": "Arcforge",
+   "craft_level": 7,
+   "fee": 10000,
+   "ingredients": [
+    {
+     "id": 4020107,
+     "name": "Diamond",
+     "qty": 3
+    },
+    {
+     "id": 4003009,
+     "name": "Processed Parchment",
+     "qty": 1
+    },
+    {
+     "id": 4000063,
+     "name": "Fragment of Magic",
+     "qty": 10
+    }
+   ],
+   "makes": 1
+  },
+  {
+   "id": 1372005,
+   "name": "Wizard Wand",
+   "discipline": "Arcforge",
+   "craft_level": 7,
+   "fee": 7500,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4010102,
+     "name": "Mithril Ingot",
+     "qty": 7
+    },
+    {
+     "id": 4020106,
+     "name": "Topaz",
+     "qty": 5
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 21
+    }
+   ]
+  },
+  {
+   "id": 2040304,
+   "name": "Earring DEX Scroll: Lesser",
+   "discipline": "Arcforge",
+   "craft_level": 8,
+   "fee": 20000,
+   "ingredients": [
+    {
+     "id": 4020108,
+     "name": "Black Crystal",
+     "qty": 3
+    },
+    {
+     "id": 4003009,
+     "name": "Processed Parchment",
+     "qty": 1
+    },
+    {
+     "id": 4000063,
+     "name": "Fragment of Magic",
+     "qty": 10
+    }
+   ],
+   "makes": 1
+  },
+  {
+   "id": 2040308,
+   "name": "Earring INT Scroll: Lesser",
+   "discipline": "Arcforge",
+   "craft_level": 8,
+   "fee": 20000,
+   "ingredients": [
+    {
+     "id": 4020108,
+     "name": "Black Crystal",
+     "qty": 3
+    },
+    {
+     "id": 4003009,
+     "name": "Processed Parchment",
+     "qty": 1
+    },
+    {
+     "id": 4000063,
+     "name": "Fragment of Magic",
+     "qty": 10
+    }
+   ],
+   "makes": 1
+  },
+  {
+   "id": 1372006,
+   "name": "Fairy Wand",
+   "discipline": "Arcforge",
+   "craft_level": 8,
+   "fee": 9500,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4020106,
+     "name": "Topaz",
+     "qty": 8
+    },
+    {
+     "id": 4020105,
+     "name": "Sapphire",
+     "qty": 3
+    },
+    {
+     "id": 4020107,
+     "name": "Diamond",
+     "qty": 3
+    },
+    {
+     "id": 4003005,
+     "name": "Fairy Wing",
+     "qty": 1
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 24
+    }
+   ]
+  },
+  {
+   "id": 1382005,
+   "name": "Arc Staff",
+   "discipline": "Arcforge",
+   "craft_level": 9,
+   "fee": 11500,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4010104,
+     "name": "Silver Ingot",
+     "qty": 9
+    },
+    {
+     "id": 4020101,
+     "name": "Amethyst",
+     "qty": 4
+    },
+    {
+     "id": 4020105,
+     "name": "Sapphire",
+     "qty": 3
+    },
+    {
+     "id": 4003005,
+     "name": "Fairy Wing",
+     "qty": 1
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 27
+    }
+   ]
+  },
+  {
+   "id": 1372007,
+   "name": "Cromi",
+   "discipline": "Arcforge",
+   "craft_level": 10,
+   "fee": 13500,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4010102,
+     "name": "Mithril Ingot",
+     "qty": 10
+    },
+    {
+     "id": 4020106,
+     "name": "Topaz",
+     "qty": 4
+    },
+    {
+     "id": 4020103,
+     "name": "Emerald",
+     "qty": 4
+    },
+    {
+     "id": 4003004,
+     "name": "Piece of Ice",
+     "qty": 1
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 30
+    }
+   ]
+  },
+  {
+   "id": 1002000,
+   "name": "Brown Skullcap",
+   "discipline": "Leatherworking",
+   "craft_level": 1,
+   "fee": 300,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003006,
+     "name": "Processed Leather",
+     "qty": 1
+    },
+    {
+     "id": 4000004,
+     "name": "Red Snail Shell",
+     "qty": 5
+    },
+    {
+     "id": 4000001,
+     "name": "Snail Shell",
+     "qty": 5
+    },
+    {
+     "id": 4003007,
+     "name": "Spool of Thread",
+     "qty": 3
+    }
+   ]
+  },
+  {
+   "id": 1002001,
+   "name": "Green Skullcap",
+   "discipline": "Leatherworking",
+   "craft_level": 1,
+   "fee": 300,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003006,
+     "name": "Processed Leather",
+     "qty": 1
+    },
+    {
+     "id": 4000001,
+     "name": "Snail Shell",
+     "qty": 10
+    },
+    {
+     "id": 4003007,
+     "name": "Spool of Thread",
+     "qty": 3
+    }
+   ]
+  },
+  {
+   "id": 4003006,
+   "name": "Processed Leather",
+   "discipline": "Leatherworking",
+   "craft_level": 1,
+   "fee": 100,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4000049,
+     "name": "Leather",
+     "qty": 5
+    }
+   ]
+  },
+  {
+   "id": 1002002,
+   "name": "Red Skullcap",
+   "discipline": "Leatherworking",
+   "craft_level": 1,
+   "fee": 300,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003006,
+     "name": "Processed Leather",
+     "qty": 1
+    },
+    {
+     "id": 4000004,
+     "name": "Red Snail Shell",
+     "qty": 10
+    },
+    {
+     "id": 4003007,
+     "name": "Spool of Thread",
+     "qty": 3
+    }
+   ]
+  },
+  {
+   "id": 1002022,
+   "name": "Brown Winter Hat",
+   "discipline": "Leatherworking",
+   "craft_level": 2,
+   "fee": 600,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003006,
+     "name": "Processed Leather",
+     "qty": 2
+    },
+    {
+     "id": 4000009,
+     "name": "Orange Mushroom Cap",
+     "qty": 10
+    },
+    {
+     "id": 4003007,
+     "name": "Spool of Thread",
+     "qty": 6
+    }
+   ]
+  },
+  {
+   "id": 1002023,
+   "name": "Green Winter Hat",
+   "discipline": "Leatherworking",
+   "craft_level": 2,
+   "fee": 600,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003006,
+     "name": "Processed Leather",
+     "qty": 2
+    },
+    {
+     "id": 4000011,
+     "name": "Leaf",
+     "qty": 10
+    },
+    {
+     "id": 4003007,
+     "name": "Spool of Thread",
+     "qty": 6
+    }
+   ]
+  },
+  {
+   "id": 1322002,
+   "name": "Leather Purse",
+   "discipline": "Leatherworking",
+   "craft_level": 2,
+   "fee": 1900,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003006,
+     "name": "Processed Leather",
+     "qty": 4
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 6
+    },
+    {
+     "id": 4003007,
+     "name": "Spool of Thread",
+     "qty": 6
+    }
+   ]
+  },
+  {
+   "id": 1082004,
+   "name": "Basic Archer Gloves",
+   "discipline": "Leatherworking",
+   "craft_level": 3,
+   "fee": 1800,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003006,
+     "name": "Processed Leather",
+     "qty": 3
+    },
+    {
+     "id": 4000016,
+     "name": "Blue Mushroom Cap",
+     "qty": 15
+    },
+    {
+     "id": 4003007,
+     "name": "Spool of Thread",
+     "qty": 9
+    }
+   ]
+  },
+  {
+   "id": 1082007,
+   "name": "Black Duo",
+   "discipline": "Leatherworking",
+   "craft_level": 3,
+   "fee": 1800,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003006,
+     "name": "Processed Leather",
+     "qty": 3
+    },
+    {
+     "id": 4000017,
+     "name": "Stirge Wing",
+     "qty": 15
+    },
+    {
+     "id": 4003007,
+     "name": "Spool of Thread",
+     "qty": 9
+    }
+   ]
+  },
+  {
+   "id": 1082006,
+   "name": "Blue Duo",
+   "discipline": "Leatherworking",
+   "craft_level": 3,
+   "fee": 1800,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003006,
+     "name": "Processed Leather",
+     "qty": 3
+    },
+    {
+     "id": 4000016,
+     "name": "Blue Mushroom Cap",
+     "qty": 15
+    },
+    {
+     "id": 4003007,
+     "name": "Spool of Thread",
+     "qty": 9
+    }
+   ]
+  },
+  {
+   "id": 1082005,
+   "name": "Brown Duo",
+   "discipline": "Leatherworking",
+   "craft_level": 3,
+   "fee": 1800,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003006,
+     "name": "Processed Leather",
+     "qty": 3
+    },
+    {
+     "id": 4010100,
+     "name": "Bronze Ingot",
+     "qty": 1
+    },
+    {
+     "id": 4003007,
+     "name": "Spool of Thread",
+     "qty": 9
+    }
+   ]
+  },
+  {
+   "id": 3030004,
+   "name": "Leatherworking Station",
+   "discipline": "Leatherworking",
+   "craft_level": 3,
+   "fee": 100000,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003006,
+     "name": "Processed Leather",
+     "qty": 10
+    },
+    {
+     "id": 4003001,
+     "name": "Processed Wood",
+     "qty": 20
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 20
+    }
+   ]
+  },
+  {
+   "id": 1082012,
+   "name": "Blue Diros",
+   "discipline": "Leatherworking",
+   "craft_level": 4,
+   "fee": 2400,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003006,
+     "name": "Processed Leather",
+     "qty": 4
+    },
+    {
+     "id": 4020105,
+     "name": "Sapphire",
+     "qty": 2
+    },
+    {
+     "id": 4003007,
+     "name": "Spool of Thread",
+     "qty": 12
+    }
+   ]
+  },
+  {
+   "id": 1082015,
+   "name": "Bronze Mischief",
+   "discipline": "Leatherworking",
+   "craft_level": 4,
+   "fee": 2400,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003006,
+     "name": "Processed Leather",
+     "qty": 4
+    },
+    {
+     "id": 4010100,
+     "name": "Bronze Ingot",
+     "qty": 2
+    },
+    {
+     "id": 4003007,
+     "name": "Spool of Thread",
+     "qty": 12
+    }
+   ]
+  },
+  {
+   "id": 1082017,
+   "name": "Dark Mischief",
+   "discipline": "Leatherworking",
+   "craft_level": 4,
+   "fee": 2400,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003006,
+     "name": "Processed Leather",
+     "qty": 4
+    },
+    {
+     "id": 4000017,
+     "name": "Stirge Wing",
+     "qty": 20
+    },
+    {
+     "id": 4003007,
+     "name": "Spool of Thread",
+     "qty": 12
+    }
+   ]
+  },
+  {
+   "id": 1082014,
+   "name": "Green Diros",
+   "discipline": "Leatherworking",
+   "craft_level": 4,
+   "fee": 2400,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003006,
+     "name": "Processed Leather",
+     "qty": 4
+    },
+    {
+     "id": 4000013,
+     "name": "Green Mushroom Cap",
+     "qty": 20
+    },
+    {
+     "id": 4003007,
+     "name": "Spool of Thread",
+     "qty": 12
+    }
+   ]
+  },
+  {
+   "id": 1082016,
+   "name": "Mithril Mischief",
+   "discipline": "Leatherworking",
+   "craft_level": 4,
+   "fee": 2400,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003006,
+     "name": "Processed Leather",
+     "qty": 4
+    },
+    {
+     "id": 4010102,
+     "name": "Mithril Ingot",
+     "qty": 2
+    },
+    {
+     "id": 4003007,
+     "name": "Spool of Thread",
+     "qty": 12
+    }
+   ]
+  },
+  {
+   "id": 4003006,
+   "name": "Processed Leather",
+   "discipline": "Leatherworking",
+   "craft_level": 4,
+   "fee": 400,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4000018,
+     "name": "Jr. Necki Skin",
+     "qty": 10
+    }
+   ]
+  },
+  {
+   "id": 1082013,
+   "name": "Red Diros",
+   "discipline": "Leatherworking",
+   "craft_level": 4,
+   "fee": 2400,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003006,
+     "name": "Processed Leather",
+     "qty": 4
+    },
+    {
+     "id": 4020100,
+     "name": "Garnet",
+     "qty": 2
+    },
+    {
+     "id": 4003007,
+     "name": "Spool of Thread",
+     "qty": 12
+    }
+   ]
+  },
+  {
+   "id": 1072057,
+   "name": "Black Lappy Boots",
+   "discipline": "Leatherworking",
+   "craft_level": 5,
+   "fee": 1500,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003006,
+     "name": "Processed Leather",
+     "qty": 5
+    },
+    {
+     "id": 4000017,
+     "name": "Stirge Wing",
+     "qty": 25
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 15
+    }
+   ]
+  },
+  {
+   "id": 1072054,
+   "name": "Blue Lappy Boots",
+   "discipline": "Leatherworking",
+   "craft_level": 5,
+   "fee": 1500,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003006,
+     "name": "Processed Leather",
+     "qty": 5
+    },
+    {
+     "id": 4020105,
+     "name": "Sapphire",
+     "qty": 3
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 15
+    }
+   ]
+  },
+  {
+   "id": 1082022,
+   "name": "Blue Savata",
+   "discipline": "Leatherworking",
+   "craft_level": 5,
+   "fee": 3000,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003006,
+     "name": "Processed Leather",
+     "qty": 5
+    },
+    {
+     "id": 4020105,
+     "name": "Sapphire",
+     "qty": 3
+    },
+    {
+     "id": 4003007,
+     "name": "Spool of Thread",
+     "qty": 15
+    }
+   ]
+  },
+  {
+   "id": 1082025,
+   "name": "Bronze Wolfskin",
+   "discipline": "Leatherworking",
+   "craft_level": 5,
+   "fee": 3000,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003006,
+     "name": "Processed Leather",
+     "qty": 5
+    },
+    {
+     "id": 4010100,
+     "name": "Bronze Ingot",
+     "qty": 3
+    },
+    {
+     "id": 4003007,
+     "name": "Spool of Thread",
+     "qty": 15
+    }
+   ]
+  },
+  {
+   "id": 1072051,
+   "name": "Brown Jack Boots",
+   "discipline": "Leatherworking",
+   "craft_level": 5,
+   "fee": 1500,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003006,
+     "name": "Processed Leather",
+     "qty": 5
+    },
+    {
+     "id": 4010100,
+     "name": "Bronze Ingot",
+     "qty": 3
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 15
+    }
+   ]
+  },
+  {
+   "id": 1082024,
+   "name": "Dark Savata",
+   "discipline": "Leatherworking",
+   "craft_level": 5,
+   "fee": 3000,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003006,
+     "name": "Processed Leather",
+     "qty": 5
+    },
+    {
+     "id": 4020108,
+     "name": "Black Crystal",
+     "qty": 3
+    },
+    {
+     "id": 4003007,
+     "name": "Spool of Thread",
+     "qty": 15
+    }
+   ]
+  },
+  {
+   "id": 1082027,
+   "name": "Dark Wolfskin",
+   "discipline": "Leatherworking",
+   "craft_level": 5,
+   "fee": 3000,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003006,
+     "name": "Processed Leather",
+     "qty": 5
+    },
+    {
+     "id": 4000017,
+     "name": "Stirge Wing",
+     "qty": 25
+    },
+    {
+     "id": 4003007,
+     "name": "Spool of Thread",
+     "qty": 15
+    }
+   ]
+  },
+  {
+   "id": 1072052,
+   "name": "Green Jack Boots",
+   "discipline": "Leatherworking",
+   "craft_level": 5,
+   "fee": 1500,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003006,
+     "name": "Processed Leather",
+     "qty": 5
+    },
+    {
+     "id": 4000018,
+     "name": "Jr. Necki Skin",
+     "qty": 25
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 15
+    }
+   ]
+  },
+  {
+   "id": 1072056,
+   "name": "Green Lappy Boots",
+   "discipline": "Leatherworking",
+   "craft_level": 5,
+   "fee": 1500,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003006,
+     "name": "Processed Leather",
+     "qty": 5
+    },
+    {
+     "id": 4000018,
+     "name": "Jr. Necki Skin",
+     "qty": 25
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 15
+    }
+   ]
+  },
+  {
+   "id": 1082026,
+   "name": "Mithril Wolfskin",
+   "discipline": "Leatherworking",
+   "craft_level": 5,
+   "fee": 3000,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003006,
+     "name": "Processed Leather",
+     "qty": 5
+    },
+    {
+     "id": 4010102,
+     "name": "Mithril Ingot",
+     "qty": 3
+    },
+    {
+     "id": 4003007,
+     "name": "Spool of Thread",
+     "qty": 15
+    }
+   ]
+  },
+  {
+   "id": 3010005,
+   "name": "Red Chair",
+   "discipline": "Leatherworking",
+   "craft_level": 5,
+   "fee": 5000,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003006,
+     "name": "Processed Leather",
+     "qty": 8
+    },
+    {
+     "id": 4010101,
+     "name": "Iron Ingot",
+     "qty": 2
+    },
+    {
+     "id": 4003008,
+     "name": "Processed Cloth",
+     "qty": 5
+    },
+    {
+     "id": 4003012,
+     "name": "Red Dye",
+     "qty": 3
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 20
+    }
+   ]
+  },
+  {
+   "id": 1072053,
+   "name": "Red Jack Boots",
+   "discipline": "Leatherworking",
+   "craft_level": 5,
+   "fee": 1500,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003006,
+     "name": "Processed Leather",
+     "qty": 5
+    },
+    {
+     "id": 4020100,
+     "name": "Garnet",
+     "qty": 3
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 15
+    }
+   ]
+  },
+  {
+   "id": 1072055,
+   "name": "Red Lappy Boots",
+   "discipline": "Leatherworking",
+   "craft_level": 5,
+   "fee": 1500,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003006,
+     "name": "Processed Leather",
+     "qty": 5
+    },
+    {
+     "id": 4020100,
+     "name": "Garnet",
+     "qty": 3
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 15
+    }
+   ]
+  },
+  {
+   "id": 1082023,
+   "name": "Red Savata",
+   "discipline": "Leatherworking",
+   "craft_level": 5,
+   "fee": 3000,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003006,
+     "name": "Processed Leather",
+     "qty": 5
+    },
+    {
+     "id": 4020100,
+     "name": "Garnet",
+     "qty": 3
+    },
+    {
+     "id": 4003007,
+     "name": "Spool of Thread",
+     "qty": 15
+    }
+   ]
+  },
+  {
+   "id": 1072073,
+   "name": "Black Hunter Boots",
+   "discipline": "Leatherworking",
+   "craft_level": 6,
+   "fee": 1800,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003006,
+     "name": "Processed Leather",
+     "qty": 6
+    },
+    {
+     "id": 4020104,
+     "name": "Opal",
+     "qty": 4
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 18
+    }
+   ]
+  },
+  {
+   "id": 1082036,
+   "name": "Black Marker",
+   "discipline": "Leatherworking",
+   "craft_level": 6,
+   "fee": 3600,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003006,
+     "name": "Processed Leather",
+     "qty": 6
+    },
+    {
+     "id": 4010106,
+     "name": "Gold Ingot",
+     "qty": 1
+    },
+    {
+     "id": 4020108,
+     "name": "Black Crystal",
+     "qty": 3
+    },
+    {
+     "id": 4003007,
+     "name": "Spool of Thread",
+     "qty": 18
+    }
+   ]
+  },
+  {
+   "id": 1072071,
+   "name": "Blue Hunter Boots",
+   "discipline": "Leatherworking",
+   "craft_level": 6,
+   "fee": 1800,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003006,
+     "name": "Processed Leather",
+     "qty": 6
+    },
+    {
+     "id": 4020105,
+     "name": "Sapphire",
+     "qty": 4
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 18
+    }
+   ]
+  },
+  {
+   "id": 1072075,
+   "name": "Bronze Chain Boots",
+   "discipline": "Leatherworking",
+   "craft_level": 6,
+   "fee": 1800,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003006,
+     "name": "Processed Leather",
+     "qty": 6
+    },
+    {
+     "id": 4010100,
+     "name": "Bronze Ingot",
+     "qty": 4
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 18
+    }
+   ]
+  },
+  {
+   "id": 1072074,
+   "name": "Brown Hunter Boots",
+   "discipline": "Leatherworking",
+   "craft_level": 6,
+   "fee": 1800,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003006,
+     "name": "Processed Leather",
+     "qty": 6
+    },
+    {
+     "id": 4010100,
+     "name": "Bronze Ingot",
+     "qty": 4
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 18
+    }
+   ]
+  },
+  {
+   "id": 1082034,
+   "name": "Brown Marker",
+   "discipline": "Leatherworking",
+   "craft_level": 6,
+   "fee": 3600,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003006,
+     "name": "Processed Leather",
+     "qty": 6
+    },
+    {
+     "id": 4010106,
+     "name": "Gold Ingot",
+     "qty": 1
+    },
+    {
+     "id": 4000024,
+     "name": "Fairy's Tentacle",
+     "qty": 30
+    },
+    {
+     "id": 4003007,
+     "name": "Spool of Thread",
+     "qty": 18
+    }
+   ]
+  },
+  {
+   "id": 1072078,
+   "name": "Gold Chain Boots",
+   "discipline": "Leatherworking",
+   "craft_level": 6,
+   "fee": 1800,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003006,
+     "name": "Processed Leather",
+     "qty": 6
+    },
+    {
+     "id": 4010106,
+     "name": "Gold Ingot",
+     "qty": 4
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 18
+    }
+   ]
+  },
+  {
+   "id": 1082039,
+   "name": "Gold Sylvia",
+   "discipline": "Leatherworking",
+   "craft_level": 6,
+   "fee": 3600,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003006,
+     "name": "Processed Leather",
+     "qty": 6
+    },
+    {
+     "id": 4010106,
+     "name": "Gold Ingot",
+     "qty": 4
+    },
+    {
+     "id": 4003007,
+     "name": "Spool of Thread",
+     "qty": 18
+    }
+   ]
+  },
+  {
+   "id": 1072072,
+   "name": "Green Hunter Boots",
+   "discipline": "Leatherworking",
+   "craft_level": 6,
+   "fee": 1800,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003006,
+     "name": "Processed Leather",
+     "qty": 6
+    },
+    {
+     "id": 4000027,
+     "name": "Curse Eye Tail",
+     "qty": 30
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 18
+    }
+   ]
+  },
+  {
+   "id": 1082035,
+   "name": "Green Marker",
+   "discipline": "Leatherworking",
+   "craft_level": 6,
+   "fee": 3600,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003006,
+     "name": "Processed Leather",
+     "qty": 6
+    },
+    {
+     "id": 4010106,
+     "name": "Gold Ingot",
+     "qty": 1
+    },
+    {
+     "id": 4000013,
+     "name": "Green Mushroom Cap",
+     "qty": 30
+    },
+    {
+     "id": 4003007,
+     "name": "Spool of Thread",
+     "qty": 18
+    }
+   ]
+  },
+  {
+   "id": 1072076,
+   "name": "Iron Chain Boots",
+   "discipline": "Leatherworking",
+   "craft_level": 6,
+   "fee": 1800,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003006,
+     "name": "Processed Leather",
+     "qty": 6
+    },
+    {
+     "id": 4010101,
+     "name": "Iron Ingot",
+     "qty": 4
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 18
+    }
+   ]
+  },
+  {
+   "id": 4003006,
+   "name": "Processed Leather",
+   "discipline": "Leatherworking",
+   "craft_level": 6,
+   "fee": 600,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4000025,
+     "name": "Ligator Skin",
+     "qty": 10
+    }
+   ]
+  },
+  {
+   "id": 1072070,
+   "name": "Red Hunter Boots",
+   "discipline": "Leatherworking",
+   "craft_level": 6,
+   "fee": 1800,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003006,
+     "name": "Processed Leather",
+     "qty": 6
+    },
+    {
+     "id": 4020100,
+     "name": "Garnet",
+     "qty": 4
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 18
+    }
+   ]
+  },
+  {
+   "id": 1072077,
+   "name": "Silver Chain Boots",
+   "discipline": "Leatherworking",
+   "craft_level": 6,
+   "fee": 1800,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003006,
+     "name": "Processed Leather",
+     "qty": 6
+    },
+    {
+     "id": 4010104,
+     "name": "Silver Ingot",
+     "qty": 4
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 18
+    }
+   ]
+  },
+  {
+   "id": 1082038,
+   "name": "Silver Sylvia",
+   "discipline": "Leatherworking",
+   "craft_level": 6,
+   "fee": 3600,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003006,
+     "name": "Processed Leather",
+     "qty": 6
+    },
+    {
+     "id": 4010104,
+     "name": "Silver Ingot",
+     "qty": 4
+    },
+    {
+     "id": 4003007,
+     "name": "Spool of Thread",
+     "qty": 18
+    }
+   ]
+  },
+  {
+   "id": 1082037,
+   "name": "Steel Sylvia",
+   "discipline": "Leatherworking",
+   "craft_level": 6,
+   "fee": 3600,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003006,
+     "name": "Processed Leather",
+     "qty": 6
+    },
+    {
+     "id": 4010101,
+     "name": "Iron Ingot",
+     "qty": 4
+    },
+    {
+     "id": 4003007,
+     "name": "Spool of Thread",
+     "qty": 18
+    }
+   ]
+  },
+  {
+   "id": 1072093,
+   "name": "Blue Silky Boots",
+   "discipline": "Leatherworking",
+   "craft_level": 7,
+   "fee": 3000,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003006,
+     "name": "Processed Leather",
+     "qty": 7
+    },
+    {
+     "id": 4020102,
+     "name": "Aquamarine",
+     "qty": 5
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 21
+    }
+   ]
+  },
+  {
+   "id": 1072095,
+   "name": "Blue White-Lined Boots",
+   "discipline": "Leatherworking",
+   "craft_level": 7,
+   "fee": 3000,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003006,
+     "name": "Processed Leather",
+     "qty": 7
+    },
+    {
+     "id": 4020102,
+     "name": "Aquamarine",
+     "qty": 5
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 21
+    }
+   ]
+  },
+  {
+   "id": 1082046,
+   "name": "Bronze Scaler",
+   "discipline": "Leatherworking",
+   "craft_level": 7,
+   "fee": 6000,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003006,
+     "name": "Processed Leather",
+     "qty": 7
+    },
+    {
+     "id": 4010100,
+     "name": "Bronze Ingot",
+     "qty": 5
+    },
+    {
+     "id": 4003007,
+     "name": "Spool of Thread",
+     "qty": 21
+    }
+   ]
+  },
+  {
+   "id": 1082049,
+   "name": "Gold Arbion",
+   "discipline": "Leatherworking",
+   "craft_level": 7,
+   "fee": 6000,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003006,
+     "name": "Processed Leather",
+     "qty": 7
+    },
+    {
+     "id": 4010106,
+     "name": "Gold Ingot",
+     "qty": 5
+    },
+    {
+     "id": 4003007,
+     "name": "Spool of Thread",
+     "qty": 21
+    }
+   ]
+  },
+  {
+   "id": 1082048,
+   "name": "Gold Scaler",
+   "discipline": "Leatherworking",
+   "craft_level": 7,
+   "fee": 6000,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003006,
+     "name": "Processed Leather",
+     "qty": 7
+    },
+    {
+     "id": 4010106,
+     "name": "Gold Ingot",
+     "qty": 5
+    },
+    {
+     "id": 4003007,
+     "name": "Spool of Thread",
+     "qty": 21
+    }
+   ]
+  },
+  {
+   "id": 1072091,
+   "name": "Green Silky Boots",
+   "discipline": "Leatherworking",
+   "craft_level": 7,
+   "fee": 3000,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003006,
+     "name": "Processed Leather",
+     "qty": 7
+    },
+    {
+     "id": 4000027,
+     "name": "Curse Eye Tail",
+     "qty": 35
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 21
+    }
+   ]
+  },
+  {
+   "id": 1072096,
+   "name": "Green White-Lined Boots",
+   "discipline": "Leatherworking",
+   "craft_level": 7,
+   "fee": 3000,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003006,
+     "name": "Processed Leather",
+     "qty": 7
+    },
+    {
+     "id": 4020103,
+     "name": "Emerald",
+     "qty": 5
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 21
+    }
+   ]
+  },
+  {
+   "id": 1082047,
+   "name": "Mithril Scaler",
+   "discipline": "Leatherworking",
+   "craft_level": 7,
+   "fee": 6000,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003006,
+     "name": "Processed Leather",
+     "qty": 7
+    },
+    {
+     "id": 4010102,
+     "name": "Mithril Ingot",
+     "qty": 5
+    },
+    {
+     "id": 4003007,
+     "name": "Spool of Thread",
+     "qty": 21
+    }
+   ]
+  },
+  {
+   "id": 1082051,
+   "name": "Orihalcon Arbion",
+   "discipline": "Leatherworking",
+   "craft_level": 7,
+   "fee": 6000,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003006,
+     "name": "Processed Leather",
+     "qty": 7
+    },
+    {
+     "id": 4010105,
+     "name": "Orihalcon Ingot",
+     "qty": 5
+    },
+    {
+     "id": 4003007,
+     "name": "Spool of Thread",
+     "qty": 21
+    }
+   ]
+  },
+  {
+   "id": 1072092,
+   "name": "Red Silky Boots",
+   "discipline": "Leatherworking",
+   "craft_level": 7,
+   "fee": 3000,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003006,
+     "name": "Processed Leather",
+     "qty": 7
+    },
+    {
+     "id": 4000032,
+     "name": "Lorang Claw",
+     "qty": 35
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 21
+    }
+   ]
+  },
+  {
+   "id": 1072094,
+   "name": "Red White-Lined Boots",
+   "discipline": "Leatherworking",
+   "craft_level": 7,
+   "fee": 3000,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003006,
+     "name": "Processed Leather",
+     "qty": 7
+    },
+    {
+     "id": 4020100,
+     "name": "Garnet",
+     "qty": 5
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 21
+    }
+   ]
+  },
+  {
+   "id": 1082050,
+   "name": "Steel Arbion",
+   "discipline": "Leatherworking",
+   "craft_level": 7,
+   "fee": 6000,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003006,
+     "name": "Processed Leather",
+     "qty": 7
+    },
+    {
+     "id": 4010101,
+     "name": "Iron Ingot",
+     "qty": 5
+    },
+    {
+     "id": 4003007,
+     "name": "Spool of Thread",
+     "qty": 21
+    }
+   ]
+  },
+  {
+   "id": 1082058,
+   "name": "Aqua Brace",
+   "discipline": "Leatherworking",
+   "craft_level": 8,
+   "fee": 8400,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003006,
+     "name": "Processed Leather",
+     "qty": 8
+    },
+    {
+     "id": 4010101,
+     "name": "Iron Ingot",
+     "qty": 6
+    },
+    {
+     "id": 4020102,
+     "name": "Aquamarine",
+     "qty": 1
+    },
+    {
+     "id": 4003007,
+     "name": "Spool of Thread",
+     "qty": 24
+    }
+   ]
+  },
+  {
+   "id": 1072109,
+   "name": "Black Blue-Lined Shoes",
+   "discipline": "Leatherworking",
+   "craft_level": 8,
+   "fee": 4200,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003006,
+     "name": "Processed Leather",
+     "qty": 8
+    },
+    {
+     "id": 4020105,
+     "name": "Sapphire",
+     "qty": 6
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 24
+    }
+   ]
+  },
+  {
+   "id": 1072110,
+   "name": "Black Green-Lined Shoes",
+   "discipline": "Leatherworking",
+   "craft_level": 8,
+   "fee": 4200,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003006,
+     "name": "Processed Leather",
+     "qty": 8
+    },
+    {
+     "id": 4020103,
+     "name": "Emerald",
+     "qty": 6
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 24
+    }
+   ]
+  },
+  {
+   "id": 1072108,
+   "name": "Black Red-Lined Shoes",
+   "discipline": "Leatherworking",
+   "craft_level": 8,
+   "fee": 4200,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003006,
+     "name": "Processed Leather",
+     "qty": 8
+    },
+    {
+     "id": 4020100,
+     "name": "Garnet",
+     "qty": 6
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 24
+    }
+   ]
+  },
+  {
+   "id": 1072111,
+   "name": "Black Yellow-Lined Shoes",
+   "discipline": "Leatherworking",
+   "craft_level": 8,
+   "fee": 4200,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003006,
+     "name": "Processed Leather",
+     "qty": 8
+    },
+    {
+     "id": 4020106,
+     "name": "Topaz",
+     "qty": 6
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 24
+    }
+   ]
+  },
+  {
+   "id": 1072107,
+   "name": "Blue Pierre Shoes",
+   "discipline": "Leatherworking",
+   "craft_level": 8,
+   "fee": 4200,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003006,
+     "name": "Processed Leather",
+     "qty": 8
+    },
+    {
+     "id": 4020102,
+     "name": "Aquamarine",
+     "qty": 6
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 24
+    }
+   ]
+  },
+  {
+   "id": 1072104,
+   "name": "Brown Pierre Shoes",
+   "discipline": "Leatherworking",
+   "craft_level": 8,
+   "fee": 4200,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003006,
+     "name": "Processed Leather",
+     "qty": 8
+    },
+    {
+     "id": 4000033,
+     "name": "Cursed Doll",
+     "qty": 40
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 24
+    }
+   ]
+  },
+  {
+   "id": 1082060,
+   "name": "Dark Brace",
+   "discipline": "Leatherworking",
+   "craft_level": 8,
+   "fee": 8400,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003006,
+     "name": "Processed Leather",
+     "qty": 8
+    },
+    {
+     "id": 4010104,
+     "name": "Silver Ingot",
+     "qty": 6
+    },
+    {
+     "id": 4020108,
+     "name": "Black Crystal",
+     "qty": 1
+    },
+    {
+     "id": 4003007,
+     "name": "Spool of Thread",
+     "qty": 24
+    }
+   ]
+  },
+  {
+   "id": 1082063,
+   "name": "Dark Cleave",
+   "discipline": "Leatherworking",
+   "craft_level": 8,
+   "fee": 8400,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003006,
+     "name": "Processed Leather",
+     "qty": 8
+    },
+    {
+     "id": 4020108,
+     "name": "Black Crystal",
+     "qty": 6
+    },
+    {
+     "id": 4000036,
+     "name": "Drake Skull",
+     "qty": 40
+    },
+    {
+     "id": 4003007,
+     "name": "Spool of Thread",
+     "qty": 24
+    }
+   ]
+  },
+  {
+   "id": 1082059,
+   "name": "Gold Brace",
+   "discipline": "Leatherworking",
+   "craft_level": 8,
+   "fee": 8400,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003006,
+     "name": "Processed Leather",
+     "qty": 8
+    },
+    {
+     "id": 4010106,
+     "name": "Gold Ingot",
+     "qty": 6
+    },
+    {
+     "id": 4020100,
+     "name": "Garnet",
+     "qty": 1
+    },
+    {
+     "id": 4003007,
+     "name": "Spool of Thread",
+     "qty": 24
+    }
+   ]
+  },
+  {
+   "id": 1082062,
+   "name": "Gold Cleave",
+   "discipline": "Leatherworking",
+   "craft_level": 8,
+   "fee": 8400,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003006,
+     "name": "Processed Leather",
+     "qty": 8
+    },
+    {
+     "id": 4010106,
+     "name": "Gold Ingot",
+     "qty": 6
+    },
+    {
+     "id": 4000036,
+     "name": "Drake Skull",
+     "qty": 40
+    },
+    {
+     "id": 4003007,
+     "name": "Spool of Thread",
+     "qty": 24
+    }
+   ]
+  },
+  {
+   "id": 1082061,
+   "name": "Red Cleave",
+   "discipline": "Leatherworking",
+   "craft_level": 8,
+   "fee": 8400,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003006,
+     "name": "Processed Leather",
+     "qty": 8
+    },
+    {
+     "id": 4020100,
+     "name": "Garnet",
+     "qty": 6
+    },
+    {
+     "id": 4000036,
+     "name": "Drake Skull",
+     "qty": 40
+    },
+    {
+     "id": 4003007,
+     "name": "Spool of Thread",
+     "qty": 24
+    }
+   ]
+  },
+  {
+   "id": 1072106,
+   "name": "Red Pierre Shoes",
+   "discipline": "Leatherworking",
+   "craft_level": 8,
+   "fee": 4200,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003006,
+     "name": "Processed Leather",
+     "qty": 8
+    },
+    {
+     "id": 4020100,
+     "name": "Garnet",
+     "qty": 6
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 24
+    }
+   ]
+  },
+  {
+   "id": 1072105,
+   "name": "Yellow Pierre Shoes",
+   "discipline": "Leatherworking",
+   "craft_level": 8,
+   "fee": 4200,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003006,
+     "name": "Processed Leather",
+     "qty": 8
+    },
+    {
+     "id": 4020106,
+     "name": "Topaz",
+     "qty": 6
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 24
+    }
+   ]
+  },
+  {
+   "id": 4003006,
+   "name": "Processed Leather",
+   "discipline": "Leatherworking",
+   "craft_level": 9,
+   "fee": 900,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4000041,
+     "name": "Croco Skin",
+     "qty": 10
+    }
+   ]
+  },
+  {
+   "id": 1072125,
+   "name": "Blue Goni Shoes",
+   "discipline": "Leatherworking",
+   "craft_level": 10,
+   "fee": 6600,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003006,
+     "name": "Processed Leather",
+     "qty": 10
+    },
+    {
+     "id": 4020105,
+     "name": "Sapphire",
+     "qty": 8
+    },
+    {
+     "id": 4000050,
+     "name": "Dragon Skin",
+     "qty": 30
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 30
+    }
+   ]
+  },
+  {
+   "id": 1082074,
+   "name": "Blue Moon Gloves",
+   "discipline": "Leatherworking",
+   "craft_level": 10,
+   "fee": 13200,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003006,
+     "name": "Processed Leather",
+     "qty": 10
+    },
+    {
+     "id": 4020105,
+     "name": "Sapphire",
+     "qty": 8
+    },
+    {
+     "id": 4000050,
+     "name": "Dragon Skin",
+     "qty": 30
+    },
+    {
+     "id": 4003007,
+     "name": "Spool of Thread",
+     "qty": 30
+    }
+   ]
+  },
+  {
+   "id": 1072123,
+   "name": "Blue Steel-Tip Boots",
+   "discipline": "Leatherworking",
+   "craft_level": 10,
+   "fee": 6600,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003006,
+     "name": "Processed Leather",
+     "qty": 10
+    },
+    {
+     "id": 4020105,
+     "name": "Sapphire",
+     "qty": 8
+    },
+    {
+     "id": 4000050,
+     "name": "Dragon Skin",
+     "qty": 30
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 30
+    }
+   ]
+  },
+  {
+   "id": 1082071,
+   "name": "Blue Willow",
+   "discipline": "Leatherworking",
+   "craft_level": 10,
+   "fee": 13200,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003006,
+     "name": "Processed Leather",
+     "qty": 10
+    },
+    {
+     "id": 4010104,
+     "name": "Silver Ingot",
+     "qty": 8
+    },
+    {
+     "id": 4000050,
+     "name": "Dragon Skin",
+     "qty": 30
+    },
+    {
+     "id": 4003007,
+     "name": "Spool of Thread",
+     "qty": 30
+    }
+   ]
+  },
+  {
+   "id": 1082075,
+   "name": "Brown Moon Gloves",
+   "discipline": "Leatherworking",
+   "craft_level": 10,
+   "fee": 13200,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003006,
+     "name": "Processed Leather",
+     "qty": 10
+    },
+    {
+     "id": 4020106,
+     "name": "Topaz",
+     "qty": 8
+    },
+    {
+     "id": 4000050,
+     "name": "Dragon Skin",
+     "qty": 30
+    },
+    {
+     "id": 4003007,
+     "name": "Spool of Thread",
+     "qty": 30
+    }
+   ]
+  },
+  {
+   "id": 1072120,
+   "name": "Brown Steel-Tip Boots",
+   "discipline": "Leatherworking",
+   "craft_level": 10,
+   "fee": 6600,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003006,
+     "name": "Processed Leather",
+     "qty": 10
+    },
+    {
+     "id": 4000040,
+     "name": "Clang Claw",
+     "qty": 50
+    },
+    {
+     "id": 4000050,
+     "name": "Dragon Skin",
+     "qty": 30
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 30
+    }
+   ]
+  },
+  {
+   "id": 1082072,
+   "name": "Dark Willow",
+   "discipline": "Leatherworking",
+   "craft_level": 10,
+   "fee": 13200,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003006,
+     "name": "Processed Leather",
+     "qty": 10
+    },
+    {
+     "id": 4010106,
+     "name": "Gold Ingot",
+     "qty": 8
+    },
+    {
+     "id": 4000050,
+     "name": "Dragon Skin",
+     "qty": 30
+    },
+    {
+     "id": 4003007,
+     "name": "Spool of Thread",
+     "qty": 30
+    }
+   ]
+  },
+  {
+   "id": 1072127,
+   "name": "Green Goni Shoes",
+   "discipline": "Leatherworking",
+   "craft_level": 10,
+   "fee": 6600,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003006,
+     "name": "Processed Leather",
+     "qty": 10
+    },
+    {
+     "id": 4020103,
+     "name": "Emerald",
+     "qty": 8
+    },
+    {
+     "id": 4000050,
+     "name": "Dragon Skin",
+     "qty": 30
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 30
+    }
+   ]
+  },
+  {
+   "id": 1072121,
+   "name": "Green Steel-Tip Boots",
+   "discipline": "Leatherworking",
+   "craft_level": 10,
+   "fee": 6600,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003006,
+     "name": "Processed Leather",
+     "qty": 10
+    },
+    {
+     "id": 4000037,
+     "name": "Tortie Shell",
+     "qty": 50
+    },
+    {
+     "id": 4000050,
+     "name": "Dragon Skin",
+     "qty": 30
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 30
+    }
+   ]
+  },
+  {
+   "id": 1072126,
+   "name": "Purple Goni Shoes",
+   "discipline": "Leatherworking",
+   "craft_level": 10,
+   "fee": 6600,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003006,
+     "name": "Processed Leather",
+     "qty": 10
+    },
+    {
+     "id": 4020101,
+     "name": "Amethyst",
+     "qty": 8
+    },
+    {
+     "id": 4000050,
+     "name": "Dragon Skin",
+     "qty": 30
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 30
+    }
+   ]
+  },
+  {
+   "id": 1072122,
+   "name": "Purple Steel-Tip Boots",
+   "discipline": "Leatherworking",
+   "craft_level": 10,
+   "fee": 6600,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003006,
+     "name": "Processed Leather",
+     "qty": 10
+    },
+    {
+     "id": 4010105,
+     "name": "Orihalcon Ingot",
+     "qty": 8
+    },
+    {
+     "id": 4000050,
+     "name": "Dragon Skin",
+     "qty": 30
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 30
+    }
+   ]
+  },
+  {
+   "id": 1072124,
+   "name": "Red Goni Shoes",
+   "discipline": "Leatherworking",
+   "craft_level": 10,
+   "fee": 6600,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003006,
+     "name": "Processed Leather",
+     "qty": 10
+    },
+    {
+     "id": 4020100,
+     "name": "Garnet",
+     "qty": 8
+    },
+    {
+     "id": 4000050,
+     "name": "Dragon Skin",
+     "qty": 30
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 30
+    }
+   ]
+  },
+  {
+   "id": 1082073,
+   "name": "Red Moon Gloves",
+   "discipline": "Leatherworking",
+   "craft_level": 10,
+   "fee": 13200,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003006,
+     "name": "Processed Leather",
+     "qty": 10
+    },
+    {
+     "id": 4020100,
+     "name": "Garnet",
+     "qty": 8
+    },
+    {
+     "id": 4000050,
+     "name": "Dragon Skin",
+     "qty": 30
+    },
+    {
+     "id": 4003007,
+     "name": "Spool of Thread",
+     "qty": 30
+    }
+   ]
+  },
+  {
+   "id": 1082070,
+   "name": "Red Willow",
+   "discipline": "Leatherworking",
+   "craft_level": 10,
+   "fee": 13200,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003006,
+     "name": "Processed Leather",
+     "qty": 10
+    },
+    {
+     "id": 4010106,
+     "name": "Gold Ingot",
+     "qty": 8
+    },
+    {
+     "id": 4000050,
+     "name": "Dragon Skin",
+     "qty": 30
+    },
+    {
+     "id": 4003007,
+     "name": "Spool of Thread",
+     "qty": 30
+    }
+   ]
+  },
+  {
+   "id": 4010100,
+   "name": "Bronze Ingot",
+   "discipline": "Smithing",
+   "craft_level": 1,
+   "fee": 100,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4010000,
+     "name": "Bronze Ore",
+     "qty": 5
+    }
+   ]
+  },
+  {
+   "id": 4010101,
+   "name": "Iron Ingot",
+   "discipline": "Smithing",
+   "craft_level": 1,
+   "fee": 100,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4010001,
+     "name": "Iron Ore",
+     "qty": 5
+    }
+   ]
+  },
+  {
+   "id": 1002017,
+   "name": "Metal Koif",
+   "discipline": "Smithing",
+   "craft_level": 1,
+   "fee": 1000,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 1002016,
+     "name": "Bronze Koif",
+     "qty": 1
+    },
+    {
+     "id": 4010101,
+     "name": "Iron Ingot",
+     "qty": 2
+    }
+   ]
+  },
+  {
+   "id": 1082001,
+   "name": "Juno",
+   "discipline": "Smithing",
+   "craft_level": 2,
+   "fee": 1200,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4010101,
+     "name": "Iron Ingot",
+     "qty": 2
+    },
+    {
+     "id": 4003006,
+     "name": "Processed Leather",
+     "qty": 2
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 6
+    }
+   ]
+  },
+  {
+   "id": 1002031,
+   "name": "Mithril Helmet",
+   "discipline": "Smithing",
+   "craft_level": 2,
+   "fee": 2000,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 1002029,
+     "name": "Bronze Helmet",
+     "qty": 1
+    },
+    {
+     "id": 4010102,
+     "name": "Mithril Ingot",
+     "qty": 2
+    }
+   ]
+  },
+  {
+   "id": 4010102,
+   "name": "Mithril Ingot",
+   "discipline": "Smithing",
+   "craft_level": 2,
+   "fee": 200,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4010002,
+     "name": "Mithril Ore",
+     "qty": 5
+    }
+   ]
+  },
+  {
+   "id": 1002018,
+   "name": "Mithril Koif",
+   "discipline": "Smithing",
+   "craft_level": 2,
+   "fee": 2000,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 1002016,
+     "name": "Bronze Koif",
+     "qty": 1
+    },
+    {
+     "id": 4010102,
+     "name": "Mithril Ingot",
+     "qty": 2
+    }
+   ]
+  },
+  {
+   "id": 1002030,
+   "name": "Steel Helmet",
+   "discipline": "Smithing",
+   "craft_level": 2,
+   "fee": 1000,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 1002029,
+     "name": "Bronze Helmet",
+     "qty": 1
+    },
+    {
+     "id": 4010101,
+     "name": "Iron Ingot",
+     "qty": 2
+    }
+   ]
+  },
+  {
+   "id": 4010103,
+   "name": "Adamantium Ingot",
+   "discipline": "Smithing",
+   "craft_level": 3,
+   "fee": 300,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4010003,
+     "name": "Adamantium Ore",
+     "qty": 5
+    }
+   ]
+  },
+  {
+   "id": 3030000,
+   "name": "Anvil",
+   "discipline": "Smithing",
+   "craft_level": 3,
+   "fee": 100000,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4010101,
+     "name": "Iron Ingot",
+     "qty": 10
+    },
+    {
+     "id": 4010100,
+     "name": "Bronze Ingot",
+     "qty": 10
+    },
+    {
+     "id": 4003001,
+     "name": "Processed Wood",
+     "qty": 5
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 20
+    }
+   ]
+  },
+  {
+   "id": 1002034,
+   "name": "Blue Metal Gear",
+   "discipline": "Smithing",
+   "craft_level": 3,
+   "fee": 2000,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 1002032,
+     "name": "Metal Gear",
+     "qty": 1
+    },
+    {
+     "id": 4010102,
+     "name": "Mithril Ingot",
+     "qty": 3
+    }
+   ]
+  },
+  {
+   "id": 4010106,
+   "name": "Gold Ingot",
+   "discipline": "Smithing",
+   "craft_level": 3,
+   "fee": 300,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4010006,
+     "name": "Gold Ore",
+     "qty": 5
+    }
+   ]
+  },
+  {
+   "id": 3000028,
+   "name": "Metal Ceiling Light",
+   "discipline": "Smithing",
+   "craft_level": 3,
+   "fee": 15000,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4010101,
+     "name": "Iron Ingot",
+     "qty": 5
+    },
+    {
+     "id": 4000014,
+     "name": "Bubbling's Huge Bubble",
+     "qty": 30
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 20
+    }
+   ]
+  },
+  {
+   "id": 1002037,
+   "name": "Mithril Full Helm",
+   "discipline": "Smithing",
+   "craft_level": 3,
+   "fee": 2000,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 1002035,
+     "name": "Bronze Full Helm",
+     "qty": 1
+    },
+    {
+     "id": 4010102,
+     "name": "Mithril Ingot",
+     "qty": 3
+    }
+   ]
+  },
+  {
+   "id": 1082002,
+   "name": "Steel Fingerless Gloves",
+   "discipline": "Smithing",
+   "craft_level": 3,
+   "fee": 1800,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4010101,
+     "name": "Iron Ingot",
+     "qty": 3
+    },
+    {
+     "id": 4003006,
+     "name": "Processed Leather",
+     "qty": 2
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 9
+    }
+   ]
+  },
+  {
+   "id": 1002036,
+   "name": "Steel Full Helm",
+   "discipline": "Smithing",
+   "craft_level": 3,
+   "fee": 1000,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 1002035,
+     "name": "Bronze Full Helm",
+     "qty": 1
+    },
+    {
+     "id": 4010101,
+     "name": "Iron Ingot",
+     "qty": 3
+    }
+   ]
+  },
+  {
+   "id": 1002033,
+   "name": "Yellow Metal Gear",
+   "discipline": "Smithing",
+   "craft_level": 3,
+   "fee": 1000,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 1002032,
+     "name": "Metal Gear",
+     "qty": 1
+    },
+    {
+     "id": 4020106,
+     "name": "Topaz",
+     "qty": 3
+    }
+   ]
+  },
+  {
+   "id": 1082008,
+   "name": "Black Cat Gloves",
+   "discipline": "Smithing",
+   "craft_level": 4,
+   "fee": 2400,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4010100,
+     "name": "Bronze Ingot",
+     "qty": 4
+    },
+    {
+     "id": 4003006,
+     "name": "Processed Leather",
+     "qty": 2
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 12
+    }
+   ]
+  },
+  {
+   "id": 1002058,
+   "name": "Iron Viking Helm",
+   "discipline": "Smithing",
+   "craft_level": 4,
+   "fee": 1000,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 1002057,
+     "name": "Bronze Viking Helm",
+     "qty": 1
+    },
+    {
+     "id": 4010101,
+     "name": "Iron Ingot",
+     "qty": 4
+    }
+   ]
+  },
+  {
+   "id": 3000029,
+   "name": "Metal Wall Light",
+   "discipline": "Smithing",
+   "craft_level": 4,
+   "fee": 20000,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4010101,
+     "name": "Iron Ingot",
+     "qty": 5
+    },
+    {
+     "id": 4000014,
+     "name": "Bubbling's Huge Bubble",
+     "qty": 30
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 20
+    }
+   ]
+  },
+  {
+   "id": 3000032,
+   "name": "Metal Wardrobe",
+   "discipline": "Smithing",
+   "craft_level": 4,
+   "fee": 20000,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4010101,
+     "name": "Iron Ingot",
+     "qty": 10
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 40
+    },
+    {
+     "id": 4003012,
+     "name": "Red Dye",
+     "qty": 5
+    }
+   ]
+  },
+  {
+   "id": 1002056,
+   "name": "Mithril Football Helmet",
+   "discipline": "Smithing",
+   "craft_level": 4,
+   "fee": 2000,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 1002054,
+     "name": "Bronze Football Helmet",
+     "qty": 1
+    },
+    {
+     "id": 4010102,
+     "name": "Mithril Ingot",
+     "qty": 4
+    }
+   ]
+  },
+  {
+   "id": 1002059,
+   "name": "Mithril Viking Helm",
+   "discipline": "Smithing",
+   "craft_level": 4,
+   "fee": 2000,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 1002057,
+     "name": "Bronze Viking Helm",
+     "qty": 1
+    },
+    {
+     "id": 4010102,
+     "name": "Mithril Ingot",
+     "qty": 4
+    }
+   ]
+  },
+  {
+   "id": 4010104,
+   "name": "Silver Ingot",
+   "discipline": "Smithing",
+   "craft_level": 4,
+   "fee": 400,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4010004,
+     "name": "Silver Ore",
+     "qty": 5
+    }
+   ]
+  },
+  {
+   "id": 1002055,
+   "name": "Steel Football Helmet",
+   "discipline": "Smithing",
+   "craft_level": 4,
+   "fee": 1000,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 1002054,
+     "name": "Bronze Football Helmet",
+     "qty": 1
+    },
+    {
+     "id": 4010101,
+     "name": "Iron Ingot",
+     "qty": 4
+    }
+   ]
+  },
+  {
+   "id": 1072047,
+   "name": "Dark War Boots",
+   "discipline": "Smithing",
+   "craft_level": 5,
+   "fee": 1500,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4010101,
+     "name": "Iron Ingot",
+     "qty": 3
+    },
+    {
+     "id": 4000017,
+     "name": "Stirge Wing",
+     "qty": 25
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 15
+    }
+   ]
+  },
+  {
+   "id": 1002088,
+   "name": "Gold Burgonet Helm",
+   "discipline": "Smithing",
+   "craft_level": 5,
+   "fee": 1000,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 1002087,
+     "name": "Iron Burgonet Helm",
+     "qty": 1
+    },
+    {
+     "id": 4010106,
+     "name": "Gold Ingot",
+     "qty": 5
+    }
+   ]
+  },
+  {
+   "id": 1002080,
+   "name": "Gold Sharp Helm",
+   "discipline": "Smithing",
+   "craft_level": 5,
+   "fee": 2000,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 1002078,
+     "name": "Steel Sharp Helm",
+     "qty": 1
+    },
+    {
+     "id": 4010106,
+     "name": "Gold Ingot",
+     "qty": 5
+    }
+   ]
+  },
+  {
+   "id": 1072046,
+   "name": "Gold War Boots",
+   "discipline": "Smithing",
+   "craft_level": 5,
+   "fee": 1500,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4010101,
+     "name": "Iron Ingot",
+     "qty": 3
+    },
+    {
+     "id": 4010106,
+     "name": "Gold Ingot",
+     "qty": 4
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 15
+    }
+   ]
+  },
+  {
+   "id": 1002079,
+   "name": "Mithril Sharp Helm",
+   "discipline": "Smithing",
+   "craft_level": 5,
+   "fee": 1000,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 1002078,
+     "name": "Steel Sharp Helm",
+     "qty": 1
+    },
+    {
+     "id": 4010102,
+     "name": "Mithril Ingot",
+     "qty": 5
+    }
+   ]
+  },
+  {
+   "id": 1072044,
+   "name": "Mithril War Boots",
+   "discipline": "Smithing",
+   "craft_level": 5,
+   "fee": 3000,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4010102,
+     "name": "Mithril Ingot",
+     "qty": 5
+    },
+    {
+     "id": 4003006,
+     "name": "Processed Leather",
+     "qty": 2
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 15
+    }
+   ]
+  },
+  {
+   "id": 1002089,
+   "name": "Orihalcon Burgonet Helm",
+   "discipline": "Smithing",
+   "craft_level": 5,
+   "fee": 2000,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 1002087,
+     "name": "Iron Burgonet Helm",
+     "qty": 1
+    },
+    {
+     "id": 4010105,
+     "name": "Orihalcon Ingot",
+     "qty": 5
+    }
+   ]
+  },
+  {
+   "id": 4010105,
+   "name": "Orihalcon Ingot",
+   "discipline": "Smithing",
+   "craft_level": 5,
+   "fee": 500,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4010005,
+     "name": "Orihalcon Ore",
+     "qty": 5
+    }
+   ]
+  },
+  {
+   "id": 3000031,
+   "name": "Rustic Bed",
+   "discipline": "Smithing",
+   "craft_level": 5,
+   "fee": 25000,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003001,
+     "name": "Processed Wood",
+     "qty": 10
+    },
+    {
+     "id": 4003008,
+     "name": "Processed Cloth",
+     "qty": 5
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 50
+    },
+    {
+     "id": 4003012,
+     "name": "Red Dye",
+     "qty": 5
+    }
+   ]
+  },
+  {
+   "id": 1072045,
+   "name": "Silver War Boots",
+   "discipline": "Smithing",
+   "craft_level": 5,
+   "fee": 1500,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4010101,
+     "name": "Iron Ingot",
+     "qty": 3
+    },
+    {
+     "id": 4010104,
+     "name": "Silver Ingot",
+     "qty": 4
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 15
+    }
+   ]
+  },
+  {
+   "id": 1082018,
+   "name": "White Fingerless Gloves",
+   "discipline": "Smithing",
+   "craft_level": 5,
+   "fee": 3000,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4010101,
+     "name": "Iron Ingot",
+     "qty": 5
+    },
+    {
+     "id": 4003006,
+     "name": "Processed Leather",
+     "qty": 2
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 15
+    }
+   ]
+  },
+  {
+   "id": 1072065,
+   "name": "Blood Battle Grieves",
+   "discipline": "Smithing",
+   "craft_level": 6,
+   "fee": 1800,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4010101,
+     "name": "Iron Ingot",
+     "qty": 4
+    },
+    {
+     "id": 4020100,
+     "name": "Garnet",
+     "qty": 4
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 18
+    }
+   ]
+  },
+  {
+   "id": 1082028,
+   "name": "Bronze Missel",
+   "discipline": "Smithing",
+   "craft_level": 6,
+   "fee": 3600,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4010100,
+     "name": "Bronze Ingot",
+     "qty": 6
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 18
+    }
+   ]
+  },
+  {
+   "id": 1002101,
+   "name": "Bronze Pride",
+   "discipline": "Smithing",
+   "craft_level": 6,
+   "fee": 1800,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4010100,
+     "name": "Bronze Ingot",
+     "qty": 6
+    }
+   ]
+  },
+  {
+   "id": 1072062,
+   "name": "Emerald Battle Grieves",
+   "discipline": "Smithing",
+   "craft_level": 6,
+   "fee": 1800,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4010101,
+     "name": "Iron Ingot",
+     "qty": 4
+    },
+    {
+     "id": 4020103,
+     "name": "Emerald",
+     "qty": 4
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 18
+    }
+   ]
+  },
+  {
+   "id": 1002103,
+   "name": "Golden Pride",
+   "discipline": "Smithing",
+   "craft_level": 6,
+   "fee": 2000,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 1002101,
+     "name": "Bronze Pride",
+     "qty": 1
+    },
+    {
+     "id": 4010106,
+     "name": "Gold Ingot",
+     "qty": 3
+    }
+   ]
+  },
+  {
+   "id": 1072063,
+   "name": "Mithril Battle Grieves",
+   "discipline": "Smithing",
+   "craft_level": 6,
+   "fee": 1800,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4010101,
+     "name": "Iron Ingot",
+     "qty": 4
+    },
+    {
+     "id": 4010102,
+     "name": "Mithril Ingot",
+     "qty": 4
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 18
+    }
+   ]
+  },
+  {
+   "id": 1082030,
+   "name": "Orihalcon Missel",
+   "discipline": "Smithing",
+   "craft_level": 6,
+   "fee": 2000,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 1082028,
+     "name": "Bronze Missel",
+     "qty": 1
+    },
+    {
+     "id": 4010105,
+     "name": "Orihalcon Ingot",
+     "qty": 4
+    }
+   ]
+  },
+  {
+   "id": 3020003,
+   "name": "Reinforced Safe",
+   "discipline": "Smithing",
+   "craft_level": 6,
+   "fee": 300000,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003001,
+     "name": "Processed Wood",
+     "qty": 5
+    },
+    {
+     "id": 4010101,
+     "name": "Iron Ingot",
+     "qty": 10
+    },
+    {
+     "id": 4010100,
+     "name": "Bronze Ingot",
+     "qty": 10
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 10
+    }
+   ]
+  },
+  {
+   "id": 1072064,
+   "name": "Silver Battle Grieves",
+   "discipline": "Smithing",
+   "craft_level": 6,
+   "fee": 1800,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4010101,
+     "name": "Iron Ingot",
+     "qty": 4
+    },
+    {
+     "id": 4010104,
+     "name": "Silver Ingot",
+     "qty": 4
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 18
+    }
+   ]
+  },
+  {
+   "id": 1082029,
+   "name": "Steel Missel",
+   "discipline": "Smithing",
+   "craft_level": 6,
+   "fee": 1000,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 1082028,
+     "name": "Bronze Missel",
+     "qty": 1
+    },
+    {
+     "id": 4010101,
+     "name": "Iron Ingot",
+     "qty": 4
+    }
+   ]
+  },
+  {
+   "id": 1002102,
+   "name": "Steel Pride",
+   "discipline": "Smithing",
+   "craft_level": 6,
+   "fee": 1000,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 1002101,
+     "name": "Bronze Pride",
+     "qty": 1
+    },
+    {
+     "id": 4010101,
+     "name": "Iron Ingot",
+     "qty": 3
+    }
+   ]
+  },
+  {
+   "id": 1082042,
+   "name": "Dark Briggon",
+   "discipline": "Smithing",
+   "craft_level": 7,
+   "fee": 1000,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 1082040,
+     "name": "Steel Briggon",
+     "qty": 1
+    },
+    {
+     "id": 4020108,
+     "name": "Black Crystal",
+     "qty": 5
+    }
+   ]
+  },
+  {
+   "id": 1072087,
+   "name": "Dark Trigger",
+   "discipline": "Smithing",
+   "craft_level": 7,
+   "fee": 3000,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4010101,
+     "name": "Iron Ingot",
+     "qty": 4
+    },
+    {
+     "id": 4020108,
+     "name": "Black Crystal",
+     "qty": 5
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 21
+    }
+   ]
+  },
+  {
+   "id": 1002122,
+   "name": "Great Blue Helmet",
+   "discipline": "Smithing",
+   "craft_level": 7,
+   "fee": 1000,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 1002120,
+     "name": "Great Brown Helmet",
+     "qty": 1
+    },
+    {
+     "id": 4020105,
+     "name": "Sapphire",
+     "qty": 7
+    }
+   ]
+  },
+  {
+   "id": 1002121,
+   "name": "Great Red Helmet",
+   "discipline": "Smithing",
+   "craft_level": 7,
+   "fee": 1000,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 1002120,
+     "name": "Great Brown Helmet",
+     "qty": 1
+    },
+    {
+     "id": 4020100,
+     "name": "Garnet",
+     "qty": 7
+    }
+   ]
+  },
+  {
+   "id": 1072086,
+   "name": "Mithril Trigger",
+   "discipline": "Smithing",
+   "craft_level": 7,
+   "fee": 3000,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4010101,
+     "name": "Iron Ingot",
+     "qty": 4
+    },
+    {
+     "id": 4010102,
+     "name": "Mithril Ingot",
+     "qty": 5
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 21
+    }
+   ]
+  },
+  {
+   "id": 1082040,
+   "name": "Steel Briggon",
+   "discipline": "Smithing",
+   "craft_level": 7,
+   "fee": 6000,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4010101,
+     "name": "Iron Ingot",
+     "qty": 7
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 21
+    }
+   ]
+  },
+  {
+   "id": 1072085,
+   "name": "Steel Trigger",
+   "discipline": "Smithing",
+   "craft_level": 7,
+   "fee": 3000,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4010101,
+     "name": "Iron Ingot",
+     "qty": 4
+    },
+    {
+     "id": 4020104,
+     "name": "Opal",
+     "qty": 5
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 21
+    }
+   ]
+  },
+  {
+   "id": 1082041,
+   "name": "Yellow Briggon",
+   "discipline": "Smithing",
+   "craft_level": 7,
+   "fee": 1000,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 1082040,
+     "name": "Steel Briggon",
+     "qty": 1
+    },
+    {
+     "id": 4020106,
+     "name": "Topaz",
+     "qty": 5
+    }
+   ]
+  },
+  {
+   "id": 1082053,
+   "name": "Adamantium Knuckle",
+   "discipline": "Smithing",
+   "craft_level": 8,
+   "fee": 1000,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 1082052,
+     "name": "Iron Knuckle",
+     "qty": 1
+    },
+    {
+     "id": 4010103,
+     "name": "Adamantium Ingot",
+     "qty": 6
+    }
+   ]
+  },
+  {
+   "id": 1092015,
+   "name": "Adamantium Tower Shield",
+   "discipline": "Smithing",
+   "craft_level": 8,
+   "fee": 1000,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 1092013,
+     "name": "Steel Tower Shield",
+     "qty": 1
+    },
+    {
+     "id": 4010103,
+     "name": "Adamantium Ingot",
+     "qty": 10
+    }
+   ]
+  },
+  {
+   "id": 1072098,
+   "name": "Blue Jangoon Shoes",
+   "discipline": "Smithing",
+   "craft_level": 8,
+   "fee": 4200,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4010102,
+     "name": "Mithril Ingot",
+     "qty": 4
+    },
+    {
+     "id": 4010106,
+     "name": "Gold Ingot",
+     "qty": 2
+    },
+    {
+     "id": 4003006,
+     "name": "Processed Leather",
+     "qty": 5
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 24
+    }
+   ]
+  },
+  {
+   "id": 1072099,
+   "name": "Brown Jangoon Shoes",
+   "discipline": "Smithing",
+   "craft_level": 8,
+   "fee": 4200,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4010103,
+     "name": "Adamantium Ingot",
+     "qty": 4
+    },
+    {
+     "id": 4010106,
+     "name": "Gold Ingot",
+     "qty": 2
+    },
+    {
+     "id": 4003006,
+     "name": "Processed Leather",
+     "qty": 5
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 24
+    }
+   ]
+  },
+  {
+   "id": 1082054,
+   "name": "Dark Knuckle",
+   "discipline": "Smithing",
+   "craft_level": 8,
+   "fee": 1000,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 1082052,
+     "name": "Iron Knuckle",
+     "qty": 1
+    },
+    {
+     "id": 4020108,
+     "name": "Black Crystal",
+     "qty": 6
+    }
+   ]
+  },
+  {
+   "id": 1002141,
+   "name": "Gold Nordic Helm",
+   "discipline": "Smithing",
+   "craft_level": 8,
+   "fee": 2000,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 1002139,
+     "name": "Steel Nordic Helm",
+     "qty": 1
+    },
+    {
+     "id": 4010106,
+     "name": "Gold Ingot",
+     "qty": 8
+    }
+   ]
+  },
+  {
+   "id": 1082052,
+   "name": "Iron Knuckle",
+   "discipline": "Smithing",
+   "craft_level": 8,
+   "fee": 6000,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4010101,
+     "name": "Iron Ingot",
+     "qty": 8
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 24
+    }
+   ]
+  },
+  {
+   "id": 1072097,
+   "name": "Maroon Jangoon Shoes",
+   "discipline": "Smithing",
+   "craft_level": 8,
+   "fee": 4200,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4010105,
+     "name": "Orihalcon Ingot",
+     "qty": 4
+    },
+    {
+     "id": 4010106,
+     "name": "Gold Ingot",
+     "qty": 2
+    },
+    {
+     "id": 4003006,
+     "name": "Processed Leather",
+     "qty": 5
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 24
+    }
+   ]
+  },
+  {
+   "id": 1002140,
+   "name": "Mithril Nordic Helm",
+   "discipline": "Smithing",
+   "craft_level": 8,
+   "fee": 1000,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 1002139,
+     "name": "Steel Nordic Helm",
+     "qty": 1
+    },
+    {
+     "id": 4010102,
+     "name": "Mithril Ingot",
+     "qty": 8
+    }
+   ]
+  },
+  {
+   "id": 1092014,
+   "name": "Mithril Tower Shield",
+   "discipline": "Smithing",
+   "craft_level": 8,
+   "fee": 1000,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 1092013,
+     "name": "Steel Tower Shield",
+     "qty": 1
+    },
+    {
+     "id": 4010102,
+     "name": "Mithril Ingot",
+     "qty": 10
+    }
+   ]
+  },
+  {
+   "id": 1072112,
+   "name": "Emerald Hildon Boots",
+   "discipline": "Smithing",
+   "craft_level": 10,
+   "fee": 6600,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4010101,
+     "name": "Iron Ingot",
+     "qty": 5
+    },
+    {
+     "id": 4020108,
+     "name": "Black Crystal",
+     "qty": 2
+    },
+    {
+     "id": 4020103,
+     "name": "Emerald",
+     "qty": 3
+    },
+    {
+     "id": 4000050,
+     "name": "Dragon Skin",
+     "qty": 30
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 30
+    }
+   ]
+  },
+  {
+   "id": 1082066,
+   "name": "Gold Brist",
+   "discipline": "Smithing",
+   "craft_level": 10,
+   "fee": 1000,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 1082064,
+     "name": "Steel Brist",
+     "qty": 1
+    },
+    {
+     "id": 4010106,
+     "name": "Gold Ingot",
+     "qty": 8
+    }
+   ]
+  },
+  {
+   "id": 1072115,
+   "name": "Gold Hildon Boots",
+   "discipline": "Smithing",
+   "craft_level": 10,
+   "fee": 6600,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4010101,
+     "name": "Iron Ingot",
+     "qty": 5
+    },
+    {
+     "id": 4020108,
+     "name": "Black Crystal",
+     "qty": 2
+    },
+    {
+     "id": 4010106,
+     "name": "Gold Ingot",
+     "qty": 3
+    },
+    {
+     "id": 4000050,
+     "name": "Dragon Skin",
+     "qty": 30
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 30
+    }
+   ]
+  },
+  {
+   "id": 1082065,
+   "name": "Mithril Brist",
+   "discipline": "Smithing",
+   "craft_level": 10,
+   "fee": 1000,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 1082064,
+     "name": "Steel Brist",
+     "qty": 1
+    },
+    {
+     "id": 4010102,
+     "name": "Mithril Ingot",
+     "qty": 8
+    }
+   ]
+  },
+  {
+   "id": 1002167,
+   "name": "Mithril Crusader Helm",
+   "discipline": "Smithing",
+   "craft_level": 10,
+   "fee": 2000,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 1002165,
+     "name": "Bronze Crusader Helm",
+     "qty": 1
+    },
+    {
+     "id": 4010102,
+     "name": "Mithril Ingot",
+     "qty": 12
+    }
+   ]
+  },
+  {
+   "id": 1072113,
+   "name": "Mithril Hildon Boots",
+   "discipline": "Smithing",
+   "craft_level": 10,
+   "fee": 6600,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4010101,
+     "name": "Iron Ingot",
+     "qty": 5
+    },
+    {
+     "id": 4020108,
+     "name": "Black Crystal",
+     "qty": 2
+    },
+    {
+     "id": 4010102,
+     "name": "Mithril Ingot",
+     "qty": 3
+    },
+    {
+     "id": 4000050,
+     "name": "Dragon Skin",
+     "qty": 30
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 30
+    }
+   ]
+  },
+  {
+   "id": 1072114,
+   "name": "Orihalcon Hildon Boots",
+   "discipline": "Smithing",
+   "craft_level": 10,
+   "fee": 6600,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4010101,
+     "name": "Iron Ingot",
+     "qty": 5
+    },
+    {
+     "id": 4020108,
+     "name": "Black Crystal",
+     "qty": 2
+    },
+    {
+     "id": 4010105,
+     "name": "Orihalcon Ingot",
+     "qty": 3
+    },
+    {
+     "id": 4000050,
+     "name": "Dragon Skin",
+     "qty": 30
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 30
+    }
+   ]
+  },
+  {
+   "id": 1002166,
+   "name": "Silver Crusader Helm",
+   "discipline": "Smithing",
+   "craft_level": 10,
+   "fee": 1000,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 1002165,
+     "name": "Bronze Crusader Helm",
+     "qty": 1
+    },
+    {
+     "id": 4010104,
+     "name": "Silver Ingot",
+     "qty": 12
+    }
+   ]
+  },
+  {
+   "id": 1082064,
+   "name": "Steel Brist",
+   "discipline": "Smithing",
+   "craft_level": 10,
+   "fee": 13200,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4010101,
+     "name": "Iron Ingot",
+     "qty": 10
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 30
+    }
+   ]
+  },
+  {
+   "id": 1002013,
+   "name": "Blue Bandana",
+   "discipline": "Tailoring",
+   "craft_level": 1,
+   "fee": 600,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003008,
+     "name": "Processed Cloth",
+     "qty": 2
+    },
+    {
+     "id": 4000002,
+     "name": "Blue Snail Shell",
+     "qty": 10
+    },
+    {
+     "id": 4003007,
+     "name": "Spool of Thread",
+     "qty": 3
+    }
+   ]
+  },
+  {
+   "id": 4003008,
+   "name": "Processed Cloth",
+   "discipline": "Tailoring",
+   "craft_level": 1,
+   "fee": 100,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4000010,
+     "name": "Pig's Ribbon",
+     "qty": 10
+    }
+   ]
+  },
+  {
+   "id": 4003008,
+   "name": "Processed Cloth",
+   "discipline": "Tailoring",
+   "craft_level": 1,
+   "fee": 100,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4000011,
+     "name": "Leaf",
+     "qty": 10
+    }
+   ]
+  },
+  {
+   "id": 4003008,
+   "name": "Processed Cloth",
+   "discipline": "Tailoring",
+   "craft_level": 1,
+   "fee": 100,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4000062,
+     "name": "Animal Fur Bundle",
+     "qty": 5
+    }
+   ]
+  },
+  {
+   "id": 1002012,
+   "name": "Red Bandana",
+   "discipline": "Tailoring",
+   "craft_level": 1,
+   "fee": 600,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003008,
+     "name": "Processed Cloth",
+     "qty": 2
+    },
+    {
+     "id": 4000004,
+     "name": "Red Snail Shell",
+     "qty": 10
+    },
+    {
+     "id": 4003007,
+     "name": "Spool of Thread",
+     "qty": 3
+    }
+   ]
+  },
+  {
+   "id": 4003007,
+   "name": "Spool of Thread",
+   "discipline": "Tailoring",
+   "craft_level": 1,
+   "fee": 100,
+   "makes": 10,
+   "ingredients": [
+    {
+     "id": 4000062,
+     "name": "Animal Fur Bundle",
+     "qty": 1
+    }
+   ]
+  },
+  {
+   "id": 1002020,
+   "name": "Blue Apprentice Hat",
+   "discipline": "Tailoring",
+   "craft_level": 2,
+   "fee": 600,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003008,
+     "name": "Processed Cloth",
+     "qty": 4
+    },
+    {
+     "id": 4000002,
+     "name": "Blue Snail Shell",
+     "qty": 10
+    },
+    {
+     "id": 4003007,
+     "name": "Spool of Thread",
+     "qty": 6
+    }
+   ]
+  },
+  {
+   "id": 1002019,
+   "name": "Brown Apprentice Hat",
+   "discipline": "Tailoring",
+   "craft_level": 2,
+   "fee": 600,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003008,
+     "name": "Processed Cloth",
+     "qty": 4
+    },
+    {
+     "id": 4000009,
+     "name": "Orange Mushroom Cap",
+     "qty": 10
+    },
+    {
+     "id": 4003007,
+     "name": "Spool of Thread",
+     "qty": 6
+    }
+   ]
+  },
+  {
+   "id": 1002026,
+   "name": "Brown Ghetto Beanie",
+   "discipline": "Tailoring",
+   "craft_level": 2,
+   "fee": 600,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003008,
+     "name": "Processed Cloth",
+     "qty": 4
+    },
+    {
+     "id": 4000009,
+     "name": "Orange Mushroom Cap",
+     "qty": 10
+    },
+    {
+     "id": 4003007,
+     "name": "Spool of Thread",
+     "qty": 6
+    }
+   ]
+  },
+  {
+   "id": 1002028,
+   "name": "Green Ghetto Beanie",
+   "discipline": "Tailoring",
+   "craft_level": 2,
+   "fee": 600,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003008,
+     "name": "Processed Cloth",
+     "qty": 4
+    },
+    {
+     "id": 4000006,
+     "name": "Squishy Liquid",
+     "qty": 10
+    },
+    {
+     "id": 4003007,
+     "name": "Spool of Thread",
+     "qty": 6
+    }
+   ]
+  },
+  {
+   "id": 1002021,
+   "name": "Red Apprentice Hat",
+   "discipline": "Tailoring",
+   "craft_level": 2,
+   "fee": 600,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003008,
+     "name": "Processed Cloth",
+     "qty": 4
+    },
+    {
+     "id": 4000004,
+     "name": "Red Snail Shell",
+     "qty": 10
+    },
+    {
+     "id": 4003007,
+     "name": "Spool of Thread",
+     "qty": 6
+    }
+   ]
+  },
+  {
+   "id": 1082000,
+   "name": "Work Gloves",
+   "discipline": "Tailoring",
+   "craft_level": 2,
+   "fee": 1200,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003008,
+     "name": "Processed Cloth",
+     "qty": 4
+    },
+    {
+     "id": 4003007,
+     "name": "Spool of Thread",
+     "qty": 6
+    }
+   ]
+  },
+  {
+   "id": 1082003,
+   "name": "Lemona",
+   "discipline": "Tailoring",
+   "craft_level": 3,
+   "fee": 1800,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003008,
+     "name": "Processed Cloth",
+     "qty": 5
+    },
+    {
+     "id": 4020102,
+     "name": "Aquamarine",
+     "qty": 1
+    },
+    {
+     "id": 4003007,
+     "name": "Spool of Thread",
+     "qty": 9
+    }
+   ]
+  },
+  {
+   "id": 3030002,
+   "name": "Sewing Machine",
+   "discipline": "Tailoring",
+   "craft_level": 3,
+   "fee": 100000,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4010101,
+     "name": "Iron Ingot",
+     "qty": 5
+    },
+    {
+     "id": 4010100,
+     "name": "Bronze Ingot",
+     "qty": 5
+    },
+    {
+     "id": 4003008,
+     "name": "Processed Cloth",
+     "qty": 5
+    },
+    {
+     "id": 4003001,
+     "name": "Processed Wood",
+     "qty": 10
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 20
+    }
+   ]
+  },
+  {
+   "id": 1082009,
+   "name": "Blue Morrican",
+   "discipline": "Tailoring",
+   "craft_level": 4,
+   "fee": 2400,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003008,
+     "name": "Processed Cloth",
+     "qty": 6
+    },
+    {
+     "id": 4020102,
+     "name": "Aquamarine",
+     "qty": 2
+    },
+    {
+     "id": 4003007,
+     "name": "Spool of Thread",
+     "qty": 12
+    }
+   ]
+  },
+  {
+   "id": 1082010,
+   "name": "Green Morrican",
+   "discipline": "Tailoring",
+   "craft_level": 4,
+   "fee": 2400,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003008,
+     "name": "Processed Cloth",
+     "qty": 6
+    },
+    {
+     "id": 4020103,
+     "name": "Emerald",
+     "qty": 2
+    },
+    {
+     "id": 4003007,
+     "name": "Spool of Thread",
+     "qty": 12
+    }
+   ]
+  },
+  {
+   "id": 1062001,
+   "name": "Ice Jeans",
+   "discipline": "Tailoring",
+   "craft_level": 4,
+   "fee": 1360,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003008,
+     "name": "Processed Cloth",
+     "qty": 6
+    },
+    {
+     "id": 4003011,
+     "name": "White Dye",
+     "qty": 1
+    },
+    {
+     "id": 4003014,
+     "name": "Blue Dye",
+     "qty": 1
+    },
+    {
+     "id": 4003007,
+     "name": "Spool of Thread",
+     "qty": 12
+    }
+   ]
+  },
+  {
+   "id": 1082011,
+   "name": "Purple Morrican",
+   "discipline": "Tailoring",
+   "craft_level": 4,
+   "fee": 2400,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003008,
+     "name": "Processed Cloth",
+     "qty": 6
+    },
+    {
+     "id": 4020101,
+     "name": "Amethyst",
+     "qty": 2
+    },
+    {
+     "id": 4003007,
+     "name": "Spool of Thread",
+     "qty": 12
+    }
+   ]
+  },
+  {
+   "id": 1062002,
+   "name": "Sandblasted Jeans",
+   "discipline": "Tailoring",
+   "craft_level": 4,
+   "fee": 1360,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003008,
+     "name": "Processed Cloth",
+     "qty": 6
+    },
+    {
+     "id": 4003014,
+     "name": "Blue Dye",
+     "qty": 2
+    },
+    {
+     "id": 4003007,
+     "name": "Spool of Thread",
+     "qty": 12
+    }
+   ]
+  },
+  {
+   "id": 1072050,
+   "name": "Black Wind Shoes",
+   "discipline": "Tailoring",
+   "craft_level": 5,
+   "fee": 1500,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003008,
+     "name": "Processed Cloth",
+     "qty": 7
+    },
+    {
+     "id": 4020104,
+     "name": "Opal",
+     "qty": 3
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 15
+    }
+   ]
+  },
+  {
+   "id": 1082020,
+   "name": "Blood Mesana",
+   "discipline": "Tailoring",
+   "craft_level": 5,
+   "fee": 3000,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003008,
+     "name": "Processed Cloth",
+     "qty": 7
+    },
+    {
+     "id": 4020100,
+     "name": "Garnet",
+     "qty": 3
+    },
+    {
+     "id": 4003007,
+     "name": "Spool of Thread",
+     "qty": 15
+    }
+   ]
+  },
+  {
+   "id": 1082021,
+   "name": "Dark Mesana",
+   "discipline": "Tailoring",
+   "craft_level": 5,
+   "fee": 3000,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003008,
+     "name": "Processed Cloth",
+     "qty": 7
+    },
+    {
+     "id": 4020108,
+     "name": "Black Crystal",
+     "qty": 3
+    },
+    {
+     "id": 4003007,
+     "name": "Spool of Thread",
+     "qty": 15
+    }
+   ]
+  },
+  {
+   "id": 1082019,
+   "name": "Ocean Mesana",
+   "discipline": "Tailoring",
+   "craft_level": 5,
+   "fee": 3000,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003008,
+     "name": "Processed Cloth",
+     "qty": 7
+    },
+    {
+     "id": 4020102,
+     "name": "Aquamarine",
+     "qty": 3
+    },
+    {
+     "id": 4003007,
+     "name": "Spool of Thread",
+     "qty": 15
+    }
+   ]
+  },
+  {
+   "id": 1002084,
+   "name": "Red Starry Bandana",
+   "discipline": "Tailoring",
+   "craft_level": 5,
+   "fee": 1500,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003008,
+     "name": "Processed Cloth",
+     "qty": 7
+    },
+    {
+     "id": 4003014,
+     "name": "Blue Dye",
+     "qty": 1
+    },
+    {
+     "id": 4003010,
+     "name": "Black Dye",
+     "qty": 1
+    },
+    {
+     "id": 4003012,
+     "name": "Red Dye",
+     "qty": 1
+    },
+    {
+     "id": 4003007,
+     "name": "Spool of Thread",
+     "qty": 15
+    }
+   ]
+  },
+  {
+   "id": 1072048,
+   "name": "Silver Wind Shoes",
+   "discipline": "Tailoring",
+   "craft_level": 5,
+   "fee": 1500,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003008,
+     "name": "Processed Cloth",
+     "qty": 7
+    },
+    {
+     "id": 4010104,
+     "name": "Silver Ingot",
+     "qty": 3
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 15
+    }
+   ]
+  },
+  {
+   "id": 1002085,
+   "name": "Sky Blue Starry Bandana",
+   "discipline": "Tailoring",
+   "craft_level": 5,
+   "fee": 1500,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003008,
+     "name": "Processed Cloth",
+     "qty": 7
+    },
+    {
+     "id": 4003014,
+     "name": "Blue Dye",
+     "qty": 1
+    },
+    {
+     "id": 4003010,
+     "name": "Black Dye",
+     "qty": 1
+    },
+    {
+     "id": 4003011,
+     "name": "White Dye",
+     "qty": 1
+    },
+    {
+     "id": 4003007,
+     "name": "Spool of Thread",
+     "qty": 15
+    }
+   ]
+  },
+  {
+   "id": 1002086,
+   "name": "Yellow Starry Bandana",
+   "discipline": "Tailoring",
+   "craft_level": 5,
+   "fee": 1500,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003008,
+     "name": "Processed Cloth",
+     "qty": 7
+    },
+    {
+     "id": 4003014,
+     "name": "Blue Dye",
+     "qty": 1
+    },
+    {
+     "id": 4003010,
+     "name": "Black Dye",
+     "qty": 1
+    },
+    {
+     "id": 4003013,
+     "name": "Yellow Dye",
+     "qty": 1
+    },
+    {
+     "id": 4003007,
+     "name": "Spool of Thread",
+     "qty": 15
+    }
+   ]
+  },
+  {
+   "id": 1072049,
+   "name": "Yellow Wind Shoes",
+   "discipline": "Tailoring",
+   "craft_level": 5,
+   "fee": 1500,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003008,
+     "name": "Processed Cloth",
+     "qty": 7
+    },
+    {
+     "id": 4020106,
+     "name": "Topaz",
+     "qty": 3
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 15
+    }
+   ]
+  },
+  {
+   "id": 1082033,
+   "name": "Black Lutia",
+   "discipline": "Tailoring",
+   "craft_level": 6,
+   "fee": 3600,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003008,
+     "name": "Processed Cloth",
+     "qty": 8
+    },
+    {
+     "id": 4020108,
+     "name": "Black Crystal",
+     "qty": 4
+    },
+    {
+     "id": 4003007,
+     "name": "Spool of Thread",
+     "qty": 18
+    }
+   ]
+  },
+  {
+   "id": 1072069,
+   "name": "Black Magic Shoes",
+   "discipline": "Tailoring",
+   "craft_level": 6,
+   "fee": 1800,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003008,
+     "name": "Processed Cloth",
+     "qty": 8
+    },
+    {
+     "id": 4020104,
+     "name": "Opal",
+     "qty": 4
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 18
+    }
+   ]
+  },
+  {
+   "id": 1082032,
+   "name": "Blue Lutia",
+   "discipline": "Tailoring",
+   "craft_level": 6,
+   "fee": 3600,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003008,
+     "name": "Processed Cloth",
+     "qty": 8
+    },
+    {
+     "id": 4020105,
+     "name": "Sapphire",
+     "qty": 4
+    },
+    {
+     "id": 4003007,
+     "name": "Spool of Thread",
+     "qty": 18
+    }
+   ]
+  },
+  {
+   "id": 1072067,
+   "name": "Blue Magic Shoes",
+   "discipline": "Tailoring",
+   "craft_level": 6,
+   "fee": 1800,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003008,
+     "name": "Processed Cloth",
+     "qty": 8
+    },
+    {
+     "id": 4020102,
+     "name": "Aquamarine",
+     "qty": 4
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 18
+    }
+   ]
+  },
+  {
+   "id": 1082031,
+   "name": "Red Lutia",
+   "discipline": "Tailoring",
+   "craft_level": 6,
+   "fee": 3600,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003008,
+     "name": "Processed Cloth",
+     "qty": 8
+    },
+    {
+     "id": 4020100,
+     "name": "Garnet",
+     "qty": 4
+    },
+    {
+     "id": 4003007,
+     "name": "Spool of Thread",
+     "qty": 18
+    }
+   ]
+  },
+  {
+   "id": 1072066,
+   "name": "Red Magic Shoes",
+   "discipline": "Tailoring",
+   "craft_level": 6,
+   "fee": 1800,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003008,
+     "name": "Processed Cloth",
+     "qty": 8
+    },
+    {
+     "id": 4020100,
+     "name": "Garnet",
+     "qty": 4
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 18
+    }
+   ]
+  },
+  {
+   "id": 1072068,
+   "name": "White Magic Shoes",
+   "discipline": "Tailoring",
+   "craft_level": 6,
+   "fee": 1800,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003008,
+     "name": "Processed Cloth",
+     "qty": 8
+    },
+    {
+     "id": 4010104,
+     "name": "Silver Ingot",
+     "qty": 4
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 18
+    }
+   ]
+  },
+  {
+   "id": 1102012,
+   "name": "Black Justice Cape",
+   "discipline": "Tailoring",
+   "craft_level": 7,
+   "fee": 6000,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003008,
+     "name": "Processed Cloth",
+     "qty": 9
+    },
+    {
+     "id": 4010107,
+     "name": "Moon Rock",
+     "qty": 1
+    },
+    {
+     "id": 4020108,
+     "name": "Black Crystal",
+     "qty": 3
+    },
+    {
+     "id": 4003007,
+     "name": "Spool of Thread",
+     "qty": 21
+    }
+   ]
+  },
+  {
+   "id": 1072090,
+   "name": "Black Salt Shoes",
+   "discipline": "Tailoring",
+   "craft_level": 7,
+   "fee": 3000,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003008,
+     "name": "Processed Cloth",
+     "qty": 9
+    },
+    {
+     "id": 4020104,
+     "name": "Opal",
+     "qty": 5
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 21
+    }
+   ]
+  },
+  {
+   "id": 1102009,
+   "name": "Blue Justice Cape",
+   "discipline": "Tailoring",
+   "craft_level": 7,
+   "fee": 6000,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003008,
+     "name": "Processed Cloth",
+     "qty": 9
+    },
+    {
+     "id": 4010107,
+     "name": "Moon Rock",
+     "qty": 1
+    },
+    {
+     "id": 4020105,
+     "name": "Sapphire",
+     "qty": 3
+    },
+    {
+     "id": 4003007,
+     "name": "Spool of Thread",
+     "qty": 21
+    }
+   ]
+  },
+  {
+   "id": 1082044,
+   "name": "Blue Noel",
+   "discipline": "Tailoring",
+   "craft_level": 7,
+   "fee": 6000,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003008,
+     "name": "Processed Cloth",
+     "qty": 9
+    },
+    {
+     "id": 4020105,
+     "name": "Sapphire",
+     "qty": 5
+    },
+    {
+     "id": 4003007,
+     "name": "Spool of Thread",
+     "qty": 21
+    }
+   ]
+  },
+  {
+   "id": 1082045,
+   "name": "Dark Noel",
+   "discipline": "Tailoring",
+   "craft_level": 7,
+   "fee": 6000,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003008,
+     "name": "Processed Cloth",
+     "qty": 9
+    },
+    {
+     "id": 4020108,
+     "name": "Black Crystal",
+     "qty": 5
+    },
+    {
+     "id": 4003007,
+     "name": "Spool of Thread",
+     "qty": 21
+    }
+   ]
+  },
+  {
+   "id": 1072089,
+   "name": "Purple Salt Shoes",
+   "discipline": "Tailoring",
+   "craft_level": 7,
+   "fee": 3000,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003008,
+     "name": "Processed Cloth",
+     "qty": 9
+    },
+    {
+     "id": 4020101,
+     "name": "Amethyst",
+     "qty": 5
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 21
+    }
+   ]
+  },
+  {
+   "id": 1102010,
+   "name": "Red Justice Cape",
+   "discipline": "Tailoring",
+   "craft_level": 7,
+   "fee": 6000,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003008,
+     "name": "Processed Cloth",
+     "qty": 9
+    },
+    {
+     "id": 4010107,
+     "name": "Moon Rock",
+     "qty": 1
+    },
+    {
+     "id": 4020100,
+     "name": "Garnet",
+     "qty": 3
+    },
+    {
+     "id": 4003007,
+     "name": "Spool of Thread",
+     "qty": 21
+    }
+   ]
+  },
+  {
+   "id": 1082043,
+   "name": "Red Noel",
+   "discipline": "Tailoring",
+   "craft_level": 7,
+   "fee": 6000,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003008,
+     "name": "Processed Cloth",
+     "qty": 9
+    },
+    {
+     "id": 4020100,
+     "name": "Garnet",
+     "qty": 5
+    },
+    {
+     "id": 4003007,
+     "name": "Spool of Thread",
+     "qty": 21
+    }
+   ]
+  },
+  {
+   "id": 1072088,
+   "name": "Red Salt Shoes",
+   "discipline": "Tailoring",
+   "craft_level": 7,
+   "fee": 3000,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003008,
+     "name": "Processed Cloth",
+     "qty": 9
+    },
+    {
+     "id": 4020100,
+     "name": "Garnet",
+     "qty": 5
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 21
+    }
+   ]
+  },
+  {
+   "id": 1102011,
+   "name": "White Justice Cape",
+   "discipline": "Tailoring",
+   "craft_level": 7,
+   "fee": 6000,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003008,
+     "name": "Processed Cloth",
+     "qty": 9
+    },
+    {
+     "id": 4010107,
+     "name": "Moon Rock",
+     "qty": 1
+    },
+    {
+     "id": 4020107,
+     "name": "Diamond",
+     "qty": 3
+    },
+    {
+     "id": 4003007,
+     "name": "Spool of Thread",
+     "qty": 21
+    }
+   ]
+  },
+  {
+   "id": 1082056,
+   "name": "Blue Arten",
+   "discipline": "Tailoring",
+   "craft_level": 8,
+   "fee": 8400,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003008,
+     "name": "Processed Cloth",
+     "qty": 10
+    },
+    {
+     "id": 4020105,
+     "name": "Sapphire",
+     "qty": 6
+    },
+    {
+     "id": 4003007,
+     "name": "Spool of Thread",
+     "qty": 24
+    }
+   ]
+  },
+  {
+   "id": 1072101,
+   "name": "Blue Moon Shoes",
+   "discipline": "Tailoring",
+   "craft_level": 8,
+   "fee": 4200,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003008,
+     "name": "Processed Cloth",
+     "qty": 10
+    },
+    {
+     "id": 4020105,
+     "name": "Sapphire",
+     "qty": 6
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 24
+    }
+   ]
+  },
+  {
+   "id": 1082057,
+   "name": "Dark Arten",
+   "discipline": "Tailoring",
+   "craft_level": 8,
+   "fee": 8400,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003008,
+     "name": "Processed Cloth",
+     "qty": 10
+    },
+    {
+     "id": 4020108,
+     "name": "Black Crystal",
+     "qty": 6
+    },
+    {
+     "id": 4003007,
+     "name": "Spool of Thread",
+     "qty": 24
+    }
+   ]
+  },
+  {
+   "id": 1072103,
+   "name": "Dark Moon Shoes",
+   "discipline": "Tailoring",
+   "craft_level": 8,
+   "fee": 4200,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003008,
+     "name": "Processed Cloth",
+     "qty": 10
+    },
+    {
+     "id": 4020104,
+     "name": "Opal",
+     "qty": 6
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 24
+    }
+   ]
+  },
+  {
+   "id": 1072102,
+   "name": "Gold Moon Shoes",
+   "discipline": "Tailoring",
+   "craft_level": 8,
+   "fee": 4200,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003008,
+     "name": "Processed Cloth",
+     "qty": 10
+    },
+    {
+     "id": 4010106,
+     "name": "Gold Ingot",
+     "qty": 6
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 24
+    }
+   ]
+  },
+  {
+   "id": 1082055,
+   "name": "Red Arten",
+   "discipline": "Tailoring",
+   "craft_level": 8,
+   "fee": 8400,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003008,
+     "name": "Processed Cloth",
+     "qty": 10
+    },
+    {
+     "id": 4020100,
+     "name": "Garnet",
+     "qty": 6
+    },
+    {
+     "id": 4003007,
+     "name": "Spool of Thread",
+     "qty": 24
+    }
+   ]
+  },
+  {
+   "id": 1072100,
+   "name": "Red Moon Shoes",
+   "discipline": "Tailoring",
+   "craft_level": 8,
+   "fee": 4200,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003008,
+     "name": "Processed Cloth",
+     "qty": 10
+    },
+    {
+     "id": 4020100,
+     "name": "Garnet",
+     "qty": 6
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 24
+    }
+   ]
+  },
+  {
+   "id": 4003008,
+   "name": "Processed Cloth",
+   "discipline": "Tailoring",
+   "craft_level": 9,
+   "fee": 900,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4000028,
+     "name": "Tablecloth",
+     "qty": 10
+    }
+   ]
+  },
+  {
+   "id": 1072117,
+   "name": "Blue Goldwind Shoes",
+   "discipline": "Tailoring",
+   "craft_level": 10,
+   "fee": 6600,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003008,
+     "name": "Processed Cloth",
+     "qty": 12
+    },
+    {
+     "id": 4010106,
+     "name": "Gold Ingot",
+     "qty": 4
+    },
+    {
+     "id": 4020105,
+     "name": "Sapphire",
+     "qty": 2
+    },
+    {
+     "id": 4000050,
+     "name": "Dragon Skin",
+     "qty": 30
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 30
+    }
+   ]
+  },
+  {
+   "id": 1082068,
+   "name": "Blue Penance",
+   "discipline": "Tailoring",
+   "craft_level": 10,
+   "fee": 13200,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003008,
+     "name": "Processed Cloth",
+     "qty": 12
+    },
+    {
+     "id": 4020105,
+     "name": "Sapphire",
+     "qty": 8
+    },
+    {
+     "id": 4003007,
+     "name": "Spool of Thread",
+     "qty": 30
+    }
+   ]
+  },
+  {
+   "id": 1082069,
+   "name": "Dark Penance",
+   "discipline": "Tailoring",
+   "craft_level": 10,
+   "fee": 13200,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003008,
+     "name": "Processed Cloth",
+     "qty": 12
+    },
+    {
+     "id": 4020108,
+     "name": "Black Crystal",
+     "qty": 8
+    },
+    {
+     "id": 4003007,
+     "name": "Spool of Thread",
+     "qty": 30
+    }
+   ]
+  },
+  {
+   "id": 1072119,
+   "name": "Green Goldwind Shoes",
+   "discipline": "Tailoring",
+   "craft_level": 10,
+   "fee": 6600,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003008,
+     "name": "Processed Cloth",
+     "qty": 12
+    },
+    {
+     "id": 4010106,
+     "name": "Gold Ingot",
+     "qty": 4
+    },
+    {
+     "id": 4020103,
+     "name": "Emerald",
+     "qty": 2
+    },
+    {
+     "id": 4000050,
+     "name": "Dragon Skin",
+     "qty": 30
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 30
+    }
+   ]
+  },
+  {
+   "id": 1072116,
+   "name": "Pink Goldwind Shoes",
+   "discipline": "Tailoring",
+   "craft_level": 10,
+   "fee": 6600,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003008,
+     "name": "Processed Cloth",
+     "qty": 12
+    },
+    {
+     "id": 4010106,
+     "name": "Gold Ingot",
+     "qty": 4
+    },
+    {
+     "id": 4020100,
+     "name": "Garnet",
+     "qty": 2
+    },
+    {
+     "id": 4000050,
+     "name": "Dragon Skin",
+     "qty": 30
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 30
+    }
+   ]
+  },
+  {
+   "id": 1072118,
+   "name": "Purple Goldwind Shoes",
+   "discipline": "Tailoring",
+   "craft_level": 10,
+   "fee": 6600,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003008,
+     "name": "Processed Cloth",
+     "qty": 12
+    },
+    {
+     "id": 4010106,
+     "name": "Gold Ingot",
+     "qty": 4
+    },
+    {
+     "id": 4020101,
+     "name": "Amethyst",
+     "qty": 2
+    },
+    {
+     "id": 4000050,
+     "name": "Dragon Skin",
+     "qty": 30
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 30
+    }
+   ]
+  },
+  {
+   "id": 1082067,
+   "name": "Red Penance",
+   "discipline": "Tailoring",
+   "craft_level": 10,
+   "fee": 13200,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003008,
+     "name": "Processed Cloth",
+     "qty": 12
+    },
+    {
+     "id": 4020100,
+     "name": "Garnet",
+     "qty": 8
+    },
+    {
+     "id": 4003007,
+     "name": "Spool of Thread",
+     "qty": 30
+    }
+   ]
+  },
+  {
+   "id": 4003000,
+   "name": "Screw",
+   "discipline": "Weaponcrafting",
+   "craft_level": 1,
+   "fee": 0,
+   "makes": 10,
+   "ingredients": [
+    {
+     "id": 4010100,
+     "name": "Bronze Ingot",
+     "qty": 1
+    },
+    {
+     "id": 4010101,
+     "name": "Iron Ingot",
+     "qty": 1
+    }
+   ]
+  },
+  {
+   "id": 1322001,
+   "name": "Steel Pipe",
+   "discipline": "Weaponcrafting",
+   "craft_level": 1,
+   "fee": 1500,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4010101,
+     "name": "Iron Ingot",
+     "qty": 1
+    }
+   ]
+  },
+  {
+   "id": 1302003,
+   "name": "Saw",
+   "discipline": "Weaponcrafting",
+   "craft_level": 2,
+   "fee": 2500,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4010100,
+     "name": "Bronze Ingot",
+     "qty": 2
+    },
+    {
+     "id": 4003001,
+     "name": "Processed Wood",
+     "qty": 2
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 6
+    }
+   ]
+  },
+  {
+   "id": 1312003,
+   "name": "Scythe",
+   "discipline": "Weaponcrafting",
+   "craft_level": 2,
+   "fee": 2500,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4010101,
+     "name": "Iron Ingot",
+     "qty": 2
+    },
+    {
+     "id": 4003001,
+     "name": "Processed Wood",
+     "qty": 2
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 6
+    }
+   ]
+  },
+  {
+   "id": 1472003,
+   "name": "Gold Titans",
+   "discipline": "Weaponcrafting",
+   "craft_level": 3,
+   "fee": 2000,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 1472001,
+     "name": "Steel Titans",
+     "qty": 1
+    },
+    {
+     "id": 4010106,
+     "name": "Gold Ingot",
+     "qty": 1
+    }
+   ]
+  },
+  {
+   "id": 1322005,
+   "name": "Hammer",
+   "discipline": "Weaponcrafting",
+   "craft_level": 3,
+   "fee": 2900,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4010101,
+     "name": "Iron Ingot",
+     "qty": 3
+    },
+    {
+     "id": 4003001,
+     "name": "Processed Wood",
+     "qty": 2
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 9
+    }
+   ]
+  },
+  {
+   "id": 1472002,
+   "name": "Mithril Titans",
+   "discipline": "Weaponcrafting",
+   "craft_level": 3,
+   "fee": 1000,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 1472001,
+     "name": "Steel Titans",
+     "qty": 1
+    },
+    {
+     "id": 4010102,
+     "name": "Mithril Ingot",
+     "qty": 1
+    }
+   ]
+  },
+  {
+   "id": 1322006,
+   "name": "Square Shovel",
+   "discipline": "Weaponcrafting",
+   "craft_level": 3,
+   "fee": 3100,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4010101,
+     "name": "Iron Ingot",
+     "qty": 3
+    },
+    {
+     "id": 4003001,
+     "name": "Processed Wood",
+     "qty": 2
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 9
+    }
+   ]
+  },
+  {
+   "id": 1472001,
+   "name": "Steel Titans",
+   "discipline": "Weaponcrafting",
+   "craft_level": 3,
+   "fee": 3500,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4010101,
+     "name": "Iron Ingot",
+     "qty": 3
+    },
+    {
+     "id": 4003006,
+     "name": "Processed Leather",
+     "qty": 10
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 9
+    }
+   ]
+  },
+  {
+   "id": 3030001,
+   "name": "Weaponcrafting Station",
+   "discipline": "Weaponcrafting",
+   "craft_level": 3,
+   "fee": 100000,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4010101,
+     "name": "Iron Ingot",
+     "qty": 10
+    },
+    {
+     "id": 4010100,
+     "name": "Bronze Ingot",
+     "qty": 10
+    },
+    {
+     "id": 4003001,
+     "name": "Processed Wood",
+     "qty": 5
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 20
+    }
+   ]
+  },
+  {
+   "id": 1472006,
+   "name": "Adamantium Igor",
+   "discipline": "Weaponcrafting",
+   "craft_level": 4,
+   "fee": 2000,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 1472004,
+     "name": "Bronze Igor",
+     "qty": 1
+    },
+    {
+     "id": 4010103,
+     "name": "Adamantium Ingot",
+     "qty": 2
+    }
+   ]
+  },
+  {
+   "id": 1472004,
+   "name": "Bronze Igor",
+   "discipline": "Weaponcrafting",
+   "craft_level": 4,
+   "fee": 4500,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4010100,
+     "name": "Bronze Ingot",
+     "qty": 2
+    },
+    {
+     "id": 4010101,
+     "name": "Iron Ingot",
+     "qty": 2
+    },
+    {
+     "id": 4003006,
+     "name": "Processed Leather",
+     "qty": 20
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 12
+    }
+   ]
+  },
+  {
+   "id": 1412002,
+   "name": "Pickaxe",
+   "discipline": "Weaponcrafting",
+   "craft_level": 4,
+   "fee": 4500,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4010101,
+     "name": "Iron Ingot",
+     "qty": 4
+    },
+    {
+     "id": 4003001,
+     "name": "Processed Wood",
+     "qty": 2
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 12
+    }
+   ]
+  },
+  {
+   "id": 1322009,
+   "name": "Pointed Shovel",
+   "discipline": "Weaponcrafting",
+   "craft_level": 4,
+   "fee": 3900,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4010101,
+     "name": "Iron Ingot",
+     "qty": 4
+    },
+    {
+     "id": 4003001,
+     "name": "Processed Wood",
+     "qty": 2
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 12
+    }
+   ]
+  },
+  {
+   "id": 1472005,
+   "name": "Steel Igor",
+   "discipline": "Weaponcrafting",
+   "craft_level": 4,
+   "fee": 1000,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 1472004,
+     "name": "Bronze Igor",
+     "qty": 1
+    },
+    {
+     "id": 4010101,
+     "name": "Iron Ingot",
+     "qty": 2
+    }
+   ]
+  },
+  {
+   "id": 1442003,
+   "name": "Janitor's Mop",
+   "discipline": "Weaponcrafting",
+   "craft_level": 5,
+   "fee": 5500,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4010101,
+     "name": "Iron Ingot",
+     "qty": 1
+    },
+    {
+     "id": 4003006,
+     "name": "Processed Leather",
+     "qty": 30
+    },
+    {
+     "id": 4003001,
+     "name": "Processed Wood",
+     "qty": 2
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 15
+    }
+   ]
+  },
+  {
+   "id": 1472007,
+   "name": "Meba",
+   "discipline": "Weaponcrafting",
+   "craft_level": 5,
+   "fee": 5500,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 1472000,
+     "name": "Garnier",
+     "qty": 1
+    },
+    {
+     "id": 4010101,
+     "name": "Iron Ingot",
+     "qty": 3
+    },
+    {
+     "id": 4003006,
+     "name": "Processed Leather",
+     "qty": 30
+    },
+    {
+     "id": 4003001,
+     "name": "Processed Wood",
+     "qty": 2
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 15
+    }
+   ]
+  },
+  {
+   "id": 1422003,
+   "name": "Monkey Wrench",
+   "discipline": "Weaponcrafting",
+   "craft_level": 5,
+   "fee": 5500,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4010101,
+     "name": "Iron Ingot",
+     "qty": 5
+    },
+    {
+     "id": 4003001,
+     "name": "Processed Wood",
+     "qty": 2
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 15
+    }
+   ]
+  },
+  {
+   "id": 4003000,
+   "name": "Screw",
+   "discipline": "Weaponcrafting",
+   "craft_level": 5,
+   "fee": 0,
+   "makes": 3,
+   "ingredients": [
+    {
+     "id": 4000023,
+     "name": "Iron Hog's Metal Hoof",
+     "qty": 10
+    }
+   ]
+  },
+  {
+   "id": 1472010,
+   "name": "Adamantium Guards",
+   "discipline": "Weaponcrafting",
+   "craft_level": 6,
+   "fee": 2000,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 1472008,
+     "name": "Steel Guards",
+     "qty": 1
+    },
+    {
+     "id": 4010103,
+     "name": "Adamantium Ingot",
+     "qty": 3
+    }
+   ]
+  },
+  {
+   "id": 1402004,
+   "name": "Aluminum Baseball Bat",
+   "discipline": "Weaponcrafting",
+   "craft_level": 6,
+   "fee": 6500,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4010101,
+     "name": "Iron Ingot",
+     "qty": 3
+    },
+    {
+     "id": 4010102,
+     "name": "Mithril Ingot",
+     "qty": 3
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 18
+    }
+   ]
+  },
+  {
+   "id": 1472009,
+   "name": "Mithril Guards",
+   "discipline": "Weaponcrafting",
+   "craft_level": 6,
+   "fee": 1000,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 1472008,
+     "name": "Steel Guards",
+     "qty": 1
+    },
+    {
+     "id": 4010102,
+     "name": "Mithril Ingot",
+     "qty": 3
+    }
+   ]
+  },
+  {
+   "id": 1472008,
+   "name": "Steel Guards",
+   "discipline": "Weaponcrafting",
+   "craft_level": 6,
+   "fee": 6500,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4010100,
+     "name": "Bronze Ingot",
+     "qty": 3
+    },
+    {
+     "id": 4010101,
+     "name": "Iron Ingot",
+     "qty": 3
+    },
+    {
+     "id": 4003006,
+     "name": "Processed Leather",
+     "qty": 40
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 18
+    }
+   ]
+  },
+  {
+   "id": 1442005,
+   "name": "Axe Pole Arm",
+   "discipline": "Weaponcrafting",
+   "craft_level": 7,
+   "fee": 9000,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4010101,
+     "name": "Iron Ingot",
+     "qty": 4
+    },
+    {
+     "id": 4010102,
+     "name": "Mithril Ingot",
+     "qty": 3
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 21
+    }
+   ]
+  },
+  {
+   "id": 1472011,
+   "name": "Bronze Guardian",
+   "discipline": "Weaponcrafting",
+   "craft_level": 7,
+   "fee": 9000,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4010100,
+     "name": "Bronze Ingot",
+     "qty": 4
+    },
+    {
+     "id": 4010101,
+     "name": "Iron Ingot",
+     "qty": 3
+    },
+    {
+     "id": 4003006,
+     "name": "Processed Leather",
+     "qty": 50
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 21
+    }
+   ]
+  },
+  {
+   "id": 1472013,
+   "name": "Dark Guardian",
+   "discipline": "Weaponcrafting",
+   "craft_level": 7,
+   "fee": 2000,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 1472011,
+     "name": "Bronze Guardian",
+     "qty": 1
+    },
+    {
+     "id": 4020108,
+     "name": "Black Crystal",
+     "qty": 1
+    }
+   ]
+  },
+  {
+   "id": 1332011,
+   "name": "Halfmoon Zamadar",
+   "discipline": "Weaponcrafting",
+   "craft_level": 7,
+   "fee": 7500,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4010101,
+     "name": "Iron Ingot",
+     "qty": 4
+    },
+    {
+     "id": 4010102,
+     "name": "Mithril Ingot",
+     "qty": 3
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 21
+    }
+   ]
+  },
+  {
+   "id": 1412005,
+   "name": "Niam",
+   "discipline": "Weaponcrafting",
+   "craft_level": 7,
+   "fee": 9000,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4010101,
+     "name": "Iron Ingot",
+     "qty": 4
+    },
+    {
+     "id": 4020103,
+     "name": "Emerald",
+     "qty": 3
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 21
+    }
+   ]
+  },
+  {
+   "id": 1472012,
+   "name": "Silver Guardian",
+   "discipline": "Weaponcrafting",
+   "craft_level": 7,
+   "fee": 1000,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 1472011,
+     "name": "Bronze Guardian",
+     "qty": 1
+    },
+    {
+     "id": 4010104,
+     "name": "Silver Ingot",
+     "qty": 4
+    }
+   ]
+  },
+  {
+   "id": 1422005,
+   "name": "Sledgehammer",
+   "discipline": "Weaponcrafting",
+   "craft_level": 7,
+   "fee": 9000,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4010101,
+     "name": "Iron Ingot",
+     "qty": 4
+    },
+    {
+     "id": 4010104,
+     "name": "Silver Ingot",
+     "qty": 2
+    },
+    {
+     "id": 4003001,
+     "name": "Processed Wood",
+     "qty": 2
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 21
+    }
+   ]
+  },
+  {
+   "id": 1442006,
+   "name": "Crescent Polearm",
+   "discipline": "Weaponcrafting",
+   "craft_level": 8,
+   "fee": 11500,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4010101,
+     "name": "Iron Ingot",
+     "qty": 4
+    },
+    {
+     "id": 4010102,
+     "name": "Mithril Ingot",
+     "qty": 2
+    },
+    {
+     "id": 4003001,
+     "name": "Processed Wood",
+     "qty": 2
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 24
+    }
+   ]
+  },
+  {
+   "id": 1332012,
+   "name": "Gephart",
+   "discipline": "Weaponcrafting",
+   "craft_level": 8,
+   "fee": 9500,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4010101,
+     "name": "Iron Ingot",
+     "qty": 6
+    },
+    {
+     "id": 4010102,
+     "name": "Mithril Ingot",
+     "qty": 2
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 24
+    }
+   ]
+  },
+  {
+   "id": 1412006,
+   "name": "Sabretooth",
+   "discipline": "Weaponcrafting",
+   "craft_level": 8,
+   "fee": 11500,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4010101,
+     "name": "Iron Ingot",
+     "qty": 4
+    },
+    {
+     "id": 4010104,
+     "name": "Silver Ingot",
+     "qty": 2
+    },
+    {
+     "id": 4010106,
+     "name": "Gold Ingot",
+     "qty": 2
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 24
+    }
+   ]
+  },
+  {
+   "id": 1472014,
+   "name": "Steel Avarice",
+   "discipline": "Weaponcrafting",
+   "craft_level": 8,
+   "fee": 11500,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4010100,
+     "name": "Bronze Ingot",
+     "qty": 4
+    },
+    {
+     "id": 4010101,
+     "name": "Iron Ingot",
+     "qty": 4
+    },
+    {
+     "id": 4003006,
+     "name": "Processed Leather",
+     "qty": 60
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 24
+    }
+   ]
+  },
+  {
+   "id": 1422006,
+   "name": "Titan",
+   "discipline": "Weaponcrafting",
+   "craft_level": 8,
+   "fee": 11500,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4010101,
+     "name": "Iron Ingot",
+     "qty": 4
+    },
+    {
+     "id": 4010104,
+     "name": "Silver Ingot",
+     "qty": 2
+    },
+    {
+     "id": 4010106,
+     "name": "Gold Ingot",
+     "qty": 2
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 24
+    }
+   ]
+  },
+  {
+   "id": 1472016,
+   "name": "Adamantium Avarice",
+   "discipline": "Weaponcrafting",
+   "craft_level": 9,
+   "fee": 1000,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 1472014,
+     "name": "Steel Avarice",
+     "qty": 1
+    },
+    {
+     "id": 4010103,
+     "name": "Adamantium Ingot",
+     "qty": 5
+    }
+   ]
+  },
+  {
+   "id": 1472015,
+   "name": "Blood Avarice",
+   "discipline": "Weaponcrafting",
+   "craft_level": 9,
+   "fee": 1000,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 1472014,
+     "name": "Steel Avarice",
+     "qty": 1
+    },
+    {
+     "id": 4020100,
+     "name": "Garnet",
+     "qty": 5
+    }
+   ]
+  },
+  {
+   "id": 1472017,
+   "name": "Dark Avarice",
+   "discipline": "Weaponcrafting",
+   "craft_level": 9,
+   "fee": 2000,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 1472014,
+     "name": "Steel Avarice",
+     "qty": 1
+    },
+    {
+     "id": 4020108,
+     "name": "Black Crystal",
+     "qty": 5
+    }
+   ]
+  },
+  {
+   "id": 1472019,
+   "name": "Blood Slain",
+   "discipline": "Weaponcrafting",
+   "craft_level": 10,
+   "fee": 1000,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 1472018,
+     "name": "Steel Slain",
+     "qty": 1
+    },
+    {
+     "id": 4020100,
+     "name": "Garnet",
+     "qty": 6
+    }
+   ]
+  },
+  {
+   "id": 1472021,
+   "name": "Dark Slain",
+   "discipline": "Weaponcrafting",
+   "craft_level": 10,
+   "fee": 2000,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 1472018,
+     "name": "Steel Slain",
+     "qty": 1
+    },
+    {
+     "id": 4020108,
+     "name": "Black Crystal",
+     "qty": 6
+    }
+   ]
+  },
+  {
+   "id": 1422007,
+   "name": "Golden Mole",
+   "discipline": "Weaponcrafting",
+   "craft_level": 10,
+   "fee": 16500,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4010100,
+     "name": "Bronze Ingot",
+     "qty": 5
+    },
+    {
+     "id": 4010106,
+     "name": "Gold Ingot",
+     "qty": 5
+    },
+    {
+     "id": 4020107,
+     "name": "Diamond",
+     "qty": 6
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 30
+    }
+   ]
+  },
+  {
+   "id": 1332016,
+   "name": "Sai",
+   "discipline": "Weaponcrafting",
+   "craft_level": 10,
+   "fee": 13500,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4010100,
+     "name": "Bronze Ingot",
+     "qty": 5
+    },
+    {
+     "id": 4010106,
+     "name": "Gold Ingot",
+     "qty": 5
+    },
+    {
+     "id": 4020107,
+     "name": "Diamond",
+     "qty": 6
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 30
+    }
+   ]
+  },
+  {
+   "id": 1472020,
+   "name": "Sapphire Slain",
+   "discipline": "Weaponcrafting",
+   "craft_level": 10,
+   "fee": 1000,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 1472018,
+     "name": "Steel Slain",
+     "qty": 1
+    },
+    {
+     "id": 4020105,
+     "name": "Sapphire",
+     "qty": 6
+    }
+   ]
+  },
+  {
+   "id": 1472018,
+   "name": "Steel Slain",
+   "discipline": "Weaponcrafting",
+   "craft_level": 10,
+   "fee": 16500,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4010100,
+     "name": "Bronze Ingot",
+     "qty": 5
+    },
+    {
+     "id": 4010101,
+     "name": "Iron Ingot",
+     "qty": 5
+    },
+    {
+     "id": 4000050,
+     "name": "Dragon Skin",
+     "qty": 30
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 30
+    }
+   ]
+  },
+  {
+   "id": 1442007,
+   "name": "The Nine Dragons",
+   "discipline": "Weaponcrafting",
+   "craft_level": 10,
+   "fee": 16500,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4010100,
+     "name": "Bronze Ingot",
+     "qty": 5
+    },
+    {
+     "id": 4010101,
+     "name": "Iron Ingot",
+     "qty": 5
+    },
+    {
+     "id": 4020100,
+     "name": "Garnet",
+     "qty": 6
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 30
+    }
+   ]
+  },
+  {
+   "id": 1412007,
+   "name": "The Rising",
+   "discipline": "Weaponcrafting",
+   "craft_level": 10,
+   "fee": 16500,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4010100,
+     "name": "Bronze Ingot",
+     "qty": 5
+    },
+    {
+     "id": 4010106,
+     "name": "Gold Ingot",
+     "qty": 5
+    },
+    {
+     "id": 4020107,
+     "name": "Diamond",
+     "qty": 6
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 30
+    }
+   ]
+  },
+  {
+   "id": 2060000,
+   "name": "Arrows for Bows",
+   "discipline": "Woodcrafting",
+   "craft_level": 1,
+   "fee": 0,
+   "makes": 500,
+   "ingredients": [
+    {
+     "id": 4003001,
+     "name": "Processed Wood",
+     "qty": 1
+    },
+    {
+     "id": 4003002,
+     "name": "Stiff Feather",
+     "qty": 1
+    }
+   ]
+  },
+  {
+   "id": 2060000,
+   "name": "Arrows for Bows",
+   "discipline": "Woodcrafting",
+   "craft_level": 1,
+   "fee": 0,
+   "makes": 5,
+   "ingredients": [
+    {
+     "id": 2061000,
+     "name": "Arrows for Crossbows",
+     "qty": 10
+    }
+   ]
+  },
+  {
+   "id": 2061000,
+   "name": "Arrows for Crossbows",
+   "discipline": "Woodcrafting",
+   "craft_level": 1,
+   "fee": 0,
+   "makes": 500,
+   "ingredients": [
+    {
+     "id": 4003001,
+     "name": "Processed Wood",
+     "qty": 1
+    },
+    {
+     "id": 4003002,
+     "name": "Stiff Feather",
+     "qty": 1
+    }
+   ]
+  },
+  {
+   "id": 2061000,
+   "name": "Arrows for Crossbows",
+   "discipline": "Woodcrafting",
+   "craft_level": 1,
+   "fee": 0,
+   "makes": 5,
+   "ingredients": [
+    {
+     "id": 2060000,
+     "name": "Arrows for Bows",
+     "qty": 10
+    }
+   ]
+  },
+  {
+   "id": 4003001,
+   "name": "Processed Wood",
+   "discipline": "Woodcrafting",
+   "craft_level": 1,
+   "fee": 100,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4000005,
+     "name": "Tree Branch",
+     "qty": 10
+    }
+   ]
+  },
+  {
+   "id": 1462000,
+   "name": "Crossbow",
+   "discipline": "Woodcrafting",
+   "craft_level": 2,
+   "fee": 2500,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003001,
+     "name": "Processed Wood",
+     "qty": 4
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 6
+    }
+   ]
+  },
+  {
+   "id": 4003001,
+   "name": "Processed Wood",
+   "discipline": "Woodcrafting",
+   "craft_level": 2,
+   "fee": 200,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4000015,
+     "name": "Firewood",
+     "qty": 5
+    }
+   ]
+  },
+  {
+   "id": 3010001,
+   "name": "The Yellow Relaxer",
+   "discipline": "Woodcrafting",
+   "craft_level": 2,
+   "fee": 3000,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003001,
+     "name": "Processed Wood",
+     "qty": 10
+    },
+    {
+     "id": 4003008,
+     "name": "Processed Cloth",
+     "qty": 5
+    },
+    {
+     "id": 4003013,
+     "name": "Yellow Dye",
+     "qty": 2
+    },
+    {
+     "id": 4003014,
+     "name": "Blue Dye",
+     "qty": 1
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 20
+    }
+   ]
+  },
+  {
+   "id": 1452000,
+   "name": "War Bow",
+   "discipline": "Woodcrafting",
+   "craft_level": 2,
+   "fee": 2500,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003001,
+     "name": "Processed Wood",
+     "qty": 4
+    },
+    {
+     "id": 4000002,
+     "name": "Blue Snail Shell",
+     "qty": 30
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 6
+    }
+   ]
+  },
+  {
+   "id": 1382000,
+   "name": "Wooden Staff",
+   "discipline": "Woodcrafting",
+   "craft_level": 2,
+   "fee": 1500,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003001,
+     "name": "Processed Wood",
+     "qty": 4
+    }
+   ]
+  },
+  {
+   "id": 1402000,
+   "name": "Wooden Sword",
+   "discipline": "Woodcrafting",
+   "craft_level": 2,
+   "fee": 2500,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003001,
+     "name": "Processed Wood",
+     "qty": 4
+    }
+   ]
+  },
+  {
+   "id": 1372000,
+   "name": "Wooden Wand",
+   "discipline": "Woodcrafting",
+   "craft_level": 2,
+   "fee": 1500,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003001,
+     "name": "Processed Wood",
+     "qty": 4
+    }
+   ]
+  },
+  {
+   "id": 1462001,
+   "name": "Battle Crossbow",
+   "discipline": "Woodcrafting",
+   "craft_level": 3,
+   "fee": 3500,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003001,
+     "name": "Processed Wood",
+     "qty": 5
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 9
+    }
+   ]
+  },
+  {
+   "id": 1452001,
+   "name": "Composite Bow",
+   "discipline": "Woodcrafting",
+   "craft_level": 3,
+   "fee": 3500,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003001,
+     "name": "Processed Wood",
+     "qty": 5
+    },
+    {
+     "id": 4010101,
+     "name": "Iron Ingot",
+     "qty": 1
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 9
+    }
+   ]
+  },
+  {
+   "id": 1372001,
+   "name": "Hardwood Wand",
+   "discipline": "Woodcrafting",
+   "craft_level": 3,
+   "fee": 1500,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003001,
+     "name": "Processed Wood",
+     "qty": 5
+    },
+    {
+     "id": 4000009,
+     "name": "Orange Mushroom Cap",
+     "qty": 30
+    }
+   ]
+  },
+  {
+   "id": 4003001,
+   "name": "Processed Wood",
+   "discipline": "Woodcrafting",
+   "craft_level": 3,
+   "fee": 300,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4000151,
+     "name": "Seedling",
+     "qty": 5
+    }
+   ]
+  },
+  {
+   "id": 1402001,
+   "name": "Wooden Baseball Bat",
+   "discipline": "Woodcrafting",
+   "craft_level": 3,
+   "fee": 3500,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003001,
+     "name": "Processed Wood",
+     "qty": 5
+    }
+   ]
+  },
+  {
+   "id": 3030003,
+   "name": "Woodworking Station",
+   "discipline": "Woodcrafting",
+   "craft_level": 3,
+   "fee": 100000,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4010101,
+     "name": "Iron Ingot",
+     "qty": 5
+    },
+    {
+     "id": 4010100,
+     "name": "Bronze Ingot",
+     "qty": 5
+    },
+    {
+     "id": 4003001,
+     "name": "Processed Wood",
+     "qty": 20
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 20
+    }
+   ]
+  },
+  {
+   "id": 1462002,
+   "name": "Balanche",
+   "discipline": "Woodcrafting",
+   "craft_level": 4,
+   "fee": 4500,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003001,
+     "name": "Processed Wood",
+     "qty": 6
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 12
+    }
+   ]
+  },
+  {
+   "id": 2060001,
+   "name": "Bronze Arrows for Bows",
+   "discipline": "Woodcrafting",
+   "craft_level": 4,
+   "fee": 0,
+   "makes": 500,
+   "ingredients": [
+    {
+     "id": 4003001,
+     "name": "Processed Wood",
+     "qty": 1
+    },
+    {
+     "id": 4010100,
+     "name": "Bronze Ingot",
+     "qty": 1
+    },
+    {
+     "id": 4003002,
+     "name": "Stiff Feather",
+     "qty": 1
+    }
+   ]
+  },
+  {
+   "id": 2060001,
+   "name": "Bronze Arrows for Bows",
+   "discipline": "Woodcrafting",
+   "craft_level": 4,
+   "fee": 0,
+   "makes": 5,
+   "ingredients": [
+    {
+     "id": 2061001,
+     "name": "Bronze Arrows for Crossbows",
+     "qty": 10
+    }
+   ]
+  },
+  {
+   "id": 2061001,
+   "name": "Bronze Arrows for Crossbows",
+   "discipline": "Woodcrafting",
+   "craft_level": 4,
+   "fee": 0,
+   "makes": 500,
+   "ingredients": [
+    {
+     "id": 4003001,
+     "name": "Processed Wood",
+     "qty": 1
+    },
+    {
+     "id": 4010100,
+     "name": "Bronze Ingot",
+     "qty": 1
+    },
+    {
+     "id": 4003002,
+     "name": "Stiff Feather",
+     "qty": 1
+    }
+   ]
+  },
+  {
+   "id": 2061001,
+   "name": "Bronze Arrows for Crossbows",
+   "discipline": "Woodcrafting",
+   "craft_level": 4,
+   "fee": 0,
+   "makes": 5,
+   "ingredients": [
+    {
+     "id": 2060001,
+     "name": "Bronze Arrows for Bows",
+     "qty": 10
+    }
+   ]
+  },
+  {
+   "id": 3000006,
+   "name": "Cherry Wardrobe",
+   "discipline": "Woodcrafting",
+   "craft_level": 4,
+   "fee": 20000,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003001,
+     "name": "Processed Wood",
+     "qty": 10
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 40
+    },
+    {
+     "id": 4003012,
+     "name": "Red Dye",
+     "qty": 5
+    }
+   ]
+  },
+  {
+   "id": 1452002,
+   "name": "Hunter's Bow",
+   "discipline": "Woodcrafting",
+   "craft_level": 4,
+   "fee": 4500,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003001,
+     "name": "Processed Wood",
+     "qty": 6
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 12
+    },
+    {
+     "id": 4000004,
+     "name": "Red Snail Shell",
+     "qty": 30
+    }
+   ]
+  },
+  {
+   "id": 1382003,
+   "name": "Old Wooden Staff",
+   "discipline": "Woodcrafting",
+   "craft_level": 4,
+   "fee": 3500,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003001,
+     "name": "Processed Wood",
+     "qty": 6
+    },
+    {
+     "id": 4010104,
+     "name": "Silver Ingot",
+     "qty": 1
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 12
+    }
+   ]
+  },
+  {
+   "id": 1452003,
+   "name": "Battle Bow",
+   "discipline": "Woodcrafting",
+   "craft_level": 5,
+   "fee": 5500,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003001,
+     "name": "Processed Wood",
+     "qty": 7
+    },
+    {
+     "id": 4010101,
+     "name": "Iron Ingot",
+     "qty": 2
+    },
+    {
+     "id": 4020106,
+     "name": "Topaz",
+     "qty": 2
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 15
+    }
+   ]
+  },
+  {
+   "id": 3000005,
+   "name": "Cherry Bed",
+   "discipline": "Woodcrafting",
+   "craft_level": 5,
+   "fee": 25000,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003001,
+     "name": "Processed Wood",
+     "qty": 10
+    },
+    {
+     "id": 4003008,
+     "name": "Processed Cloth",
+     "qty": 5
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 50
+    },
+    {
+     "id": 4003012,
+     "name": "Red Dye",
+     "qty": 5
+    }
+   ]
+  },
+  {
+   "id": 1462003,
+   "name": "Mountain Crossbow",
+   "discipline": "Woodcrafting",
+   "craft_level": 5,
+   "fee": 5500,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003001,
+     "name": "Processed Wood",
+     "qty": 7
+    },
+    {
+     "id": 4010101,
+     "name": "Iron Ingot",
+     "qty": 2
+    },
+    {
+     "id": 4020106,
+     "name": "Topaz",
+     "qty": 1
+    },
+    {
+     "id": 4020102,
+     "name": "Aquamarine",
+     "qty": 1
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 15
+    }
+   ]
+  },
+  {
+   "id": 1322010,
+   "name": "Plunger",
+   "discipline": "Woodcrafting",
+   "craft_level": 5,
+   "fee": 4500,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003001,
+     "name": "Processed Wood",
+     "qty": 7
+    },
+    {
+     "id": 4003006,
+     "name": "Processed Leather",
+     "qty": 3
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 15
+    }
+   ]
+  },
+  {
+   "id": 4003001,
+   "name": "Processed Wood",
+   "discipline": "Woodcrafting",
+   "craft_level": 5,
+   "fee": 500,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4000152,
+     "name": "Wooden Board",
+     "qty": 5
+    }
+   ]
+  },
+  {
+   "id": 3010002,
+   "name": "The Red Relaxer",
+   "discipline": "Woodcrafting",
+   "craft_level": 5,
+   "fee": 3000,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003001,
+     "name": "Processed Wood",
+     "qty": 10
+    },
+    {
+     "id": 4003008,
+     "name": "Processed Cloth",
+     "qty": 5
+    },
+    {
+     "id": 4003012,
+     "name": "Red Dye",
+     "qty": 2
+    },
+    {
+     "id": 4003014,
+     "name": "Blue Dye",
+     "qty": 1
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 20
+    }
+   ]
+  },
+  {
+   "id": 1462004,
+   "name": "Eagle Crow",
+   "discipline": "Woodcrafting",
+   "craft_level": 6,
+   "fee": 6500,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003001,
+     "name": "Processed Wood",
+     "qty": 8
+    },
+    {
+     "id": 4010105,
+     "name": "Orihalcon Ingot",
+     "qty": 2
+    },
+    {
+     "id": 4020106,
+     "name": "Topaz",
+     "qty": 1
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 18
+    }
+   ]
+  },
+  {
+   "id": 3020001,
+   "name": "Reinforced Wooden Chest",
+   "discipline": "Woodcrafting",
+   "craft_level": 6,
+   "fee": 300000,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003001,
+     "name": "Processed Wood",
+     "qty": 20
+    },
+    {
+     "id": 4010101,
+     "name": "Iron Ingot",
+     "qty": 5
+    },
+    {
+     "id": 4010100,
+     "name": "Bronze Ingot",
+     "qty": 5
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 10
+    }
+   ]
+  },
+  {
+   "id": 1452004,
+   "name": "Ryden",
+   "discipline": "Woodcrafting",
+   "craft_level": 6,
+   "fee": 6500,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003001,
+     "name": "Processed Wood",
+     "qty": 8
+    },
+    {
+     "id": 4010106,
+     "name": "Gold Ingot",
+     "qty": 1
+    },
+    {
+     "id": 4020103,
+     "name": "Emerald",
+     "qty": 1
+    },
+    {
+     "id": 4020106,
+     "name": "Topaz",
+     "qty": 1
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 18
+    }
+   ]
+  },
+  {
+   "id": 2060002,
+   "name": "Iron Arrows for Bows",
+   "discipline": "Woodcrafting",
+   "craft_level": 7,
+   "fee": 0,
+   "makes": 500,
+   "ingredients": [
+    {
+     "id": 4003001,
+     "name": "Processed Wood",
+     "qty": 1
+    },
+    {
+     "id": 4010101,
+     "name": "Iron Ingot",
+     "qty": 1
+    },
+    {
+     "id": 4003002,
+     "name": "Stiff Feather",
+     "qty": 1
+    }
+   ]
+  },
+  {
+   "id": 2060002,
+   "name": "Iron Arrows for Bows",
+   "discipline": "Woodcrafting",
+   "craft_level": 7,
+   "fee": 0,
+   "makes": 5,
+   "ingredients": [
+    {
+     "id": 2061002,
+     "name": "Iron Arrows for Crossbows",
+     "qty": 10
+    }
+   ]
+  },
+  {
+   "id": 2061002,
+   "name": "Iron Arrows for Crossbows",
+   "discipline": "Woodcrafting",
+   "craft_level": 7,
+   "fee": 0,
+   "makes": 500,
+   "ingredients": [
+    {
+     "id": 4003001,
+     "name": "Processed Wood",
+     "qty": 1
+    },
+    {
+     "id": 4010101,
+     "name": "Iron Ingot",
+     "qty": 1
+    },
+    {
+     "id": 4003002,
+     "name": "Stiff Feather",
+     "qty": 1
+    }
+   ]
+  },
+  {
+   "id": 2061002,
+   "name": "Iron Arrows for Crossbows",
+   "discipline": "Woodcrafting",
+   "craft_level": 7,
+   "fee": 0,
+   "makes": 5,
+   "ingredients": [
+    {
+     "id": 2060002,
+     "name": "Iron Arrows for Bows",
+     "qty": 10
+    }
+   ]
+  },
+  {
+   "id": 1452005,
+   "name": "Red Viper",
+   "discipline": "Woodcrafting",
+   "craft_level": 7,
+   "fee": 9000,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003001,
+     "name": "Processed Wood",
+     "qty": 9
+    },
+    {
+     "id": 4010104,
+     "name": "Silver Ingot",
+     "qty": 1
+    },
+    {
+     "id": 4020100,
+     "name": "Garnet",
+     "qty": 1
+    },
+    {
+     "id": 4020104,
+     "name": "Opal",
+     "qty": 1
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 21
+    }
+   ]
+  },
+  {
+   "id": 1462005,
+   "name": "Heckler",
+   "discipline": "Woodcrafting",
+   "craft_level": 8,
+   "fee": 11500,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003001,
+     "name": "Processed Wood",
+     "qty": 10
+    },
+    {
+     "id": 4010101,
+     "name": "Iron Ingot",
+     "qty": 2
+    },
+    {
+     "id": 4010106,
+     "name": "Gold Ingot",
+     "qty": 2
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 24
+    }
+   ]
+  },
+  {
+   "id": 1452006,
+   "name": "Vaulter 2000",
+   "discipline": "Woodcrafting",
+   "craft_level": 8,
+   "fee": 11500,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003001,
+     "name": "Processed Wood",
+     "qty": 10
+    },
+    {
+     "id": 4010101,
+     "name": "Iron Ingot",
+     "qty": 2
+    },
+    {
+     "id": 4020108,
+     "name": "Black Crystal",
+     "qty": 2
+    },
+    {
+     "id": 4000036,
+     "name": "Drake Skull",
+     "qty": 40
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 24
+    }
+   ]
+  },
+  {
+   "id": 1462006,
+   "name": "Silver Crow",
+   "discipline": "Woodcrafting",
+   "craft_level": 9,
+   "fee": 14000,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003001,
+     "name": "Processed Wood",
+     "qty": 11
+    },
+    {
+     "id": 4010104,
+     "name": "Silver Ingot",
+     "qty": 2
+    },
+    {
+     "id": 4020107,
+     "name": "Diamond",
+     "qty": 2
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 27
+    }
+   ]
+  },
+  {
+   "id": 2060003,
+   "name": "Adamantium Arrows for Bows",
+   "discipline": "Woodcrafting",
+   "craft_level": 10,
+   "fee": 0,
+   "makes": 500,
+   "ingredients": [
+    {
+     "id": 4003001,
+     "name": "Processed Wood",
+     "qty": 1
+    },
+    {
+     "id": 4010103,
+     "name": "Adamantium Ingot",
+     "qty": 1
+    },
+    {
+     "id": 4003002,
+     "name": "Stiff Feather",
+     "qty": 12
+    }
+   ]
+  },
+  {
+   "id": 2060003,
+   "name": "Adamantium Arrows for Bows",
+   "discipline": "Woodcrafting",
+   "craft_level": 10,
+   "fee": 0,
+   "makes": 5,
+   "ingredients": [
+    {
+     "id": 2061003,
+     "name": "Mithril Arrows for Crossbows",
+     "qty": 10
+    }
+   ]
+  },
+  {
+   "id": 2061003,
+   "name": "Mithril Arrows for Crossbows",
+   "discipline": "Woodcrafting",
+   "craft_level": 10,
+   "fee": 0,
+   "makes": 500,
+   "ingredients": [
+    {
+     "id": 4003001,
+     "name": "Processed Wood",
+     "qty": 1
+    },
+    {
+     "id": 4010102,
+     "name": "Mithril Ingot",
+     "qty": 1
+    },
+    {
+     "id": 4003002,
+     "name": "Stiff Feather",
+     "qty": 12
+    }
+   ]
+  },
+  {
+   "id": 2061003,
+   "name": "Mithril Arrows for Crossbows",
+   "discipline": "Woodcrafting",
+   "craft_level": 10,
+   "fee": 0,
+   "makes": 5,
+   "ingredients": [
+    {
+     "id": 2060003,
+     "name": "Adamantium Arrows for Bows",
+     "qty": 10
+    }
+   ]
+  },
+  {
+   "id": 1452007,
+   "name": "Olympus",
+   "discipline": "Woodcrafting",
+   "craft_level": 10,
+   "fee": 16500,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003001,
+     "name": "Processed Wood",
+     "qty": 12
+    },
+    {
+     "id": 4010102,
+     "name": "Mithril Ingot",
+     "qty": 3
+    },
+    {
+     "id": 4020105,
+     "name": "Sapphire",
+     "qty": 2
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 30
+    }
+   ]
+  },
+  {
+   "id": 1462007,
+   "name": "Rower",
+   "discipline": "Woodcrafting",
+   "craft_level": 10,
+   "fee": 16500,
+   "makes": 1,
+   "ingredients": [
+    {
+     "id": 4003001,
+     "name": "Processed Wood",
+     "qty": 12
+    },
+    {
+     "id": 4010106,
+     "name": "Gold Ingot",
+     "qty": 3
+    },
+    {
+     "id": 4020106,
+     "name": "Topaz",
+     "qty": 2
+    },
+    {
+     "id": 4003000,
+     "name": "Screw",
+     "qty": 30
+    }
+   ]
+  }
+ ]
+}

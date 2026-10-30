@@ -13,6 +13,7 @@ At startup you're asked whether to update prices already in that file (suggested
 never looked up before are fetched.
 """
 import json
+import os
 import queue
 import threading
 import time
@@ -196,12 +197,21 @@ class Live:
             else:
                 print(f"  market price for {name}: 24h median {entry['median_24h']} "
                       f"({entry['reports_24h']} reports), low {entry['low_24h']}")
+            # the price checker and the crafting calculator can run at the same time and both
+            # save here: take in what the other one saved since, so neither erases the other's
+            saved = load() or {}
             with self.lock:
                 self.items[name] = entry
                 self.waiting.discard(name)
+                for other, theirs in saved.get("items", {}).items():
+                    mine = self.items.get(other)
+                    if mine is None or theirs.get("fetched", "") > mine.get("fetched", ""):
+                        self.items[other] = theirs
+                if (saved.get("updated") or "") > (self.dump.get("updated") or ""):
+                    self.dump["updated"] = saved["updated"]
                 text = json.dumps(self.dump, indent=1)
             DUMP_FILE.parent.mkdir(exist_ok=True)
-            tmp = DUMP_FILE.with_suffix(".tmp")
+            tmp = DUMP_FILE.with_name(f"{DUMP_FILE.stem}.{os.getpid()}.tmp")
             tmp.write_text(text, "utf-8")
             tmp.replace(DUMP_FILE)
 
