@@ -6,11 +6,15 @@ uses the two calls the MaplePrice overlay (github.com/cpan1995/maplepricechecker
 search?q=<name> to find an item's id, and item-market-summary?itemId=<id>, which gives the
 last 24 hours' low / median / number of reports, among other things.
 
-To go easy on the site, prices are downloaded once into data/market_prices.json, one request
-per second, and reused: at startup the crawler says how old that dump is and asks whether to
-download a new one (suggested once every 24 hours, not more).
+Prices are looked up live: the first time a listing for an item shows up, a background thread
+asks MeowDB for its prices (one request a second) and saves them in data/market_prices.json.
+At startup you're asked whether to update prices already in that file (suggested once every
+24 hours, not more). Say no, and items already in it keep their saved prices; only items
+never looked up before are fetched.
 """
 import json
+import queue
+import threading
 import time
 import urllib.error
 import urllib.parse
@@ -19,10 +23,11 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 API = "https://meowdb.com/msclassic/api"
-UA = "maple-price-checker (personal use; one download a day)"
+UA = "maple-price-checker (personal use; each item once a day at most)"
 DUMP_FILE = Path(__file__).parent / "data" / "market_prices.json"
 SETTINGS_FILE = Path(__file__).parent / "crawler_settings.json"
 REFRESH_HOURS = 24
+REQUEST_GAP = 1.0  # seconds between requests to MeowDB
 
 
 def load_settings():
@@ -68,99 +73,165 @@ def _get(path, **params):
         return json.load(r)
 
 
-def download(names, known_ids=None):
-    """{name: prices} for every name MeowDB knows. known_ids (from the last dump) saves
-    looking the same items up again."""
-    known_ids = known_ids or {}
-    items = {}
-    for n, name in enumerate(names, 1):
-        try:
-            item_id = known_ids.get(name)
-            if item_id is None:
-                found = [i for i in _get("search", q=name).get("items", []) if i["name"].lower() == name.lower()]
-                time.sleep(1)
-                if not found:
-                    print(f"  {n}/{len(names)} {name}: not found on MeowDB")
-                    continue
-                item_id = found[0]["id"]
-            d = _get("item-market-summary", itemId=item_id, condition="clean")
-            time.sleep(1)
-        except urllib.error.HTTPError as e:
-            if e.code == 400:  # "can't be traded on the Free Market"
-                print(f"  {n}/{len(names)} {name}: not tradeable on the Free Market")
-                continue
-            raise
-        day = d.get("last24h") or {}
-        items[name] = {
-            "id": item_id,
+def now_iso():
+    return datetime.now(timezone.utc).isoformat(timespec="seconds")
+
+
+def lookup(name, game_id=None, meow_id=None):
+    """MeowDB's prices for one item: an entry for market_prices.json. Items MeowDB doesn't know
+    or that can't be traded get an entry too (without prices), so they aren't asked about again."""
+    entry = {"fetched": now_iso()}
+    if meow_id is None:
+        found = _get("search", q=name).get("items", [])
+        time.sleep(REQUEST_GAP)
+        # the icon key is the game's item id, which tells same-named items apart
+        same = [i for i in found if game_id is not None and str(i.get("iconKey")) == str(game_id)]
+        same = same or [i for i in found if i["name"].lower() == name.lower()]
+        if not same:
+            return {**entry, "status": "not found"}
+        meow_id = same[0]["id"]
+    try:
+        d = _get("item-market-summary", itemId=meow_id, condition="clean")
+    except urllib.error.HTTPError as e:
+        if e.code == 400:  # "can't be traded on the Free Market"
+            return {**entry, "id": meow_id, "status": "not tradeable"}
+        raise
+    finally:
+        time.sleep(REQUEST_GAP)
+    day = d.get("last24h") or {}
+    return {**entry, "id": meow_id,
             "low_24h": day.get("low"),
             "median_24h": day.get("median"),
             "reports_24h": day.get("count") or 0,
             "median_7d": (d.get("last7d") or {}).get("median"),
-            "usual_14d": d.get("usual"),
-        }
-        e = items[name]
-        print(f"  {n}/{len(names)} {name}: 24h low {e['low_24h']}, median {e['median_24h']} "
-              f"({e['reports_24h']} reports)")
-    return items
+            "usual_14d": d.get("usual")}
 
 
 def load():
-    """The last dump, or None."""
+    """The saved prices, or None."""
     try:
         return json.loads(DUMP_FILE.read_text("utf-8"))
     except (OSError, ValueError):
         return None
 
 
-def age_hours(dump):
-    fetched = datetime.fromisoformat(dump["fetched"])
-    return (datetime.now(timezone.utc) - fetched).total_seconds() / 3600
+def age_hours(stamp):
+    return (datetime.now(timezone.utc) - datetime.fromisoformat(stamp)).total_seconds() / 3600
 
 
-def prepare(names):
-    """Load the dump, after asking whether to download a new one. {name: prices}, or {} if
-    there's no market data to use."""
+class Live:
+    """Free Market prices by item name, looked up on MeowDB in the background as items are seen.
+
+    get() never waits: an item not looked up yet has no price at first and gets one a few
+    seconds later. Items already saved are only looked up again when update is True (you said
+    yes at startup), and then once per session."""
+
+    def __init__(self, dump=None, update=False, game_ids=None, enabled=True):
+        self.enabled = enabled
+        self.dump = dump or {"source": "https://meowdb.com/msclassic", "updated": None, "items": {}}
+        self.items = self.dump["items"]
+        self.update = update
+        self.game_ids = game_ids or {}  # name -> game item id, to pick the right search result
+        self.asked = set()  # names queued this session: each is looked up at most once
+        self.waiting = set()  # names queued and not looked up yet
+        self.lock = threading.Lock()
+        self.todo = queue.Queue()
+        self.thread = None
+        if update:
+            self.dump["updated"] = now_iso()
+
+    def __bool__(self):
+        return self.enabled
+
+    def get(self, name):
+        """The saved prices for name (None if none yet), queueing a lookup if one is due."""
+        if not self.enabled:
+            return None
+        with self.lock:
+            entry = self.items.get(name)
+            due = name not in self.asked and (entry is None or self.update)
+            if due:
+                self.asked.add(name)
+                self.waiting.add(name)
+        if due:
+            self.todo.put(name)
+            if self.thread is None:
+                self.thread = threading.Thread(target=self._work, daemon=True)
+                self.thread.start()
+        return entry
+
+    def pending(self, names):
+        """Whether any of names is still waiting for its lookup."""
+        with self.lock:
+            return any(n in self.waiting for n in names)
+
+    def lowest(self, names):
+        """For a listing that could be any of names (a name the game cut off), the prices of
+        the one with the lowest 24h median, so a listing only counts as a deal when it's one
+        whichever item it is. None until every one of them has a price."""
+        entries = [self.get(n) for n in names]
+        if not entries or any(not e or not e.get("median_24h") for e in entries):
+            return None
+        return min(entries, key=lambda e: e["median_24h"])
+
+    def _work(self):
+        failures = 0
+        while True:
+            name = self.todo.get()
+            with self.lock:
+                known = self.items.get(name, {}).get("id")
+            try:
+                entry = lookup(name, self.game_ids.get(name), known)
+                failures = 0
+            except (OSError, ValueError) as e:
+                with self.lock:
+                    self.waiting.discard(name)
+                failures += 1
+                print(f"  MeowDB lookup for {name} failed ({e}); "
+                      f"{'pausing lookups for 5 minutes' if failures >= 3 else 'skipped for now'}")
+                time.sleep(300 if failures >= 3 else 10)
+                continue
+            if entry.get("status"):
+                print(f"  market price for {name}: {entry['status']} on MeowDB")
+            else:
+                print(f"  market price for {name}: 24h median {entry['median_24h']} "
+                      f"({entry['reports_24h']} reports), low {entry['low_24h']}")
+            with self.lock:
+                self.items[name] = entry
+                self.waiting.discard(name)
+                text = json.dumps(self.dump, indent=1)
+            DUMP_FILE.parent.mkdir(exist_ok=True)
+            tmp = DUMP_FILE.with_suffix(".tmp")
+            tmp.write_text(text, "utf-8")
+            tmp.replace(DUMP_FILE)
+
+
+def prepare(game_ids=None):
+    """Ask whether to use (and update) Free Market prices; returns a Live, which is empty and
+    disabled if you said no."""
     dump = load()
-    if dump is None:
-        answer = input(f"No Free Market prices downloaded yet. Download them for {len(names)} items "
-                       f"from MeowDB now (about {2 * len(names)} seconds)? [Y/n] ").strip().lower()
+    if dump is not None and "updated" not in dump:  # a dump from before live lookups
+        dump["updated"] = dump.pop("fetched", None)
+        for entry in dump["items"].values():
+            entry.setdefault("fetched", dump["updated"])
+    if dump is None or not dump["items"]:
+        answer = input("Look up Free Market prices on MeowDB for the items you come across "
+                       "(one request a second, each item once)? [Y/n] ").strip().lower()
         if answer not in ("", "y", "yes"):
             print("  no market prices: only NPC deals will be checked")
-            return {}
+            return Live(enabled=False)
+        print("  market prices are looked up as items show up in stores")
+        return Live(dump, update=True, game_ids=game_ids)
+    count = len(dump["items"])
+    hours = age_hours(dump["updated"]) if dump.get("updated") else None
+    when = f"{hours:.1f} hours ago" if hours is not None else "a while ago"
+    if hours is not None and hours < REFRESH_HOURS:
+        prompt = (f"Market prices for {count} items were last updated {when}. Update them again as items "
+                  f"show up? (once every {REFRESH_HOURS} hours is plenty) [y/N] ")
+        update = input(prompt).strip().lower() in ("y", "yes")
     else:
-        hours = age_hours(dump)
-        missing = [n for n in names if n not in dump["items"]]
-        note = f"; {len(missing)} items in the settings aren't in it" if missing else ""
-        if hours < REFRESH_HOURS:
-            prompt = (f"Free Market prices were downloaded {hours:.1f} hours ago{note}. Download again anyway? "
-                      f"(once every {REFRESH_HOURS} hours is plenty) [y/N] ")
-            fresh = input(prompt).strip().lower() in ("y", "yes")
-        else:
-            prompt = f"Free Market prices were downloaded {hours:.0f} hours ago{note}. Download new ones? [Y/n] "
-            fresh = input(prompt).strip().lower() in ("", "y", "yes")
-        if not fresh and missing:
-            # items added to the settings since the last download: fetch just those
-            answer = input(f"  Download prices for just the {len(missing)} new items ({', '.join(missing)})? [Y/n] ")
-            if answer.strip().lower() in ("", "y", "yes"):
-                print(f"Downloading Free Market prices from MeowDB ({len(missing)} items, one request a second)...")
-                try:
-                    dump["items"].update(download(missing))
-                    DUMP_FILE.write_text(json.dumps(dump, indent=1), "utf-8")
-                except (OSError, ValueError) as e:
-                    print(f"  download failed ({e}); going on without them")
-        if not fresh:
-            return {n: dump["items"][n] for n in names if n in dump["items"]}
-    print(f"Downloading Free Market prices from MeowDB ({len(names)} items, one request a second)...")
-    known = {n: v["id"] for n, v in (dump or {}).get("items", {}).items()}
-    try:
-        items = download(names, known)
-    except (OSError, ValueError) as e:
-        print(f"  download failed ({e}); {'using the old prices' if dump else 'no market prices'}")
-        return {n: dump["items"][n] for n in names if n in dump["items"]} if dump else {}
-    DUMP_FILE.parent.mkdir(exist_ok=True)
-    DUMP_FILE.write_text(json.dumps({"source": "https://meowdb.com/msclassic",
-                                     "fetched": datetime.now(timezone.utc).isoformat(timespec="seconds"),
-                                     "items": items}, indent=1), "utf-8")
-    print(f"  saved {len(items)} items to {DUMP_FILE.name}")
-    return items
+        prompt = f"Market prices for {count} items were last updated {when}. Update them as items show up? [Y/n] "
+        update = input(prompt).strip().lower() in ("", "y", "yes")
+    print("  saved prices are updated once each as items show up; new items are looked up" if update
+          else "  saved prices are kept as they are; only items never looked up before are fetched")
+    return Live(dump, update=update, game_ids=game_ids)

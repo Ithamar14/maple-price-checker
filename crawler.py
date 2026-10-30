@@ -13,7 +13,8 @@ by itself if another window comes to the front.
 
 Usage:
     python crawler.py --dry-run          # look only: show which shops it would open
-    python crawler.py                    # asks the budget, crawls this room, then channels 40..1
+    python crawler.py                    # asks auto/confirm and the budget, crawls this room, then channels 40..1
+    python crawler.py --confirm          # you press OK on every purchase window
     python crawler.py --budget 250k --channels 12-1 --minutes 20
     python crawler.py --no-channel-change
 """
@@ -70,6 +71,7 @@ MAX_BUYS_PER_LISTING = 3            # a stack whose stock was read low gets topp
 FROZEN_AFTER = 3.0                  # seconds of identical screen captures before warning that capture is stuck
 SHOP_FEE = 0.03                     # a player shop keeps 3% of each sale ("will be deducted from sales")
 MARKET_CONFIRM_WAIT = 120.0        # seconds the purchase window waits for you on a market deal
+REVIEW_PAUSE = 5.0                 # seconds a store stays open when it lists a review / custom search item
 SHOP_OPEN_WAIT = 6.0               # seconds to wait for a store to open after double-clicking its sign
 NO_SHOPS_WAIT = 10.0              # seconds to wait for shops after a channel change before moving on
 CH1_CELL = (64, 128)               # from the "CHANGE CHANNEL" title to CH.1's centre
@@ -279,14 +281,17 @@ class Screen:
 
 # ---------------------------------------------------------------- what to show on screen
 
-SHOP = "#00e5ff"        # shop signs found in the room
+SHOP = "#5070ff"        # shop signs found in the room (blue; cyan is your custom search)
 TARGET = "#ff40ff"      # the shop / channel being worked on
-FOUND = "#7CFC00"       # store window, dialogs, channel window
+FOUND = pc.STATUS_COLOR  # store window, dialogs, channel window, status lines
 SEEN = "#a0a0a0"        # any other text OCR read
 SKIPPED = "#ff8c00"     # a shop skipped because of its name
-LISTED = "#ffd800"      # a recognised single-item listing
-MARKET = "#c040ff"      # a listing far below its Free Market price: waits for you to confirm
-DEAL = "#ff2020"        # a listing that passes the buy rules
+LISTED = pc.LISTED_COLOR  # a recognised single-item listing
+MARKET = pc.MARKET_COLOR  # a listing far below its Free Market price
+DEAL = pc.NPC_DEAL_COLOR  # a listing that passes the buy rules (NPC deal)
+REVIEW = pc.REVIEW_COLOR  # an item on the review_items list: worth checking its stats yourself
+CUSTOM = pc.CUSTOM_COLOR  # an item on your custom_search.txt list
+WARN = pc.WARN_COLOR    # something went wrong or looks off
 READING = "#4da6ff"     # a spot read for a number (stock, mesos, total)
 CLICK = "#ffffff"
 
@@ -441,11 +446,12 @@ class Crawler:
         self.min_total_profit = settings.get("min_total_profit", 50)
         self.skip_shops_with = [pc.norm(w) for w in settings.get("skip_shops_with", []) if pc.norm(w)]
         market_cfg = market.load_settings()
-        self.market_items = market_cfg.get("items", [])
         self.market_below = market_cfg.get("below_24h_median_percent", 30)
         self.market_min_reports = market_cfg.get("min_reports_24h", 5)
         self.market_auto = set(market_cfg.get("auto_buy", []))  # market deals bought without asking you
-        self.market = {}  # name -> Free Market prices, after load_market()
+        self.market = market.Live(enabled=False)  # Free Market prices, after load_market()
+        self.confirm_all = False  # every purchase waits on its last window for you to press OK
+        self.watch = pc.Watchlists(pc.load_custom_items(self.db), pc.load_review_items())
         self.budget = 0
         self.spent = 0
         self.bought = []  # (name, quantity, paid, value, "npc" or "market")
@@ -463,30 +469,29 @@ class Crawler:
         """Profit per item: what an NPC pays minus the price, or for a market deal, what selling
         it at today's 24h median brings after the shop fee, minus the price (an estimate)."""
         if market:
-            return int(self.market[hit.name]["median_24h"] * (1 - SHOP_FEE)) - hit.asking
+            return int(self.market.lowest(hit.names)["median_24h"] * (1 - SHOP_FEE)) - hit.asking
         return hit.profit
 
     def worth_buying(self, hit):
-        if any(w in hit.name.lower() for w in self.never_buy):
+        if any(w in n.lower() for n in hit.names for w in self.never_buy):
             return False
         need = self.required_profit(hit.asking)
         return need is not None and hit.profit >= need
 
     def load_market(self):
         """Ask about and load the Free Market price dump (see market.py)."""
-        if self.market_items:
-            self.market = market.prepare(self.market_items)
+        self.market = market.prepare(self.db.ids)
 
-    def market_limit(self, name):
+    def market_limit(self, hit):
         """The highest asking price that's a market deal for this item, or None when there's no
         trustworthy price: a deal is below_24h_median_percent under the median price of the last
         24 hours, and that median has to come from at least min_reports_24h reports."""
-        return market.deal_limit(self.market.get(name), self.market_below, self.market_min_reports)
+        return market.deal_limit(self.market.lowest(hit.names), self.market_below, self.market_min_reports)
 
     def market_deal(self, hit):
-        limit = self.market_limit(hit.name)
+        limit = self.market_limit(hit)
         return (limit is not None and hit.asking <= limit
-                and not any(w in hit.name.lower() for w in self.never_buy))
+                and not any(w in n.lower() for n in hit.names for w in self.never_buy))
 
     # ---- helpers
 
@@ -676,7 +681,7 @@ class Crawler:
                         per_char = (lx1 - lx0) / max(1, len(text))
                         hits.append(box(nx0 + (lx0 + m.start() * per_char) / zoom - 2, ny0 + ly0 / zoom - 2,
                                         nx0 + (lx0 + m.end() * per_char) / zoom + 2, ny0 + ly1 / zoom + 2,
-                                        DEAL, word))
+                                        WARN, word))
             if hits:
                 marks.append(box(nx0, ny0, nx1, y1, SKIPPED, f"{i} skip", below=True))
                 marks.extend(hits)
@@ -697,7 +702,7 @@ class Crawler:
             cv2.putText(img, name.encode("ascii", "replace").decode() or "(nothing read)",
                         (int(x0), int(y0) - 4), cv2.FONT_HERSHEY_SIMPLEX, 0.45, (255, 255, 0), 1)
         for _, where, color, label in marks:
-            if color in (SKIPPED, DEAL):
+            if color in (SKIPPED, WARN):
                 x0, y0, x1, y1 = (int(v) for v in where)
                 cv2.rectangle(img, (x0, y0), (x1, y1), bgr(color), 2)
                 cv2.putText(img, label, (x0, y1 + 16), cv2.FONT_HERSHEY_SIMPLEX, 0.5, bgr(color), 2)
@@ -718,6 +723,7 @@ class Crawler:
 
     def read_store(self, channel):
         done = set()  # listings finished with: skipped, failed, or bought MAX_BUYS_PER_LISTING times
+        reviewed = set()  # review / custom search listings already pointed out in this store
         buys = Counter()
         last_page = None
         for _ in range(200):  # pages and purchases; a store needs far fewer
@@ -729,6 +735,16 @@ class Crawler:
             self.doing("reading the store's listings")
             lines, _, singles, _ = pc.scan(frame, self.reader, self.finder, self.db, 1, False)
             self.mark_listings(lines, singles)
+            new = [h for h in singles if self.watch.kind(h) and (h.name, h.asking) not in reviewed]
+            if new:
+                reviewed.update((h.name, h.asking) for h in new)
+                for h in new:
+                    print(f"  {self.watch.label(h)} {h.name}: asking {h.asking:,} (channel {channel})")
+                    self.log(channel, h, 0, self.watch.label(h).lower())
+                self.doing(f"{' / '.join(sorted({self.watch.label(h) for h in new}))}: "
+                           f"{', '.join(h.name for h in new)} (hold ESC to stop here)")
+                winsound.MessageBeep(winsound.MB_ICONASTERISK)
+                self.controls.wait(REVIEW_PAUSE)
             # NPC deals (guaranteed profit) are bought on their own; market deals wait for you
             npc = [d for d in singles if self.worth_buying(d) and (d.name, d.asking) not in done]
             mkt = [d for d in singles if not self.worth_buying(d) and self.market_deal(d)
@@ -739,7 +755,7 @@ class Crawler:
                 # a listing that's still there (not grey) after a purchase has stock left, because its
                 # stock number was read low: it gets bought again (a stack it can't read is skipped)
                 buys[key] += 1
-                ask = not npc and deal.name not in self.market_auto
+                ask = self.confirm_all or (not npc and deal.name not in self.market_auto)
                 if not self.buy(deal, frame, channel, market=not npc, ask_you=ask) or buys[key] >= MAX_BUYS_PER_LISTING:
                     done.add(key)
                 continue  # the list changes after a purchase: read this page again
@@ -755,21 +771,30 @@ class Crawler:
             self.controls.wait(0.2)
 
     def mark_listings(self, lines, singles):
-        """Grey box on every OCR line; yellow on recognised single items, red on ones it would buy."""
+        """Grey box on every OCR line; yellow on recognised single items, light green on ones it
+        would buy, cyan / purple on your custom search / review items, green on market deals."""
         items = [box(l.x0, l.y0, l.x1, l.y1, SEEN) for l in lines]
         for h in singles:
             x0, y0, x1, y1 = h.box
             buy = self.worth_buying(h)
-            label = f"{h.profit:+,} (NPC {h.npc_pays:,}){' BUY' if buy else ''}"
-            color = DEAL if buy else LISTED
-            m = self.market.get(h.name)
+            parts = [h.npc_text + (" BUY" if buy else "")] if h.npc_pays else []
+            if h.options:
+                parts.append(f"could be {len(h.options)} items")
+            watched = self.watch.color(h)
+            color = DEAL if buy else watched or LISTED
+            if watched:
+                parts.append(self.watch.label(h))
+            m = self.market.lowest(h.names)
             if m and m.get("median_24h"):
                 below = 100 * (h.asking - m["median_24h"]) / m["median_24h"]
-                label += f" | FM 24h median {m['median_24h']:,} ({below:+.0f}%)"
-                if not buy and self.market_deal(h):
+                market_part = f"FM 24h median {m['median_24h']:,} ({below:+.0f}%)"
+                if not buy and not watched and self.market_deal(h):
                     color = MARKET
-                    label += " MARKET DEAL: " + ("AUTO-BUY" if h.name in self.market_auto else "ASKS YOU")
-            items.append(box(x0 - 4, y0 - 4, x1 + 4, y1 + 4, color, label))
+                    market_part += " MARKET DEAL: " + ("AUTO-BUY" if h.name in self.market_auto else "ASKS YOU")
+                parts.append(market_part)
+            elif self.market.pending(h.names):
+                parts.append("getting data...")
+            items.append(box(x0 - 4, y0 - 4, x1 + 4, y1 + 4, color, " | ".join(parts)))
         self.marks.set("listings", items)
 
     def read_stock(self, frame, hit):
@@ -847,7 +872,7 @@ class Crawler:
         if not m:
             return None
         limit = int(re.sub(r"[,.]", "", m.group(1)))
-        self.marks.set("refused", [box(x0, y0, x1, y1, DEAL, f"game: at most {limit}", below=True)], ttl=3)
+        self.marks.set("refused", [box(x0, y0, x1, y1, WARN, f"game: at most {limit}", below=True)], ttl=3)
         return limit
 
     def read_total(self, frame, dialog):
@@ -899,10 +924,12 @@ class Crawler:
             m = pc.LISTING_RE.match(l.text)
             name = pc.name_above(l, lines) if m else None
             if name and pc.to_int(m.group(1)) == 1 and pc.to_int(m.group(2)) == deal.asking:
-                item = self.db.lookup(name.text)
-                agrees = bool(item) and item[0] == deal.name
+                # a cut-off name agrees when it fits every item the first read narrowed it to
+                # (the icon may have narrowed that further than the text alone can)
+                found = {n for n, _ in self.db.candidates(name.text)}
+                agrees = bool(found) and set(deal.names) <= found
                 break
-        self.marks.set("recheck", [box(rx0, ry0, rx1, ry1, READING if agrees else DEAL,
+        self.marks.set("recheck", [box(rx0, ry0, rx1, ry1, READING if agrees else WARN,
                                        "second read agrees" if agrees else "second read DISAGREES", below=True)])
         return agrees
 
@@ -925,12 +952,12 @@ class Crawler:
         stock = stock_read or 1
         quantity = min(stock, remaining // deal.asking)
         if market:
-            median = self.market[deal.name]["median_24h"]
+            median = self.market.lowest(deal.names)["median_24h"]
             print(f"  MARKET DEAL {deal.name}: asking {deal.asking:,}, 24h median {median:,} "
                   f"({100 * (deal.asking - median) / median:+.0f}%), stock {stock_read or 'not shown'}"
                   f"{'; asks you' if ask_you else '; auto-buy'}")
         else:
-            print(f"  DEAL {deal.name}: asking {deal.asking:,}, NPC pays {deal.npc_pays:,} "
+            print(f"  DEAL {deal.name}: asking {deal.asking:,}, {deal.npc_label}{deal.could_be} "
                   f"(+{deal.profit:,} each), stock {stock_read or 'not shown'}")
         if quantity < 1:
             print(f"    over budget ({remaining:,} left); skipped")
@@ -1000,8 +1027,8 @@ class Crawler:
             quantity = 1
             expected = deal.asking
             if ask_you:
-                if not self.wait_for_you(self.find_single_dialog, f"1 x {deal.name} for {expected:,}"):
-                    self.log(channel, deal, 0, "market deal: no answer, cancelled")
+                if not self.wait_for_you(self.find_single_dialog, market, f"1 x {deal.name} for {expected:,}"):
+                    self.log(channel, deal, 0, "no answer from you, cancelled")
                     return
                 closed = True
             else:
@@ -1057,8 +1084,9 @@ class Crawler:
                 self.log(channel, deal, 0, f"total {total} != expected {expected}, cancelled")
                 return
             if ask_you:
-                if not self.wait_for_you(self.find_total_dialog, f"{quantity} x {deal.name} for {expected:,}"):
-                    self.log(channel, deal, 0, "market deal: no answer, cancelled")
+                if not self.wait_for_you(self.find_total_dialog, market,
+                                         f"{quantity} x {deal.name} for {expected:,}"):
+                    self.log(channel, deal, 0, "no answer from you, cancelled")
                     return
                 closed = True
             else:
@@ -1090,7 +1118,7 @@ class Crawler:
             how = "" if paid is not None else " (your mesos couldn't be read; the store shows it sold)"
             self.spent += expected
             if market:
-                value = quantity * (self.market[deal.name].get("median_24h") or 0)
+                value = quantity * (self.market.lowest(deal.names) or {}).get("median_24h", 0)
                 self.bought.append((deal.name, quantity, expected, value, "market"))
                 worth = f"about {value:,} at today's market median"
                 how += " (market deal, you confirmed)" if ask_you else " (market deal, auto-bought)"
@@ -1099,7 +1127,9 @@ class Crawler:
                 value = quantity * deal.npc_pays
                 self.bought.append((deal.name, quantity, expected, value, "npc"))
                 worth = f"NPC value {value:,}"
-                if self.market.get(deal.name, {}).get("median_24h"):  # a market item too: log it with the others
+                if ask_you:
+                    how += " (you confirmed)"
+                if self.market.lowest(deal.names):  # a market item too: log it with the others
                     self.log_market_buy(channel, deal, quantity, f"NPC deal, NPC pays {deal.npc_pays:,}")
             print(f"    BOUGHT {quantity} for {expected:,}{how} ({worth}). Budget left {self.budget - self.spent:,}")
             self.log(channel, deal, quantity, f"bought for {expected}{how}")
@@ -1109,8 +1139,8 @@ class Crawler:
             return True
         if ask_you and paid is None:
             print("    nothing was paid: you cancelled (or it didn't go through)")
-            self.log(channel, deal, 0, "market deal: cancelled by you")
-            self.doing("market deal cancelled")
+            self.log(channel, deal, 0, "cancelled by you")
+            self.doing("purchase cancelled")
             return
         pc.DEBUG_DIR.mkdir(exist_ok=True)
         cv2.imwrite(str(pc.DEBUG_DIR / "purchase_unconfirmed.png"), frame)
@@ -1125,7 +1155,7 @@ class Crawler:
         """logs/market_buys.txt: one line per market deal bought (auto-bought, or confirmed by
         you), with the price to sell it back at without losing money (shops take SHOP_FEE of
         every sale from the seller)."""
-        m = self.market[deal.name]
+        m = self.market.lowest(deal.names)
         break_even = math.ceil(deal.asking / (1 - SHOP_FEE))
         line = (f"{datetime.now():%Y-%m-%d %H:%M}  bought {quantity} x {deal.name} at {deal.asking:,} each "
                 f"({quantity * deal.asking:,} total, channel {channel}, {how}) - sell for at least {break_even:,} each "
@@ -1135,12 +1165,12 @@ class Crawler:
             f.write(line)
         print(f"    break even: sell for at least {break_even:,} each (logs\\market_buys.txt)")
 
-    def wait_for_you(self, find_dialog, what):
-        """Market deals aren't bought on the bot's own judgement: it leaves the purchase window
-        open for you to press OK (buy) or Cancel, and waits until the window has been gone for a
+    def wait_for_you(self, find_dialog, market, what):
+        """For market deals (and every deal in confirm mode) it leaves the purchase window open
+        for you to press OK (buy) or Cancel, and waits until the window has been gone for a
         moment (a single frame without it may just be your cursor covering it). False if nobody
         answered within MARKET_CONFIRM_WAIT; the purchase is then cancelled."""
-        self.doing(f"MARKET DEAL {what}: press OK to buy or Cancel (waiting for you)")
+        self.doing(f"{'MARKET DEAL' if market else 'DEAL'} {what}: press OK to buy or Cancel (waiting for you)")
         print(f"    waiting for you: press OK to buy, or Cancel (up to {MARKET_CONFIRM_WAIT:.0f}s), "
               f"then let go of the mouse")
         for _ in range(3):
@@ -1319,13 +1349,13 @@ class Crawler:
             print(f"a store is open: {len(singles)} single listings, {len(deals)} pass the buy rules; "
                   f"your mesos read as {self.read_mesos(frame)}")
             for d in deals:
-                print(f"  would buy {d.name}: asking {d.asking:,}, NPC pays {d.npc_pays:,}, "
+                print(f"  would buy {d.name}: asking {d.asking:,}, {d.npc_label}, "
                       f"stock {self.read_stock(frame, d)}, second read agrees: {self.confirm_listing(frame, d)}")
             for d in singles:
                 if not self.worth_buying(d) and self.market_deal(d):
                     how = "would buy it" if d.name in self.market_auto else "would ask you"
                     print(f"  market deal ({how}): {d.name} asking {d.asking:,}, "
-                          f"24h median {self.market[d.name]['median_24h']:,}")
+                          f"24h median {self.market.lowest(d.names)['median_24h']:,}")
         print(f"marked screenshot: {pc.DEBUG_DIR / 'crawler_dry_run.png'}")
         self.doing(f"dry run done: {len(shops)} shops, {len(deals)} deals in the open store (nothing clicked)")
 
@@ -1420,10 +1450,27 @@ def ask_budget():
         print("  please type a number")
 
 
+def ask_confirm_mode():
+    """True: every purchase waits on its last window for you to press OK."""
+    while True:
+        text = input("Buy deals automatically, or wait for you to confirm each purchase? "
+                     "[A]uto / [C]onfirm: ").strip().lower()
+        if text in ("a", "auto"):
+            return False
+        if text in ("c", "confirm"):
+            return True
+        print("  please type A or C")
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--dry-run", action="store_true", help="only look: mark the shops it would open")
     ap.add_argument("--budget", type=parse_mesos, help="most it may spend this session (asked if not given)")
+    mode = ap.add_mutually_exclusive_group()
+    mode.add_argument("--auto", dest="confirm", action="store_false", default=None,
+                      help="buy deals without asking (asked if neither --auto nor --confirm is given)")
+    mode.add_argument("--confirm", dest="confirm", action="store_true",
+                      help="stop on every purchase window for you to press OK or Cancel")
     ap.add_argument("--channels", default="40-1", help="channels to visit after this room, in order (e.g. 40-1)")
     ap.add_argument("--no-channel-change", action="store_true", help="only crawl the current room")
     ap.add_argument("--minutes", type=float, default=0,
@@ -1440,13 +1487,17 @@ def main():
     sys.stdout.reconfigure(line_buffering=True, errors="replace")  # OCR text can hold characters the console can't show
 
     crawler = Crawler(args)
+    if not args.dry_run:
+        crawler.confirm_all = ask_confirm_mode() if args.confirm is None else args.confirm
+        print("  every purchase waits for you to press OK or Cancel" if crawler.confirm_all
+              else "  deals are bought automatically (market deals off the auto_buy list still ask you)")
     crawler.load_market()
     if crawler.market:
         crawler.market_below = args.market_percent or market.ask_percent(crawler.market_below)
-        asks = [n for n in crawler.market if n not in crawler.market_auto]
         print(f"  market deals: {crawler.market_below:g}% or more under the 24h median; "
-              + (f"bought automatically except {len(asks)} you confirm ({', '.join(asks)})" if asks
-                 else "all bought automatically"))
+              + ("you confirm each one" if crawler.confirm_all
+                 else f"the {len(crawler.market_auto)} items on the auto_buy list are bought automatically, "
+                      f"you confirm the rest"))
     if args.dry_run:
         job, linger = crawler.dry_run, 15.0
     else:

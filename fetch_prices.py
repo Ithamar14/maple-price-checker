@@ -4,9 +4,12 @@ Source: https://maplestory.quest (datamined from the Classic World client).
 Only the per-item pages are fetched, which the site's robots.txt allows.
 Progress is cached so the script can be stopped and resumed.
 
+Every item is kept, also ones an NPC won't buy (npc_pays null, e.g. scrolls): their names are
+needed to recognise listings for Free Market prices.
+
 Usage:
-    python fetch_prices.py                       # everything, equipment up to level 40
-    python fetch_prices.py --max-equip-level 50
+    python fetch_prices.py                       # everything
+    python fetch_prices.py --max-equip-level 50  # equipment only up to level 50
     python fetch_prices.py --max-equip-level 0   # no equipment
 """
 import argparse
@@ -30,6 +33,7 @@ TITLE_RE = re.compile(r"<title>([^<]+)</title>")
 DESC_PAYS_RE = re.compile(r"An NPC pays ([\d,]+) mesos? for one")
 BODY_PAYS_RE = re.compile(r">NPC pays<(?:[^>]*>){1,12}?\s*([\d,]+|-)\s*<")
 LEVEL_RE = re.compile(r">Level<(?:[^>]*>){1,12}?\s*(\d+)\s*<")
+SLOTS_RE = re.compile(r'"name":"Upgrade slots","value":(\d+)')  # equipment: scroll slots when new
 
 
 def get(url, retries=5):
@@ -70,12 +74,13 @@ def parse_item(page):
     if m and m.group(1) != "-":
         pays = int(m.group(1).replace(",", ""))
     lv = LEVEL_RE.search(page)
-    return name, pays, int(lv.group(1)) if lv else None
+    slots = SLOTS_RE.search(page)
+    return name, pays, int(lv.group(1)) if lv else None, int(slots.group(1)) if slots else None
 
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--max-equip-level", type=int, default=40,
+    ap.add_argument("--max-equip-level", type=int, default=999,
                     help="keep equipment up to this required level (0 = skip equipment)")
     ap.add_argument("--workers", type=int, default=2)
     ap.add_argument("--delay", type=float, default=0.75, help="seconds between requests per worker")
@@ -89,25 +94,29 @@ def main():
 
     urls = item_urls()
     # equipment needs fetching before its level is known, so every equip page is read once
+    # equipment cached before upgrade slots were read gets fetched again once
     todo = {i: u for i, u in urls.items()
-            if str(i) not in cache and (args.max_equip_level > 0 or not is_equip(i))}
+            if (str(i) not in cache or (is_equip(i) and "slots" not in cache[str(i)]))
+            and (args.max_equip_level > 0 or not is_equip(i))}
     print(f"{len(urls)} items in sitemap, {len(cache)} cached, {len(todo)} to fetch")
 
     def work(item):
         item_id, url = item
-        name, pays, level = parse_item(get(url))
+        name, pays, level, slots = parse_item(get(url))
         time.sleep(args.delay)
-        return item_id, name, pays, level
+        return item_id, name, pays, level, slots
 
     done = 0
     with ThreadPoolExecutor(args.workers) as pool:
         for fut in as_completed(pool.submit(work, it) for it in todo.items()):
             try:
-                item_id, name, pays, level = fut.result()
+                item_id, name, pays, level, slots = fut.result()
             except Exception as e:
                 print(f"  failed: {e}")
                 continue
             cache[str(item_id)] = {"name": name, "npc_pays": pays, "level": level}
+            if is_equip(item_id):
+                cache[str(item_id)]["slots"] = slots
             done += 1
             if done % 25 == 0:
                 CACHE_FILE.write_text(json.dumps(cache), "utf-8")
@@ -115,7 +124,7 @@ def main():
     CACHE_FILE.write_text(json.dumps(cache), "utf-8")
 
     items = [{"id": int(i), **v, "name": clean_name(v["name"])} for i, v in cache.items()
-             if v["npc_pays"] and (not is_equip(i) or (v.get("level") or 0) <= args.max_equip_level)]
+             if not is_equip(i) or (v.get("level") or 0) <= args.max_equip_level]
     items.sort(key=lambda x: x["name"].lower())
     OUT_FILE.write_text(json.dumps({
         "source": BASE,
@@ -123,7 +132,7 @@ def main():
         "fetched": date.today().isoformat(),
         "items": items,
     }, indent=1), "utf-8")
-    print(f"wrote {len(items)} priced items to {OUT_FILE}")
+    print(f"wrote {len(items)} items ({sum(1 for i in items if i['npc_pays'])} with an NPC price) to {OUT_FILE}")
 
 
 if __name__ == "__main__":

@@ -1,38 +1,62 @@
 # MapleStory Classic price checker
 
 Watches the game once a second. When a player store is open, it reads the listings with OCR
-and boxes every single-item listing it recognises in **yellow**, and in **red** any item a player is selling for less than an NPC will pay you for it.
-Buying it and selling it to an NPC is guaranteed profit. Items in the market list (see
-"Market deals" under the crawler) also show their Free Market median of the last 24 hours, and
-get a **purple** box when listed far enough under it. At startup it asks the same two questions
-as the crawler: download new market prices, and how far under the median counts as a deal
+and boxes every single-item listing it recognises in **yellow**, and in **light green** any item a player is selling for less than an NPC will pay you for it.
+Buying it and selling it to an NPC is guaranteed profit. Every listing also shows its Free
+Market median of the last 24 hours (see "Market deals" under the crawler), and gets a
+**green** box when listed far enough under it. At startup it asks the same two questions as
+the crawler: update saved market prices, and how far under the median counts as a deal
 (`--market-percent 30` skips that question, `--no-market` turns market prices off).
+
+**Scrolled equipment (experimental, off unless you pass `--tooltip-slots`).** Hover an
+equipment item and it reads "Remaining
+Enhancements: N" from the tooltip and compares it with the upgrade slots the item has when
+new. If slots were already used (scrolls passed or failed), that line gets a **red** box saying
+how many; an item with every slot left gets a green one. The slot counts come from
+[MapleStory Quest](https://maplestory.quest) with the NPC prices.
 
 It only looks at pixels (like a screenshot) and draws a click-through overlay. It never
 reads game memory or sends input, so you keep playing normally.
 
 ## Quick start (Windows)
 
-1. Install [Python 3.10 or newer](https://www.python.org/downloads/windows/) and tick
-   **"Add python.exe to PATH"** in the installer.
-2. Download this repo (green **Code** button → **Download ZIP**) and unzip it.
-3. Double-click **`price_checker.bat`**. The first start installs what it needs (1–2 minutes);
-   after that it starts right away.
+1. Download this repo (green **Code** button → **Download ZIP**) and unzip it somewhere,
+   e.g. your Desktop. (Don't run it from inside the zip.)
+2. Double-click **`price_checker.bat`**. If Windows says it protected your PC, click
+   **More info → Run anyway**.
+3. Start MapleStory. The overlay appears over the game and follows its window.
+
+You don't need to install Python or anything else. The first start sets everything up inside
+the folder (about 1 minute and 400 MB, internet needed once); after that it starts in a few
+seconds. It installs nothing on the rest of your PC: deleting the folder removes everything.
+If something goes wrong, delete the `.venv` and `tools` folders and run it again.
 
 Options can be passed to `price_checker.bat`, e.g. `price_checker.bat --min-profit 500`.
 
 ## Price data
 
-`data/prices.json` holds what an NPC pays for 1,600 items: use, etc, setup, and equipment up
-to level 40. It comes from [MapleStory Quest](https://maplestory.quest), which reads it out of
+`data/prices.json` holds every item's name, and what an NPC pays for it (1,957 of 2,248
+items; scrolls and some others have no NPC price, so they only get market prices). It comes from [MapleStory Quest](https://maplestory.quest), which reads it out of
 the MapleStory Classic World client (Grand Launch build, 21 October 2026). Thanks to them
 for the data.
 
 To refresh it after a game patch, delete `data/prices.json` and run `price_checker.bat`, or run
 `.venv\Scripts\python fetch_prices.py`. That takes about 25 minutes. It goes slowly to be
 polite to the site, and you can stop it and run it again to continue. Use
-`--max-equip-level 50` to keep more equipment, or `0` for none. Many beginner equips
-(Sword, Grey T-Shirt…) have no NPC price at all, so they never get a box.
+`--max-equip-level 50` to leave out equipment above that level, or `0` for none.
+
+**Cut-off names.** The store cuts long names off ("Hat Accuracy Scroll: Great..."). Those are
+matched on their start; when that still fits several items, scrolls are told apart by the
+colour of their icon (Lesser blue, Intermediate red, Greater gold, Chaos grey). Anything else
+that stays ambiguous is checked against the cheapest item it could be, so it's only a deal if
+it's one whichever item it is.
+
+**Custom search.** Double-click **`edit_custom_search.bat`** to open your own list of items to
+look out for, for any reason. Put one item name per line and save. The next time the price
+checker or crawler starts, listings of those items get a **cyan** box labelled "CUSTOM SEARCH",
+and the crawler beeps and keeps the store open a few seconds. A name that isn't a known item
+is reported at startup, with the closest match. The list is `custom_search.txt` and stays on
+your PC (it isn't uploaded to GitHub).
 
 Prices you checked in game yourself can go in `data/manual_prices.json`
 (`"Item Name": mesos`); they override the download.
@@ -83,6 +107,9 @@ pays, up to the full stock. After the room it changes channel with the keyboard
 (Esc → Enter → arrow keys → Enter), from channel 40 down to 1, and repeats.
 
 **Spending limits:**
+- **Auto or confirm.** At startup it asks whether to buy deals automatically or to stop on
+  every purchase window, beep, and wait (up to 2 minutes) for you to press OK or Cancel.
+  Pass `--auto` or `--confirm` to skip the question.
 - **Budget.** It asks for a session budget when it starts (or pass `--budget 250k`) and never
   spends past it. If the full stock costs more than what's left, it buys fewer.
 - **Buy rules** in `crawler_settings.json`: the minimum profit per item depends on the price.
@@ -112,23 +139,28 @@ pays, up to the full stock. After the room it changes channel with the keyboard
 
 **Overlay.** While it runs, it draws over the game what it sees and does, so you can follow along:
 the current action in the top-left corner (with budget and spending under it), and a box around
-everything it recognises: shop signs (cyan, numbered in the order it opens them; the one it's on in
-pink), the store window and dialogs (green), every line of text it read (grey), single-item listings
-(yellow, or red when it will buy them), the numbers it reads (stock, your mesos, the total; blue),
+everything it recognises: shop signs (blue, numbered in the order it opens them; the one it's on in
+pink), the store window and dialogs (white), every line of text it read (grey), single-item listings
+(yellow; light green for NPC deals it will buy, green for market deals, purple for review items),
+warnings such as a second read that disagrees (red), the numbers it reads (stock, your mesos, the total; blue),
 the selected channel, and a crosshair wherever it clicks. The overlay is hidden from screenshots, so
 it never confuses the crawler itself.
 
-**Market deals (asks you first).** Items listed under `market` in `crawler_settings.json` (all
-ores, Stiff Feather and Leather to start with) are also compared with Free Market prices from
+**Market deals (asks you first).** Every listing is also compared with Free Market prices from
 [MeowDB](https://meowdb.com/msclassic). A listing at least 30% under the item's median price of
 the last 24 hours is a market deal, if that median comes from at least 5 player reports. Unlike NPC
 deals these aren't guaranteed profit, so unless an item is on the `auto_buy` list (which it
 buys like an NPC deal), the crawler sets up the purchase, beeps, and waits on the final purchase
 window for you to press OK or Cancel. Every market item bought (auto-bought, confirmed by you, or
 bought as an NPC deal) goes into `logs\market_buys.txt` with the price to sell it back at without
-losing money after the 3% shop fee. Prices are downloaded once into `data\market_prices.json`;
-at startup the crawler says how old they are and asks whether to download new ones (once a day
-is plenty, and keeps the load on MeowDB low).
+losing money after the 3% shop fee.
+
+Prices are looked up live: the first time an item shows up in a store, its prices are fetched
+in the background (one request a second) and saved in `data\market_prices.json`, so a green
+box can appear a few seconds after a store opens. At startup it says when the saved prices were
+last updated and asks whether to update them. **Yes** updates each saved item once, the first
+time it's seen that session. **No** keeps every saved price as it is and only looks up items
+that were never looked up before. Once every 24 hours is plenty, and keeps the load on MeowDB low.
 
 It doesn't walk around: stand somewhere that shows the shops you want. Everything it
 bought or skipped is logged to `logs\crawl_<date>.csv`, with a summary at the end.
@@ -145,6 +177,7 @@ is open, it also lists what it would buy and whether the second read agrees.
 | option | what it does |
 |---|---|
 | `--budget 250k` | session budget (otherwise it asks) |
+| `--auto` / `--confirm` | buy deals automatically, or wait for you on every purchase (otherwise it asks) |
 | `--channels 40-1` | channels to visit after the current room, in order |
 | `--no-channel-change` | only do the current room |
 | `--minutes 60` | also stop after this long (default: no limit) |
