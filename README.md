@@ -51,15 +51,33 @@ colour of their icon (Lesser blue, Intermediate red, Greater gold, Chaos grey). 
 that stays ambiguous is checked against the cheapest item it could be, so it's only a deal if
 it's one whichever item it is.
 
-**Custom search.** Double-click **`edit_custom_search.bat`** to open your own list of items to
-look out for, for any reason. Put one item name per line and save. The next time the price
-checker or crawler starts, listings of those items get a **cyan** box labelled "CUSTOM SEARCH",
-and the crawler beeps and keeps the store open a few seconds. A name that isn't a known item
-is reported at startup, with the closest match. The list is `custom_search.txt` and stays on
-your PC (it isn't uploaded to GitHub).
+**Custom list.** In the launcher's Custom list tab, list items you want pointed out. When the price
+checker or crawler starts, listings of those items get a **cyan** box labelled "CUSTOM SEARCH", and
+a name that isn't a known item is reported at startup, with the closest match. The list is
+`custom_items.json` and stays on your PC.
 
 Prices you checked in game yourself can go in `data/manual_prices.json`
 (`"Item Name": mesos`); they override the download.
+
+## The launcher
+
+`launcher.bat` opens one window for everything, so you don't have to go through a console and its
+questions each time. It asks for administrator rights once, because the bots need them. What you set
+stays set (`launcher_settings.json`).
+
+- **Tabs:** Overlay, Crawler, Full sell loop and Crafting each have their options and Start and Stop
+  buttons. The three that use the game's screen run one at a time. What they print shows in the log
+  at the bottom.
+- **Stop:** a bot lets go of its keys and ends by itself. If it hasn't after 20 seconds it's ended by
+  force. Holding ESC for 1 second still works too.
+- **MeowDB, at the top:** when a price was last fetched, how many are over 24 hours old, and a button
+  to update just those, about one a second. Bots started from here don't update saved prices by
+  themselves; they only look up items never seen before. Items MeowDB doesn't know aren't counted.
+- **Custom list tab:** search all items and add or remove them, and set each one's price rule, buy limit
+  and whether it waits for your OK. It's saved in `custom_items.json`, with how many were bought, and
+  changes apply the next time you press Start. What's on the list is never sold at the NPC.
+
+The `.bat` files for each tool still work as before.
 
 ## Running it
 
@@ -130,11 +148,23 @@ pays, up to the full stock. After the room it changes channel with the keyboard
 - **Auto or confirm.** At startup it asks whether to buy deals automatically or to stop on
   every purchase window, beep, and wait (up to 2 minutes) for you to press OK or Cancel.
   Pass `--auto` or `--confirm` to skip the question.
+- **NPC only or market too.** It also asks whether to buy only NPC deals. If you say yes, it
+  doesn't look up Free Market prices at all, so it never buys a market deal or stops to ask
+  about one. Pass `--npc-only` or `--market-deals` to skip the question.
+- **Custom list buying.** With `--buy-custom`, or the box on the launcher's tab, items on your list are
+  bought by the rules set for each on the launcher's Custom list tab: at least X% under the 24h median,
+  up to X% over it, or at or under a fixed price; how many in all, counted across sessions; and whether
+  to wait for your OK. When the bot starts it gets the latest price of everything on the list still to be
+  bought before opening a shop. A median needs at least `min_reports_24h` reports, and one over 24 hours
+  old is looked up again first. A cut-off name that could be something not on the list isn't bought. Items on
+  the list aren't bought as NPC or market deals. `--no-custom-buy` only points them out.
 - **Budget.** It asks for a session budget when it starts (or pass `--budget 250k`) and never
   spends past it. If the full stock costs more than what's left, it buys fewer.
 - **Buy rules** in `crawler_settings.json`: the minimum profit per item depends on the price.
   The defaults are +1 under 1,000 mesos, +50 from 1,000, and +500 from 10,000, so it won't
   spend 9,999 to make 1.
+- **Big buys need a real margin** (`big_buy`, default 25% and 5%): an NPC deal costing more than
+  25% of the session budget is skipped unless its profit is at least 5% of the asking price.
 - **Minimum profit per purchase** (`min_total_profit`, default 50): quantity × profit per item
   must reach it, so one item at +2 is skipped but 30 of them at +2 are bought. For market deals
   the profit is estimated from selling at the 24h median after the 3% shop fee.
@@ -194,11 +224,36 @@ crawler.bat --dry-run
 That marks the shops it would open (in order) on `debug\crawler_dry_run.png`. If a store
 is open, it also lists what it would buy and whether the second read agrees.
 
+**Rooms.** With their doors saved by `where_am_i.bat` (`data/nav_points.json`), the bot walks straight to a
+room's door, and the loop goes through rooms 6-1, 16-13, 12-7 and 20-17. The upper rooms are reached by the
+teleporter, used as many times as it takes. Rooms 7-12 and 17-20 have another layout inside: to leave one from
+anywhere the bot goes down to the ground, climbs the small ladder under the door and walks right to it. `nav_test.bat` walks the route over and over without selling.
+
+**When it sells.** Only when under `sell_below_budget_percent` of the budget is left (the launcher's **Sell early
+under**), not after every room. Stopping with money left leaves what it bought in your bags.
+
+**What's never sold.** Before each sale the full loop reads the item's name in the shop's list. It keeps
+anything on your custom list, and anything whose name it can't match to a known item, and says so in
+the log. If six kept items fill the rows showing, the rest of that tab stays unsold on that trip.
+
+**Full loop with selling.** `full_sell_loop.bat` buys NPC deals only, without asking. It crawls every
+channel in a Free Market room on the bottom floor of the Entrance (a channel it can't get into after
+3 tries, as it may be full, is skipped), then walks to the bottom-left NPC in the Henesys weapon store, **sells
+everything on the Equip, Use and Etc tabs**, and starts again in the next room with the budget plus
+what the sale brought in. It sells early when under 10% of the budget is left
+(`sell_below_budget_percent`). Keep nothing you want to keep on those tabs. Keep the minimap on the
+setting that shows the map's name. `--rounds 2` stops after two rooms; otherwise hold ESC to stop.
+Log: `logs/walk_<date>.log`. Each run of the full sell loop also writes the custom items it bought,
+and at what prices, to `logs/custom_buys_<date>_<time>.txt`.
+
 | option | what it does |
 |---|---|
 | `--budget 250k` | session budget (otherwise it asks) |
 | `--auto` / `--confirm` | buy deals automatically, or wait for you on every purchase (otherwise it asks) |
-| `--channels 40-1` | channels to visit after the current room, in order |
+| `--npc-only` / `--market-deals` | buy only NPC deals, or Free Market deals too (otherwise it asks) |
+| `--buy-custom` / `--no-custom-buy` | buy custom list items by their own rules, or only point them out (otherwise it asks) |
+| `--channels 40-1` | the only channels to visit, in order: a range, a list like `1,3,20,39`, or a mix like `1-5,20` |
+| `--rooms 6-1,16-13` | full sell loop: the only rooms to go through, in order, written the same way (default: all 20) |
 | `--no-channel-change` | only do the current room |
 | `--minutes 60` | also stop after this long (default: no limit) |
 | `--no-overlay` | don't draw what it sees and does over the game |

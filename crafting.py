@@ -132,8 +132,10 @@ def main():
     ap.add_argument("--discipline", action="append", help="check this discipline (repeatable)")
     ap.add_argument("--margin", type=float, help="profit margin, percent of what a craft sells for")
     ap.add_argument("--no-open", action="store_true", help="don't open the page in the browser")
+    market.add_update_flag(ap)
     args = ap.parse_args()
     sys.stdout.reconfigure(line_buffering=True, errors="replace")
+    market.update_saved = args.market_update
 
     if not RECIPES_FILE.exists():
         raise SystemExit("no recipes yet: run  python fetch_prices.py  first")

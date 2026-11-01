@@ -1,0 +1,799 @@
+"""One window for all the tools: start and stop the price checker overlay, the crawler, the full
+sell loop and the crafting calculator, keep MeowDB's prices up to date and edit the custom list.
+Everything you set stays set (launcher_settings.json).
+
+Each tool runs as its own program, with what it prints shown in the log at the bottom, so one
+crashing leaves this window open. The three that use the game's screen run one at a time.
+
+Start it with launcher.bat, which asks for the administrator rights the bots need.
+"""
+import ctypes
+import json
+import os
+import queue
+import re
+import subprocess
+import sys
+import tempfile
+import threading
+import time
+import tkinter as tk
+import webbrowser
+from pathlib import Path
+from tkinter import messagebox, ttk
+
+import custom_items
+import market
+
+HERE = Path(__file__).parent
+SETTINGS_FILE = HERE / "launcher_settings.json"
+BOT_SETTINGS_FILE = HERE / "crawler_settings.json"
+PRICES_FILE = HERE / "data" / "prices.json"
+MANUAL_FILE = HERE / "data" / "manual_prices.json"
+RECIPES_FILE = HERE / "data" / "recipes.json"
+CRAFT_PAGE = HERE / "craft_calculator.html"
+ICON_FILE = HERE / "launcher.ico"
+
+ALL_ROOMS = "6-1,16-13,12-7,20-17"
+STOP_WAIT = 20.0        # seconds a bot gets to stop by itself after Stop, before it's ended by force
+MEOW_READ_EVERY = 5.0   # seconds between looks at the saved prices
+MAX_LOG_LINES = 3000
+MAX_RESULTS = 200       # items shown in the custom list's search
+PROGRESS_RE = re.compile(r"progress (\d+) (\d+)")
+
+TOOLS = {"overlay": "Overlay", "crawler": "Crawler", "full": "Full sell loop", "craft": "Crafting", "update": "MeowDB update"}
+ON_GAME = ("overlay", "crawler", "full")  # these use the game's screen: one at a time
+PRESS_KEYS = (0x25, 0x26, 0x27, 0x28, 0x12, 0x11, 0x10)  # arrows, alt, ctrl, shift: what a bot can hold down
+KEYEVENTF_KEYUP = 2
+CREATE_NO_WINDOW = 0x08000000
+
+
+# ---------------------------------------------------------------- settings
+
+def bot_settings():
+    try:
+        return json.loads(BOT_SETTINGS_FILE.read_text("utf-8"))
+    except (OSError, ValueError):
+        return {}
+
+
+def defaults():
+    cfg = bot_settings()
+    percent = str(cfg.get("market", {}).get("below_24h_median_percent", 30))
+    craft = cfg.get("crafting", {})
+    return {
+        "ov_market": True, "ov_percent": percent, "ov_min_profit": "1", "ov_interval": "1.0",
+        "ov_tooltips": False, "ov_debug": False,
+        "cr_dry": False, "cr_budget": "", "cr_mode": "auto", "cr_deals": "npc", "cr_percent": percent,
+        "cr_custom_stop": False, "cr_channels": "40-1", "cr_single": False,
+        "cr_minutes": "", "cr_debug": False,
+        "fl_budget": "", "fl_custom_stop": False, "fl_channels": "40-1", "fl_rooms": ALL_ROOMS,
+        "fl_rounds": "", "fl_minutes": "", "fl_sell_below": str(cfg.get("sell_below_budget_percent", 10)),
+        "cf_margin": str(craft.get("margin_percent", 10)), "cf_disciplines": craft.get("disciplines") or ["Arcforge"],
+    }
+
+
+def load_settings():
+    values = defaults()
+    try:
+        saved = json.loads(SETTINGS_FILE.read_text("utf-8"))
+    except (OSError, ValueError):
+        return values
+    values.update({k: v for k, v in saved.items() if k in values and isinstance(v, type(values[k]))})
+    return values
+
+
+def save_settings(values):
+    tmp = SETTINGS_FILE.with_suffix(".tmp")
+    tmp.write_text(json.dumps(values, indent=1), "utf-8")
+    tmp.replace(SETTINGS_FILE)
+
+
+# ---------------------------------------------------------------- what each tool is started with
+
+def budget_of(text):
+    try:
+        budget = market.parse_mesos(text)
+    except ValueError:
+        budget = 0
+    if budget <= 0:
+        raise ValueError("Type a budget, like 50000, 250k or 1.5m.")
+    return str(budget)
+
+
+def percent_of(text, what):
+    try:
+        return str(market.parse_percent(text))
+    except ValueError:
+        raise ValueError(f"{what} has to be a number between 0 and 100.") from None
+
+
+def number_of(text, what, whole=False):
+    """The text of a number over 0, for a box that can be left empty; '' if it is."""
+    text = text.strip()
+    if not text:
+        return ""
+    try:
+        value = int(text) if whole else float(text)
+    except ValueError:
+        value = 0
+    if value <= 0:
+        raise ValueError(f"{what} has to be a {'whole ' if whole else ''}number over 0, or empty.")
+    return text
+
+
+def channels_of(text):
+    try:
+        market.parse_numbers(text, 1, 40)
+    except ValueError:
+        raise ValueError("Channels go from 1 to 40, written like 40-1, 1,3,20,39 or 1-5,20.") from None
+    return text.replace(" ", "")
+
+
+def rooms_of(text):
+    try:
+        market.parse_numbers(text, 1, 20)
+    except ValueError:
+        raise ValueError(f"Rooms go from 1 to 20, written like {ALL_ROOMS} or 3,10,15.") from None
+    return text.replace(" ", "")
+
+
+def custom_args(on):
+    return ["--buy-custom"] if on else ["--no-custom-buy"]
+
+
+def overlay_args(v):
+    args = ["price_checker.py", "--market-update", "no"]
+    if v["ov_market"]:
+        args += ["--market-percent", percent_of(v["ov_percent"], "The market deal %")]
+    else:
+        args.append("--no-market")
+    args += ["--min-profit", number_of(v["ov_min_profit"], "Minimum profit", whole=True) or "1",
+             "--interval", number_of(v["ov_interval"], "The scan interval") or "1.0"]
+    return args + ["--tooltip-slots"] * v["ov_tooltips"] + ["--debug"] * v["ov_debug"]
+
+
+def crawler_args(v):
+    args = ["crawler.py", "--market-update", "no",
+            "--npc-only" if v["cr_deals"] == "npc" else "--market-deals"]
+    if v["cr_deals"] == "market":
+        args += ["--market-percent", percent_of(v["cr_percent"], "The market deal %")]
+    args += custom_args(v["cr_custom_stop"])
+    if v["cr_dry"]:
+        return args + ["--dry-run"] + ["--debug"] * v["cr_debug"]
+    args += ["--auto" if v["cr_mode"] == "auto" else "--confirm", "--budget", budget_of(v["cr_budget"])]
+    args += ["--no-channel-change"] if v["cr_single"] else ["--channels", channels_of(v["cr_channels"])]
+    minutes = number_of(v["cr_minutes"], "The time limit")
+    return args + (["--minutes", minutes] if minutes else []) + ["--debug"] * v["cr_debug"]
+
+
+def full_args(v):
+    args = ["full_sell_loop.py", "--market-update", "no", "--budget", budget_of(v["fl_budget"]),
+            "--channels", channels_of(v["fl_channels"]), "--rooms", rooms_of(v["fl_rooms"]),
+            "--sell-below", percent_of(v["fl_sell_below"], "The sell-below %")]
+    args += custom_args(v["fl_custom_stop"])
+    rounds = number_of(v["fl_rounds"], "Rounds", whole=True)
+    minutes = number_of(v["fl_minutes"], "The time limit")
+    return args + (["--rounds", rounds] if rounds else []) + (["--minutes", minutes] if minutes else [])
+
+
+def craft_args(v):
+    if not v["cf_disciplines"]:
+        raise ValueError("Tick at least one discipline.")
+    try:
+        margin = float(v["cf_margin"])
+    except ValueError:
+        margin = -1
+    if margin < 0:
+        raise ValueError("The margin has to be a number, 0 or more.")
+    args = ["crafting.py", "--market-update", "no", "--margin", v["cf_margin"].strip()]
+    for discipline in v["cf_disciplines"]:
+        args += ["--discipline", discipline]
+    return args
+
+
+ARGS = {"overlay": overlay_args, "crawler": crawler_args, "full": full_args, "craft": craft_args,
+        "update": lambda v: ["market.py", "--update-stale"]}
+
+
+# ---------------------------------------------------------------- the custom list
+
+def known_items():
+    """Every item name the price data has."""
+    names = set()
+    try:
+        names.update(it["name"] for it in json.loads(PRICES_FILE.read_text("utf-8"))["items"])
+    except (OSError, ValueError, KeyError):
+        pass
+    try:
+        names.update(n for n in json.loads(MANUAL_FILE.read_text("utf-8")) if not n.startswith("_"))
+    except (OSError, ValueError):
+        pass
+    return sorted(names, key=str.lower)
+
+
+def search_items(names, text, limit=MAX_RESULTS):
+    """Names containing all the typed words, those starting with the text first."""
+    words = text.lower().split()
+    found = [n for n in names if all(w in n.lower() for w in words)]
+    found.sort(key=lambda n: not n.lower().startswith(text.strip().lower()))  # stable: stays alphabetical
+    return found[:limit]
+
+
+def disciplines():
+    try:
+        return sorted({r["discipline"] for r in json.loads(RECIPES_FILE.read_text("utf-8"))["recipes"]})
+    except (OSError, ValueError, KeyError):
+        return []
+
+
+# ---------------------------------------------------------------- MeowDB's status
+
+def ago(hours):
+    minutes = int(hours * 60)
+    if minutes < 1:
+        return "just now"
+    if minutes < 60:
+        return f"{minutes}m ago"
+    if minutes < 48 * 60:
+        return f"{minutes // 60}h {minutes % 60:02d}m ago"
+    return f"{minutes // (24 * 60)} days ago"
+
+
+def meow_status(dump):
+    """(text for the status line, how many prices are due)."""
+    total = len(market.priced(dump))
+    if not total:
+        return "MeowDB: no saved prices yet. They're looked up as items show up.", 0
+    due = len(market.stale_names(dump))
+    last = market.last_fetched(dump)
+    when = ago(last) if last is not None else "never"
+    return f"MeowDB: last price fetched {when}  |  {due} of {total} need an update (over {market.REFRESH_HOURS}h old)", due
+
+
+# ---------------------------------------------------------------- running a tool
+
+def release_keys():
+    """Let go of everything a bot that was ended by force could still have held down."""
+    for vk in PRESS_KEYS:
+        ctypes.windll.user32.keybd_event(vk, 0, KEYEVENTF_KEYUP, 0)
+
+
+class Job:
+    """One tool running as its own program, its output going to lines."""
+
+    def __init__(self, tool, args, lines, graceful):
+        self.tool, self.lines, self.graceful = tool, lines, graceful
+        self.stop_at = None
+        self.stop_file = Path(tempfile.gettempdir()) / f"maple_stop_{os.getpid()}_{tool}_{time.monotonic_ns()}"
+        env = {**os.environ, "PYTHONIOENCODING": "utf-8", "MAPLE_STOP_FILE": str(self.stop_file)}
+        python = Path(sys.executable).with_name("python.exe")  # this window runs on pythonw, which prints nowhere
+        self.proc = subprocess.Popen([str(python), "-u", *args], cwd=HERE, env=env, stdin=subprocess.DEVNULL,
+                                     stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, encoding="utf-8",
+                                     errors="replace", creationflags=CREATE_NO_WINDOW)
+        threading.Thread(target=self._read, daemon=True).start()
+
+    def _read(self):
+        for line in self.proc.stdout:
+            self.lines.put((self.tool, line.rstrip()))
+        self.lines.put((self.tool, None))
+
+    def stop(self):
+        """A bot finishes what it holds down and lets go by itself. The others have nothing to finish."""
+        if self.stop_at is not None:
+            return
+        self.stop_at = time.monotonic() + STOP_WAIT
+        if self.graceful:
+            self.stop_file.touch()
+        else:
+            self.proc.terminate()
+
+    def overdue(self):
+        return self.stop_at is not None and time.monotonic() > self.stop_at and self.proc.poll() is None
+
+    def kill(self):
+        self.proc.kill()
+        release_keys()
+
+    def clean_up(self):
+        self.stop_file.unlink(missing_ok=True)
+
+
+# ---------------------------------------------------------------- the window
+
+class App:
+    def __init__(self, root):
+        self.root = root
+        self.lines = queue.Queue()
+        self.jobs = {}
+        self.vars = {}
+        self.buttons = {}  # tool -> (start, stop, status)
+        self.outcome = {}  # tool -> how it last ended
+        self.values = load_settings()
+        self.dump = market.load()
+        self.dump_read = time.monotonic()
+        self.dump_time = self.file_time()
+        self.progress = None
+        self.closing = False
+        self.items = known_items()
+        self.results = []
+        self.listed = []
+
+        root.title("Maple tools")
+        root.protocol("WM_DELETE_WINDOW", self.close)
+        self.build()
+        root.update_idletasks()  # never smaller than what the tallest tab needs, as far as the screen allows
+        root.minsize(root.winfo_reqwidth(), min(root.winfo_reqheight(), root.winfo_screenheight() - 80))
+        self.refresh_buttons()
+        self.tick_meow()
+        self.drain()
+
+    # ---- building it
+
+    def build(self):
+        self.build_meow()
+        panes = ttk.PanedWindow(self.root, orient="vertical")
+        panes.pack(fill="both", expand=True, padx=8, pady=(0, 8))
+        tabs = ttk.Notebook(panes)
+        panes.add(tabs, weight=3)
+        for title, make in (("Overlay", self.build_overlay), ("Crawler", self.build_crawler),
+                            ("Full sell loop", self.build_full), ("Crafting", self.build_craft),
+                            ("Custom list", self.build_custom)):
+            page = ttk.Frame(tabs, padding=12)
+            page.columnconfigure(1, weight=1)
+            tabs.add(page, text=title)
+            make(page)
+        self.build_log(panes)
+
+    def build_meow(self):
+        bar = ttk.Frame(self.root, padding=(8, 8))
+        bar.pack(fill="x")
+        self.meow_text = tk.StringVar()
+        ttk.Label(bar, textvariable=self.meow_text).pack(side="left")
+        self.meow_button = ttk.Button(bar, command=self.meow_clicked)
+        self.meow_button.pack(side="right")
+
+    def build_log(self, panes):
+        frame = ttk.Frame(panes)
+        panes.add(frame, weight=2)
+        self.log_box = tk.Text(frame, height=10, wrap="word", state="disabled", font=("Consolas", 9))
+        scroll = ttk.Scrollbar(frame, command=self.log_box.yview)
+        self.log_box.configure(yscrollcommand=scroll.set)
+        scroll.pack(side="right", fill="y")
+        self.log_box.pack(fill="both", expand=True)
+
+    def var(self, key):
+        value = self.values[key]
+        self.vars[key] = tk.BooleanVar(value=value) if isinstance(value, bool) else tk.StringVar(value=value)
+        return self.vars[key]
+
+    def entry(self, page, row, label, key, hint=""):
+        ttk.Label(page, text=label).grid(row=row, column=0, sticky="w", pady=3, padx=(0, 10))
+        line = ttk.Frame(page)
+        line.grid(row=row, column=1, sticky="w")
+        ttk.Entry(line, textvariable=self.var(key), width=14).pack(side="left")
+        ttk.Label(line, text=hint, foreground="#666").pack(side="left", padx=(8, 0))
+
+    def check(self, page, row, label, key):
+        ttk.Checkbutton(page, text=label, variable=self.var(key)).grid(row=row, column=0, columnspan=2, sticky="w", pady=3)
+
+    def choice(self, page, row, label, key, options):
+        ttk.Label(page, text=label).grid(row=row, column=0, sticky="w", pady=3, padx=(0, 10))
+        line = ttk.Frame(page)
+        line.grid(row=row, column=1, sticky="w")
+        var = self.var(key)
+        for value, text in options:
+            ttk.Radiobutton(line, text=text, value=value, variable=var).pack(side="left", padx=(0, 12))
+
+    def controls(self, page, row, tool, extra=None):
+        line = ttk.Frame(page)
+        line.grid(row=row, column=0, columnspan=2, sticky="w", pady=(12, 0))
+        start = ttk.Button(line, text="Start", command=lambda: self.start(tool))
+        stop = ttk.Button(line, text="Stop", command=lambda: self.stop(tool))
+        status = tk.Label(line, anchor="w")
+        start.pack(side="left")
+        stop.pack(side="left", padx=6)
+        if extra:
+            extra(line).pack(side="left", padx=(0, 6))
+        status.pack(side="left", padx=6)
+        self.buttons[tool] = (start, stop, status)
+
+    def note(self, page, row, text, color="#666"):
+        tk.Label(page, text=text, fg=color, justify="left", anchor="w", wraplength=660).grid(
+            row=row, column=0, columnspan=2, sticky="w", pady=(0, 6))
+
+    def build_overlay(self, page):
+        self.note(page, 0, "Boxes deals over the game while you browse shops. It doesn't touch the game. F8 pauses it.")
+        self.check(page, 1, "Compare with Free Market prices", "ov_market")
+        self.entry(page, 2, "Market deal", "ov_percent", "% or more under the 24h median")
+        self.entry(page, 3, "Minimum NPC profit", "ov_min_profit", "mesos per item")
+        self.entry(page, 4, "Scan every", "ov_interval", "seconds")
+        self.check(page, 5, "Check hovered equipment's scroll slots (experimental)", "ov_tooltips")
+        self.check(page, 6, "Save debug screenshots", "ov_debug")
+        self.controls(page, 7, "overlay")
+
+    def build_crawler(self, page):
+        self.note(page, 0, "Crawls the shops in this room, then the channels below. Stand in a Free Market room.")
+        self.entry(page, 1, "Budget", "cr_budget", "like 50000, 250k or 1.5m")
+        self.choice(page, 2, "NPC and market deals", "cr_mode", (("auto", "Buy automatically"), ("confirm", "I confirm each one")))
+        self.choice(page, 3, "Deals", "cr_deals", (("npc", "NPC deals only"), ("market", "Free Market deals too")))
+        self.entry(page, 4, "Market deal", "cr_percent", "% or more under the 24h median (with market deals)")
+        self.check(page, 5, "Buy custom list items, by the rules on the Custom list tab", "cr_custom_stop")
+        self.entry(page, 7, "Channels", "cr_channels", "only these, in order: 40-1, or 1,3,20,39")
+        self.check(page, 8, "This room only: don't change channel", "cr_single")
+        self.entry(page, 9, "Time limit", "cr_minutes", "minutes (empty: none)")
+        self.check(page, 10, "Dry run: only mark what it would open", "cr_dry")
+        self.check(page, 11, "Save a screenshot of every click", "cr_debug")
+        self.controls(page, 12, "crawler")
+
+    def build_full(self, page):
+        self.note(page, 0, "SELLS EVERYTHING ON THE EQUIP, USE AND ETC TABS at the NPC each trip, except what's on the custom list. "
+                           "Move or list what you want to keep first.", "#c0392b")
+        self.note(page, 1, "Every channel of each room, going to sell when the money runs low. Buys NPC deals without asking. "
+                           "Stand in a Free Market room with the minimap showing the map's name.")
+        self.entry(page, 2, "Budget", "fl_budget", "like 50000, 250k or 1.5m")
+        self.entry(page, 3, "Channels", "fl_channels", "only these, in order: 40-1, or 1,3,20,39")
+        self.entry(page, 4, "Sell when under", "fl_sell_below", "% of the budget left")
+        self.entry(page, 10, "Rooms", "fl_rooms", "only these, in order: all are " + ALL_ROOMS + ", or 3,10,15")
+        self.check(page, 5, "Buy custom list items, by the rules on the Custom list tab (those set to wait for my OK wait until I answer)", "fl_custom_stop")
+        self.entry(page, 7, "Rounds", "fl_rounds", "rooms (empty: until stopped)")
+        self.entry(page, 8, "Time limit", "fl_minutes", "minutes (empty: none)")
+        self.controls(page, 11, "full")
+
+    def build_craft(self, page):
+        self.note(page, 0, "Works out what's profitable to craft, from saved prices, and opens the results in your browser.")
+        ttk.Label(page, text="Disciplines").grid(row=1, column=0, sticky="nw", pady=3, padx=(0, 10))
+        line = ttk.Frame(page)
+        line.grid(row=1, column=1, sticky="w")
+        self.discipline_vars = {}
+        for i, name in enumerate(disciplines()):
+            var = tk.BooleanVar(value=name in self.values["cf_disciplines"])
+            self.discipline_vars[name] = var
+            ttk.Checkbutton(line, text=name, variable=var).grid(row=i // 3, column=i % 3, sticky="w", padx=(0, 12))
+        self.entry(page, 2, "Margin", "cf_margin", "% of what a craft sells for")
+        self.controls(page, 3, "craft", lambda parent: ttk.Button(parent, text="Open last results", command=self.open_page))
+
+    def build_custom(self, page):
+        page.columnconfigure(0, weight=1)
+        page.columnconfigure(1, weight=2)
+        page.rowconfigure(1, weight=1)
+        self.note(page, 0, "Everything on this list gets a cyan box and is never sold at the NPC. The bots buy by these rules "
+                           "when you tick Buy custom list items on their tab. Changes apply the next time you press Start.")
+        left = ttk.Frame(page)
+        right = ttk.Frame(page)
+        left.grid(row=1, column=0, sticky="nsew", padx=(0, 8))
+        right.grid(row=1, column=1, sticky="nsew")
+        ttk.Label(left, text="Find an item").pack(anchor="w")
+        self.search_text = tk.StringVar()
+        self.search_text.trace_add("write", lambda *_: self.show_results())
+        search = ttk.Entry(left, textvariable=self.search_text)
+        search.pack(fill="x", pady=(2, 4))
+        search.bind("<Return>", lambda _: self.add_selected())
+        self.result_box = tk.Listbox(left, height=6, exportselection=False)
+        self.result_box.pack(fill="both", expand=True)
+        self.result_box.bind("<Double-Button-1>", lambda _: self.add_selected())
+        ttk.Button(left, text="Add to list", command=self.add_selected).pack(anchor="e", pady=(4, 0))
+
+        scale = self.root.winfo_fpixels("1i") / 96  # column sizes and row height are in pixels
+        ttk.Style().configure("Treeview", rowheight=int(20 * scale))
+        columns = {"name": ("Item", 120), "when": ("Buy when", 135), "bought": ("Bought", 55), "ask": ("Purchase", 60)}
+        self.list_box = ttk.Treeview(right, columns=list(columns), show="headings", height=6, selectmode="browse")
+        for column, (title, width) in columns.items():
+            self.list_box.heading(column, text=title)
+            self.list_box.column(column, width=int(width * scale), stretch=column == "name")
+        self.list_box.pack(fill="both", expand=True)
+        self.list_box.bind("<<TreeviewSelect>>", lambda _: self.show_item())
+        self.list_box.bind("<Delete>", lambda _: self.remove_selected())
+
+        form = ttk.Frame(right)
+        form.pack(fill="x", pady=(6, 0))
+        self.item_title = tk.StringVar(value="Pick an item above to set its rules")
+        ttk.Label(form, textvariable=self.item_title).grid(row=0, column=0, columnspan=4, sticky="w")
+        self.item_when = tk.StringVar(value="under")
+        self.item_percent, self.item_price, self.item_limit = tk.StringVar(), tk.StringVar(), tk.StringVar()
+        self.item_confirm = tk.BooleanVar(value=True)
+        ttk.Radiobutton(form, text="Under median by", value="under", variable=self.item_when).grid(row=1, column=0, sticky="w")
+        ttk.Radiobutton(form, text="Up to over median by", value="over", variable=self.item_when).grid(row=2, column=0, sticky="w")
+        ttk.Radiobutton(form, text="At or under a price of", value="price", variable=self.item_when).grid(row=3, column=0, sticky="w")
+        ttk.Entry(form, textvariable=self.item_percent, width=8).grid(row=1, column=1, rowspan=2, sticky="w", padx=4)
+        ttk.Label(form, text="%").grid(row=1, column=2, rowspan=2, sticky="w")
+        ttk.Entry(form, textvariable=self.item_price, width=10).grid(row=3, column=1, sticky="w", padx=4)
+        ttk.Label(form, text="Buy limit").grid(row=4, column=0, sticky="w", pady=(4, 0))
+        ttk.Entry(form, textvariable=self.item_limit, width=8).grid(row=4, column=1, sticky="w", padx=4, pady=(4, 0))
+        ttk.Label(form, text="empty: no limit", foreground="#666").grid(row=4, column=2, columnspan=2, sticky="w", pady=(4, 0))
+        ttk.Radiobutton(form, text="Wait for my OK", value=True, variable=self.item_confirm).grid(row=5, column=0, sticky="w", pady=(4, 0))
+        ttk.Radiobutton(form, text="Buy without asking", value=False, variable=self.item_confirm).grid(row=5, column=1, columnspan=3, sticky="w", pady=(4, 0))
+        buttons = ttk.Frame(right)
+        buttons.pack(fill="x", pady=(6, 0))
+        ttk.Button(buttons, text="Save item", command=self.save_item).pack(side="left")
+        ttk.Button(buttons, text="Reset bought count", command=self.reset_item).pack(side="left", padx=6)
+        ttk.Button(buttons, text="Remove", command=self.remove_selected).pack(side="right")
+        self.list_time = None
+        self.show_results()
+        self.show_list()
+
+    # ---- the custom list
+
+    def show_results(self):
+        self.results = search_items(self.items, self.search_text.get())
+        self.result_box.delete(0, "end")
+        self.result_box.insert("end", *self.results)
+        if self.results:
+            self.result_box.selection_set(0)
+
+    def show_list(self, select=None):
+        """The list as it is on disk, which a bot may be counting in."""
+        known = {custom_items.key(n) for n in self.items}
+        chosen = select or self.chosen_name()
+        self.listed = custom_items.load()
+        self.list_time = self.list_file_time()
+        self.list_box.delete(*self.list_box.get_children())
+        for number, item in enumerate(self.listed):
+            name = item["name"] if custom_items.key(item["name"]) in known else f"{item['name']} (not a known item)"
+            bought = f"{item['bought']} / {item['limit']}" if item["limit"] else f"{item['bought']}"
+            self.list_box.insert("", "end", iid=str(number), values=(name, custom_items.describe(item), bought,
+                                                                    "asks me" if item["confirm"] else "auto"))
+            if chosen and custom_items.key(chosen) == custom_items.key(item["name"]):
+                self.list_box.selection_set(str(number))
+
+    def list_file_time(self):
+        try:
+            return custom_items.FILE.stat().st_mtime
+        except OSError:
+            return None
+
+    def chosen_name(self):
+        chosen = self.list_box.selection()
+        return self.listed[int(chosen[0])]["name"] if chosen and int(chosen[0]) < len(self.listed) else None
+
+    def show_item(self):
+        name = self.chosen_name()
+        item = name and custom_items.find(self.listed, name)
+        if not item:
+            return
+        self.item_title.set(f"{item['name']}: buy it when...")
+        self.item_when.set(item["when"])
+        self.item_percent.set(f"{item['percent']:g}")
+        self.item_price.set(str(item["price"]) if item["price"] else "")
+        self.item_limit.set("" if item["limit"] is None else str(item["limit"]))
+        self.item_confirm.set(item["confirm"])
+
+    def save_item(self):
+        name = self.chosen_name()
+        if not name:
+            return
+        try:
+            changes = custom_items.parse_rules(self.item_when.get(), self.item_percent.get(), self.item_price.get(), self.item_limit.get())
+        except ValueError as e:
+            messagebox.showerror("Custom list", str(e))
+            return
+        custom_items.update(name, confirm=self.item_confirm.get(), **changes)
+        self.log("list", f"saved {name}")
+        self.show_list(select=name)
+
+    def reset_item(self):
+        name = self.chosen_name()
+        if name:
+            custom_items.update(name, bought=0)
+            self.log("list", f"bought count of {name} reset")
+            self.show_list(select=name)
+
+    def add_selected(self):
+        chosen = self.result_box.curselection()
+        if not chosen:
+            return
+        name = self.results[chosen[0]]
+        self.log("list", f"added {name}: starts as 1 item, 20% under median, waiting for your OK" if custom_items.add(name)
+                 else f"{name} is already on the list")
+        self.show_list(select=name)
+        self.show_item()
+
+    def remove_selected(self):
+        name = self.chosen_name()
+        if name:
+            custom_items.remove(name)
+            self.log("list", f"removed {name}")
+            self.item_title.set("Pick an item above to set its rules")
+            self.show_list()
+
+    # ---- settings
+
+    def current(self):
+        values = {key: var.get() for key, var in self.vars.items()}
+        values["cf_disciplines"] = [n for n, var in self.discipline_vars.items() if var.get()] or self.values["cf_disciplines"]
+        return values
+
+    def remember(self):
+        try:
+            save_settings(self.current())
+        except OSError as e:
+            self.log("launcher", f"couldn't save the settings: {e}")
+
+    # ---- starting and stopping
+
+    def start(self, tool):
+        values = self.current()
+        if tool == "craft":
+            values["cf_disciplines"] = [n for n, var in self.discipline_vars.items() if var.get()]
+        try:
+            args = ARGS[tool](values)
+        except ValueError as e:
+            messagebox.showerror(TOOLS[tool], str(e))
+            return
+        self.remember()
+        try:
+            self.jobs[tool] = Job(tool, args, self.lines, graceful=tool in ("crawler", "full"))
+        except OSError as e:
+            messagebox.showerror(TOOLS[tool], f"Couldn't start it: {e}")
+            return
+        self.outcome.pop(tool, None)
+        self.log(tool, "started: " + " ".join(args))
+        self.refresh_buttons()
+
+    def stop(self, tool):
+        job = self.jobs.get(tool)
+        if job:
+            self.log(tool, "stopping...")
+            job.stop()
+            self.refresh_buttons()
+
+    def ended(self, tool):
+        job = self.jobs.pop(tool)
+        code = job.proc.wait()
+        job.clean_up()
+        if job.stop_at is not None or code == 0:
+            self.outcome[tool] = ("stopped" if job.stop_at is not None else "finished", "#666")
+        else:
+            self.outcome[tool] = (f"ended with an error ({code}): see the log", "#c0392b")
+        self.log(tool, self.outcome[tool][0])
+        if tool == "update":
+            self.progress = None
+            self.read_dump(force=True)
+            self.tick_status()
+        self.refresh_buttons()
+        if self.closing and not self.jobs:
+            self.root.destroy()
+
+    def refresh_buttons(self):
+        game_job = next((t for t in ON_GAME if t in self.jobs), None)
+        for tool, (start, stop, status) in self.buttons.items():
+            job = self.jobs.get(tool)
+            blocked = tool in ON_GAME and game_job and game_job != tool
+            start.state(["disabled"] if job or blocked else ["!disabled"])
+            stop.state(["!disabled"] if job else ["disabled"])
+            if job:
+                text, color = ("stopping...", "#a86a00") if job.stop_at is not None else ("running", "#11804a")
+            elif blocked:
+                text, color = f"{TOOLS[game_job]} is running: one at a time", "#666"
+            else:
+                text, color = self.outcome.get(tool, ("not running", "#666"))
+            status.configure(text=text, fg=color)
+
+    def open_page(self):
+        if CRAFT_PAGE.exists():
+            webbrowser.open(CRAFT_PAGE.as_uri())
+        else:
+            messagebox.showinfo(TOOLS["craft"], "No results yet: press Start first.")
+
+    # ---- MeowDB
+
+    def file_time(self):
+        try:
+            return market.DUMP_FILE.stat().st_mtime
+        except OSError:
+            return None
+
+    def read_dump(self, force=False):
+        """The saved prices again if they've changed, every few seconds at most: a tool saving
+        them can't while they're being read."""
+        if not force and time.monotonic() - self.dump_read < MEOW_READ_EVERY:
+            return
+        self.dump_read = time.monotonic()
+        changed = self.file_time()
+        if changed != self.dump_time:
+            dump = market.load()
+            if dump is not None:
+                self.dump, self.dump_time = dump, changed
+
+    def meow_clicked(self):
+        if "update" in self.jobs:
+            self.stop("update")
+        else:
+            self.start("update")
+
+    def tick_status(self):
+        text, due = meow_status(self.dump)
+        job = self.jobs.get("update")
+        if job and self.progress:
+            done, total = self.progress
+            text = f"MeowDB: updating, {done} of {total} done (one a second)"
+        elif job:
+            text = "MeowDB: starting the update..."
+        self.meow_text.set(text)
+        if job:
+            self.meow_button.configure(text="Stop update")
+            self.meow_button.state(["disabled"] if job.stop_at is not None else ["!disabled"])
+        else:
+            self.meow_button.configure(text=f"Update {due} price{'s' if due != 1 else ''} now" if due else "All up to date")
+            self.meow_button.state(["!disabled"] if due else ["disabled"])
+
+    def tick_meow(self):
+        self.read_dump()
+        if self.list_file_time() != self.list_time:  # a bot bought something
+            self.show_list()
+        self.tick_status()
+        self.root.after(1000, self.tick_meow)
+
+    # ---- the log, and closing
+
+    def log(self, tool, text):
+        at_end = self.log_box.yview()[1] >= 0.999
+        name = TOOLS.get(tool, tool)
+        self.log_box.configure(state="normal")
+        self.log_box.insert("end", f"{time.strftime('%H:%M:%S')} [{name}] {text}\n")
+        excess = int(self.log_box.index("end-1c").split(".")[0]) - MAX_LOG_LINES
+        if excess > 0:
+            self.log_box.delete("1.0", f"{excess + 1}.0")
+        self.log_box.configure(state="disabled")
+        if at_end:
+            self.log_box.see("end")
+
+    def drain(self):
+        for _ in range(200):
+            try:
+                tool, line = self.lines.get_nowait()
+            except queue.Empty:
+                break
+            if line is None:
+                self.ended(tool)
+                continue
+            progress = PROGRESS_RE.fullmatch(line) if tool == "update" else None
+            if progress:
+                self.progress = int(progress[1]), int(progress[2])
+                self.tick_status()
+            else:
+                self.log(tool, line)
+        for tool, job in list(self.jobs.items()):
+            if job.overdue():
+                self.log(tool, f"didn't stop within {STOP_WAIT:.0f} seconds: ending it, and letting go of any keys")
+                job.kill()
+        self.root.after(100, self.drain)
+
+    def close(self):
+        if self.jobs:
+            running = ", ".join(TOOLS[t] for t in self.jobs)
+            if not messagebox.askyesno("Maple tools", f"{running} is still running. Stop it and close?"):
+                return
+            self.closing = True
+            for tool in list(self.jobs):
+                self.stop(tool)
+            self.remember()
+            return
+        self.remember()
+        self.root.destroy()
+
+
+def sharp_on_scaled_displays():
+    """Without this, Windows scales the window up after tk has measured its text, which cuts the
+    ends off labels on a display that isn't at 100%."""
+    try:
+        ctypes.windll.shcore.SetProcessDpiAwareness(1)
+    except OSError:
+        pass
+
+
+def main():
+    sharp_on_scaled_displays()
+    # without its own id Windows files the window under Python, with Python's icon on the taskbar
+    ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("maple.tools.launcher")
+    root = tk.Tk()
+    try:
+        root.iconbitmap(default=str(ICON_FILE))
+    except tk.TclError:
+        pass  # only a missing icon
+    App(root)
+    root.mainloop()
+
+
+if __name__ == "__main__":
+    main()

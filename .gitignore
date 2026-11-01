@@ -7,5 +7,7 @@ data/fetch_cache.json
 data/market_prices.json
 data/prices_lvl30_backup.json
 custom_search.txt
+custom_items.json
+launcher_settings.json
 tools/
 craft_calculator.html

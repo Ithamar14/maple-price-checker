@@ -10,11 +10,16 @@ Prices are looked up live: the first time a listing for an item shows up, a back
 asks MeowDB for its prices (one request a second) and saves them in data/market_prices.json.
 At startup you're asked whether to update prices already in that file (suggested once every
 24 hours, not more). Say no, and items already in it keep their saved prices; only items
-never looked up before are fetched.
+never looked up before are fetched. --market-update yes/no answers that without asking.
+
+    python market.py --update-stale    # looks up every saved price over 24 hours old, then exits
 """
+import argparse
 import json
 import os
 import queue
+import re
+import sys
 import threading
 import time
 import urllib.error
@@ -29,6 +34,8 @@ DUMP_FILE = Path(__file__).parent / "data" / "market_prices.json"
 SETTINGS_FILE = Path(__file__).parent / "crawler_settings.json"
 REFRESH_HOURS = 24
 REQUEST_GAP = 1.0  # seconds between requests to MeowDB
+SAVE_TRIES = 20    # Windows refuses to replace a file while something is reading it: try again
+update_saved = None  # "yes" / "no" from --market-update: prepare() doesn't ask, None: it does
 
 
 def load_settings():
@@ -54,6 +61,37 @@ def parse_percent(text):
     if not 0 < value < 100:
         raise ValueError(text)
     return value
+
+
+def parse_mesos(text):
+    """'250000', '250,000', '250k', '1.5m' -> int."""
+    m = re.fullmatch(r"\s*([\d.,]+)\s*([km]?)\s*", text.lower())
+    if not m:
+        raise ValueError(text)
+    number = float(m.group(1).replace(",", ""))
+    return int(number * {"": 1, "k": 1_000, "m": 1_000_000}[m.group(2)])
+
+
+def parse_numbers(text, low, high):
+    """'40-1', '1,3,20,39', '6-1,16-13', '5' -> a list, in the order given, each number once.
+    ValueError if it isn't that, or a number isn't from low to high."""
+    numbers = []
+    for part in text.replace(" ", "").split(","):
+        first, dash, last = part.partition("-")
+        if not first.isdigit() or (dash and not last.isdigit()):
+            raise ValueError(text)
+        a, b = int(first), int(last or first)
+        if not (low <= a <= high and low <= b <= high):
+            raise ValueError(text)
+        for n in (range(a, b - 1, -1) if a >= b else range(a, b + 1)):
+            if n not in numbers:
+                numbers.append(n)
+    return numbers
+
+
+def add_update_flag(ap):
+    ap.add_argument("--market-update", choices=["yes", "no"],
+                    help="update saved Free Market prices as items show up (asked if not given)")
 
 
 def ask_percent(default):
@@ -120,6 +158,27 @@ def age_hours(stamp):
     return (datetime.now(timezone.utc) - datetime.fromisoformat(stamp)).total_seconds() / 3600
 
 
+def priced(dump):
+    """The saved items that have prices to keep up to date: an item MeowDB doesn't know or that
+    can't be traded has none, and looking those up every day wouldn't change that."""
+    return {n: e for n, e in ((dump or {}).get("items") or {}).items() if not e.get("status")}
+
+
+def is_stale(entry):
+    return not entry.get("fetched") or age_hours(entry["fetched"]) >= REFRESH_HOURS
+
+
+def stale_names(dump):
+    """The saved prices due for an update: over REFRESH_HOURS old."""
+    return [n for n, e in priced(dump).items() if is_stale(e)]
+
+
+def last_fetched(dump):
+    """How many hours ago the newest saved price was looked up, or None."""
+    stamps = [e["fetched"] for e in priced(dump).values() if e.get("fetched")]
+    return age_hours(max(stamps, key=datetime.fromisoformat)) if stamps else None
+
+
 class Live:
     """Free Market prices by item name, looked up on MeowDB in the background as items are seen.
 
@@ -155,11 +214,44 @@ class Live:
                 self.asked.add(name)
                 self.waiting.add(name)
         if due:
-            self.todo.put(name)
-            if self.thread is None:
-                self.thread = threading.Thread(target=self._work, daemon=True)
-                self.thread.start()
+            self._queue(name)
         return entry
+
+    def _queue(self, name):
+        self.todo.put(name)
+        if self.thread is None:
+            self.thread = threading.Thread(target=self._work, daemon=True)
+            self.thread.start()
+
+    def refresh(self, names):
+        """Look up again whichever of names has a price over REFRESH_HOURS old, whatever was
+        said about updating: this is for prices about to be spent on."""
+        if not self.enabled:
+            return
+        with self.lock:
+            due = [n for n in names if n not in self.waiting and n in self.items
+                   and not self.items[n].get("status") and is_stale(self.items[n])]
+            self.asked.update(due)
+            self.waiting.update(due)
+        for name in due:
+            self._queue(name)
+
+    def update_now(self, names):
+        """Look up every one of names, however recently it last was."""
+        if not self.enabled:
+            return
+        with self.lock:
+            due = [n for n in names if n not in self.waiting]
+            self.asked.update(due)
+            self.waiting.update(due)
+        for name in due:
+            self._queue(name)
+
+    def fresh(self, names):
+        """Whether every one of names has a price under REFRESH_HOURS old."""
+        with self.lock:
+            entries = [self.items.get(n) for n in names]
+        return bool(entries) and all(e and not is_stale(e) for e in entries)
 
     def pending(self, names):
         """Whether any of names is still waiting for its lookup."""
@@ -202,7 +294,6 @@ class Live:
             saved = load() or {}
             with self.lock:
                 self.items[name] = entry
-                self.waiting.discard(name)
                 for other, theirs in saved.get("items", {}).items():
                     mine = self.items.get(other)
                     if mine is None or theirs.get("fetched", "") > mine.get("fetched", ""):
@@ -213,7 +304,16 @@ class Live:
             DUMP_FILE.parent.mkdir(exist_ok=True)
             tmp = DUMP_FILE.with_name(f"{DUMP_FILE.stem}.{os.getpid()}.tmp")
             tmp.write_text(text, "utf-8")
-            tmp.replace(DUMP_FILE)
+            for attempt in range(SAVE_TRIES):
+                try:
+                    tmp.replace(DUMP_FILE)
+                    break
+                except PermissionError:
+                    time.sleep(0.1)
+            else:
+                print("  couldn't save the market prices just now; the next lookup tries again")
+            with self.lock:  # only now: whoever waits for this may exit straight after
+                self.waiting.discard(name)
 
 
 def prepare(game_ids=None):
@@ -224,6 +324,10 @@ def prepare(game_ids=None):
         dump["updated"] = dump.pop("fetched", None)
         for entry in dump["items"].values():
             entry.setdefault("fetched", dump["updated"])
+    if update_saved is not None:
+        print("  saved prices are updated once each as items show up; new items are looked up" if update_saved == "yes"
+              else "  saved prices are kept as they are; only items never looked up before are fetched")
+        return Live(dump, update=update_saved == "yes", game_ids=game_ids)
     if dump is None or not dump["items"]:
         answer = input("Look up Free Market prices on MeowDB for the items you come across "
                        "(one request a second, each item once)? [Y/n] ").strip().lower()
@@ -245,3 +349,38 @@ def prepare(game_ids=None):
     print("  saved prices are updated once each as items show up; new items are looked up" if update
           else "  saved prices are kept as they are; only items never looked up before are fetched")
     return Live(dump, update=update, game_ids=game_ids)
+
+
+def update_stale():
+    """Look up every saved price that's due, printing 'progress <done> <total>' along the way."""
+    dump = load()
+    names = stale_names(dump)
+    if not names:
+        print("all saved prices are under 24 hours old: nothing to update")
+        return
+    print(f"updating {len(names)} prices on MeowDB, about one a second")
+    live = Live(dump, update=True)
+    for name in names:
+        live.get(name)
+    shown = None
+    while True:
+        waiting = sum(1 for n in names if live.pending([n]))
+        if waiting != shown:
+            print(f"progress {len(names) - waiting} {len(names)}")
+            shown = waiting
+        if not waiting:
+            break
+        time.sleep(1)
+    with live.lock:
+        left = len(set(names) & set(stale_names(live.dump)))
+    print(f"updated {len(names) - left} prices" + (f"; {left} failed and are still due" if left else ""))
+
+
+if __name__ == "__main__":
+    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument("--update-stale", action="store_true", help="look up every saved price over 24 hours old")
+    if ap.parse_args().update_stale:
+        sys.stdout.reconfigure(line_buffering=True, errors="replace")
+        update_stale()
+    else:
+        ap.print_help()

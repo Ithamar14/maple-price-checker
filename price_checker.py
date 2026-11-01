@@ -32,6 +32,7 @@ import numpy as np
 from rapidfuzz import fuzz, process
 from rapidocr import RapidOCR
 
+import custom_items
 import market
 
 HERE = Path(__file__).parent
@@ -44,7 +45,7 @@ NPC_DEAL_COLOR = "#a0ffa0"  # light green: sells to an NPC for more than it cost
 MARKET_COLOR = "#00d040"    # green: far under its Free Market price
 LISTED_COLOR = "#ffd800"    # yellow: a recognised listing, nothing special
 REVIEW_COLOR = "#c040ff"    # purple: on the review_items list, worth checking its stats yourself
-CUSTOM_COLOR = "#00e5ff"    # cyan: on your custom_search.txt list
+CUSTOM_COLOR = "#00e5ff"    # cyan: on your custom list
 WARN_COLOR = "#ff2020"      # red: something to watch out for
 STATUS_COLOR = "#ffffff"    # status lines
 
@@ -77,37 +78,22 @@ def load_review_items():
     return frozenset(norm(n) for n in names if norm(n))
 
 
-CUSTOM_FILE = HERE / "custom_search.txt"
-CUSTOM_TEMPLATE = """\
-# Custom search: items to point out (cyan box) whenever they're listed, for any reason.
-# One item name per line, as the game spells it; capitals and spaces don't matter.
-# Lines starting with # are ignored. Save the file, then restart the price checker / crawler.
-#
-# Examples (remove the # to use them):
-# Work Gloves
-# Hat Accuracy Scroll: Greater
-"""
-
-
 def load_custom_items(db):
-    """Normalised names in custom_search.txt (created with instructions if missing). Names
-    that aren't a known item are reported, with the closest match, since they'd never show up."""
-    if not CUSTOM_FILE.exists():
-        CUSTOM_FILE.write_text(CUSTOM_TEMPLATE, "utf-8")
-    names = [l.strip() for l in CUSTOM_FILE.read_text("utf-8").splitlines()]
-    names = [n for n in names if n and not n.startswith("#")]
+    """Normalised names on your custom list. Names that aren't a known item are reported, with the
+    closest match, since they'd never show up."""
+    names = [i["name"] for i in custom_items.load()]
     for n in names:
         if norm(n) not in db.items:
             close = process.extractOne(norm(n), db.keys, scorer=fuzz.ratio)
             hint = f" (did you mean {db.items[close[0]][0]}?)" if close and close[1] >= 70 else ""
             print(f"  custom search: '{n}' isn't a known item name{hint}")
     if names:
-        print(f"  custom search: watching for {len(names)} items (cyan boxes)")
+        print(f"  custom search: pointing out {len(names)} items with cyan boxes")
     return frozenset(norm(n) for n in names if norm(n))
 
 
 class Watchlists:
-    """Items you asked to have pointed out: custom_search.txt (cyan, any reason) and
+    """Items you asked to have pointed out: your custom list (cyan, any reason) and
     review_items in crawler_settings.json (purple, check their stats)."""
 
     def __init__(self, custom=frozenset(), review=frozenset()):
@@ -602,8 +588,11 @@ def trim_bars(bgr, region, last=None):
     positions, clicks) has to be measured inside the picture. Returns (picture, its screen region).
     A frame that's all black (loading) reuses last, the (top, bottom, left, right) bars before."""
     h, w = bgr.shape[:2]
-    rows = bgr.max(axis=(1, 2)) > 8
-    cols = bgr.max(axis=(0, 2)) > 8
+    # a row or column only counts as picture when a good part of it is lit: the game draws its
+    # cursor over the bars too, and those few pixels mustn't make the bars look uneven
+    lit = bgr.max(axis=2) > 8
+    rows = lit.mean(axis=1) > 0.1
+    cols = lit.mean(axis=0) > 0.1
     if rows.sum() < h * 0.5 or cols.sum() < w * 0.5:  # mostly black: loading, not bars
         bars = last or (0, 0, 0, 0)
     else:
@@ -916,10 +905,12 @@ def main():
     ap.add_argument("--market-percent", type=market.parse_percent,
                     help="a market deal is this many %% under the 24h median (asked if not given)")
     ap.add_argument("--no-market", action="store_true", help="don't compare with Free Market prices")
+    market.add_update_flag(ap)
     ap.add_argument("--tooltip-slots", action="store_true",
                     help="experimental, off by default: check hovered equipment's remaining scroll slots")
     args = ap.parse_args()
     sys.stdout.reconfigure(line_buffering=True, errors="replace")  # OCR text can hold characters the console can't show
+    market.update_saved = args.market_update
 
     if args.list_windows:
         for _, t, exe in visible_windows():

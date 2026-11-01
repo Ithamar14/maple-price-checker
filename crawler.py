@@ -13,8 +13,9 @@ by itself if another window comes to the front.
 
 Usage:
     python crawler.py --dry-run          # look only: show which shops it would open
-    python crawler.py                    # asks auto/confirm and the budget, crawls this room, then channels 40..1
+    python crawler.py                    # asks auto/confirm, NPC only or not, and the budget, crawls this room, then channels 40..1
     python crawler.py --confirm          # you press OK on every purchase window
+    python crawler.py --npc-only         # only NPC deals: no market prices, no market deals
     python crawler.py --budget 250k --channels 12-1 --minutes 20
     python crawler.py --no-channel-change
 """
@@ -24,6 +25,7 @@ import ctypes
 import json
 import math
 import ctypes.wintypes as wt
+import os
 import re
 import signal
 import sys
@@ -38,6 +40,7 @@ import cv2
 import mss
 import numpy as np
 
+import custom_items
 import market
 import price_checker as pc
 
@@ -67,10 +70,14 @@ TOTAL_RE = re.compile(r"total\s*price\s*is\s*([\d,.]+)\s*meso", re.I)
 # the chat bar at the bottom, where no shop sign, store or dialog is ever looked for.
 PARK_AT = (0.35, 0.93)
 STOCK_VOTES = 3                     # of the 12 reads of a stock number, how many must agree
+LIST_ROWS = 6                      # rows showing in a store's list
+SAME_PAGES_AT_END = 2              # scrolls that change nothing before it counts as the end of the list
 MAX_BUYS_PER_LISTING = 3            # a stack whose stock was read low gets topped up, at most this often
 FROZEN_AFTER = 3.0                  # seconds of identical screen captures before warning that capture is stuck
 SHOP_FEE = 0.03                     # a player shop keeps 3% of each sale ("will be deducted from sales")
 MARKET_CONFIRM_WAIT = 120.0        # seconds the purchase window waits for you on a market deal
+CUSTOM_START_WAIT = 5.0            # seconds per custom list item at startup, for its price to arrive
+CUSTOM_PRICE_WAIT = 10.0           # seconds a store stays open for a custom search item's price to arrive
 REVIEW_PAUSE = 5.0                 # seconds a store stays open when it lists a review / custom search item
 SHOP_OPEN_WAIT = 6.0               # seconds to wait for a store to open after double-clicking its sign
 NO_SHOPS_WAIT = 10.0              # seconds to wait for shops after a channel change before moving on
@@ -79,7 +86,8 @@ CH_STEP = (131, 41)                 # cell spacing; 8 channels per row
 CH_HIGHLIGHT_PATCH = (-45, -30, 6)  # x range and +-y around a cell centre to read its colour
 
 VK = {"esc": 0x1B, "enter": 0x0D, "left": 0x25, "up": 0x26, "right": 0x27, "down": 0x28,
-      "backspace": 0x08, "end": 0x23, **{str(d): 0x30 + d for d in range(10)}}
+      "backspace": 0x08, "end": 0x23, "alt": 0x12, "ctrl": 0x11, "shift": 0x10, "space": 0x20,
+      **{str(d): 0x30 + d for d in range(10)}}
 EXTENDED = {"left", "up", "right", "down", "end"}
 
 
@@ -235,6 +243,23 @@ class Controls:
             _send(INPUT(1, _INPUTUNION(ki=KEYBDINPUT(vk, scan, 0x0008 | ext | 0x0002, 0, 0))))
             self.wait(0.12)
 
+    def key_down(self, name):
+        self.ensure_front()
+        ext = 0x0001 if name in EXTENDED else 0
+        _send(INPUT(1, _INPUTUNION(ki=KEYBDINPUT(VK[name], user32.MapVirtualKeyW(VK[name], 0), 0x0008 | ext, 0, 0))))
+
+    def key_up(self, name):
+        ext = 0x0001 if name in EXTENDED else 0
+        _send(INPUT(1, _INPUTUNION(ki=KEYBDINPUT(VK[name], user32.MapVirtualKeyW(VK[name], 0), 0x0008 | ext | 0x0002, 0, 0))))
+
+    def hold(self, name, seconds):
+        """Hold a key down for this long (let go again even if the crawler is stopped meanwhile)."""
+        self.key_down(name)
+        try:
+            self.wait(seconds)
+        finally:
+            self.key_up(name)
+
     def type_number(self, n):
         for d in str(n):
             self.key(d)
@@ -254,10 +279,11 @@ class Screen:
 
     def grab(self):
         window = pc.client_rect(self.hwnd)
-        frame = np.array(self.sct.grab(window))[:, :, :3]
-        frame, self.region, self.bars = pc.trim_bars(frame, window, self.bars)
+        self.raw = np.ascontiguousarray(np.array(self.sct.grab(window))[:, :, :3])  # with any black bars
+        frame, self.region, self.bars = pc.trim_bars(self.raw, window, self.bars)
         self.check_frozen(frame)
-        return np.ascontiguousarray(frame)
+        self.frame = np.ascontiguousarray(frame)  # the latest picture, for marked screenshots
+        return self.frame
 
     def check_frozen(self, frame):
         """The game picture always moves a little (characters, effects, chat). If captures stay
@@ -290,7 +316,7 @@ LISTED = pc.LISTED_COLOR  # a recognised single-item listing
 MARKET = pc.MARKET_COLOR  # a listing far below its Free Market price
 DEAL = pc.NPC_DEAL_COLOR  # a listing that passes the buy rules (NPC deal)
 REVIEW = pc.REVIEW_COLOR  # an item on the review_items list: worth checking its stats yourself
-CUSTOM = pc.CUSTOM_COLOR  # an item on your custom_search.txt list
+CUSTOM = pc.CUSTOM_COLOR  # an item on your custom list
 WARN = pc.WARN_COLOR    # something went wrong or looks off
 READING = "#4da6ff"     # a spot read for a number (stock, mesos, total)
 CLICK = "#ffffff"
@@ -444,17 +470,28 @@ class Crawler:
         self.buy_rules = sorted((r["price_from"], r["min_profit"]) for r in settings["buy_rules"])
         self.never_buy = [w.lower() for w in settings.get("never_buy", [])]
         self.min_total_profit = settings.get("min_total_profit", 50)
+        big_buy = settings.get("big_buy", {})
+        self.big_buy_percent = big_buy.get("over_budget_percent", 25)
+        self.big_buy_flip = big_buy.get("min_flip_percent", 5)
         self.skip_shops_with = [pc.norm(w) for w in settings.get("skip_shops_with", []) if pc.norm(w)]
         market_cfg = market.load_settings()
         self.market_below = market_cfg.get("below_24h_median_percent", 30)
         self.market_min_reports = market_cfg.get("min_reports_24h", 5)
         self.market_auto = set(market_cfg.get("auto_buy", []))  # market deals bought without asking you
         self.market = market.Live(enabled=False)  # Free Market prices, after load_market()
+        self.channel_refused = False  # the last channel change didn't take: the channel may be full
+        self.sell_below = None  # stop opening shops once under this percent of the budget is left
         self.confirm_all = False  # every purchase waits on its last window for you to press OK
+        self.market_deals = True  # False: NPC deals only (prices may still be loaded for custom_percent)
+        self.buy_custom = False  # buy custom list items, each by its own rules
+        self.book = custom_items.Book()
         self.watch = pc.Watchlists(pc.load_custom_items(self.db), pc.load_review_items())
         self.budget = 0
         self.spent = 0
         self.bought = []  # (name, quantity, paid, value, "npc" or "market")
+        self.custom_log = None  # the full sell loop's list of custom items bought
+        self.custom_started = None
+        self.custom_bought = []  # (time, name, quantity, paid, where, how)
         self.marks = Marks()
 
     def required_profit(self, asking):
@@ -473,14 +510,84 @@ class Crawler:
         return hit.profit
 
     def worth_buying(self, hit):
+        if self.watch.kind(hit) == "custom":  # bought by its own rules, and never sold to make the profit
+            return False
         if any(w in n.lower() for n in hit.names for w in self.never_buy):
             return False
         need = self.required_profit(hit.asking)
         return need is not None and hit.profit >= need
 
+    def money_low(self):
+        return self.sell_below is not None and self.budget - self.spent < self.budget * self.sell_below / 100
+
+    def custom_entries(self, hit):
+        """The custom list items this listing is; None if it could also be something not on the
+        list (a cut-off name): what's bought has to be safe from being sold at the NPC."""
+        entries = [self.book.get(n) for n in hit.names]
+        return entries if entries and all(entries) else None
+
+    def custom_top_price(self, entries, hit):
+        """The most to pay, by the strictest of the items it could be; None if that can't be said:
+        a median needs enough reports behind it, and to be under a day old."""
+        tops = []
+        for item in entries:
+            if item["when"] == "price":
+                tops.append(item["price"])
+                continue
+            if not self.market.fresh(hit.names):
+                return None
+            percent = item["percent"] if item["when"] == "under" else -item["percent"]
+            top = market.deal_limit(self.market.lowest(hit.names), percent, self.market_min_reports)
+            if top is None:
+                return None
+            tops.append(top)
+        return min(tops)
+
+    def custom_left(self, hit):
+        """How many more of this listing's item may be bought; None: no limit."""
+        counts = [n for n in map(custom_items.left, self.custom_entries(hit) or ()) if n is not None]
+        return min(counts) if counts else None
+
+    def custom_buy(self, hit):
+        """Whether to buy this listing, by its own item's rules: its limit, then its price."""
+        entries = self.buy_custom and self.custom_entries(hit)
+        if not entries or self.custom_left(hit) == 0:
+            return False
+        top = self.custom_top_price(entries, hit)
+        return top is not None and hit.asking <= top
+
+    def custom_needs_price(self, hit):
+        """Whether this listing's item goes by the market, with buying left to do."""
+        entries = self.buy_custom and self.custom_entries(hit)
+        return bool(entries) and self.custom_left(hit) != 0 and any(i["when"] != "price" for i in entries)
+
+    def too_thin_for_budget(self, deal, quantity):
+        """Whether an NPC deal ties up too much of the session budget for its profit: it costs
+        more than over_budget_percent of the budget, and earns under min_flip_percent of its price."""
+        return (quantity * deal.asking * 100 > self.budget * self.big_buy_percent
+                and deal.profit * 100 < deal.asking * self.big_buy_flip)
+
     def load_market(self):
         """Ask about and load the Free Market price dump (see market.py)."""
         self.market = market.prepare(self.db.ids)
+
+    def update_custom_prices(self):
+        """The latest prices of everything on the custom list still to be bought, before the first
+        shop opens: one that turns up first thing shouldn't be missed for a price still on its way."""
+        names = []
+        for item in self.book.items.values():
+            known = self.db.items.get(pc.norm(item["name"]))
+            if known and custom_items.left(item) != 0:
+                names.append(known[0])  # as MeowDB's lookups and the listings spell it
+        if not names or not self.market:
+            return
+        print(f"  custom list: getting the latest prices of {len(names)} items from MeowDB...")
+        self.market.update_now(names)
+        end = time.monotonic() + CUSTOM_START_WAIT * len(names)
+        while self.market.pending(names) and time.monotonic() < end and not stop_requested():
+            time.sleep(0.25)
+        late = [n for n in names if self.market.pending([n])]
+        print(f"  custom list: still waiting on {', '.join(late)}; they may be late" if late else "  custom list: prices are up to date")
 
     def market_limit(self, hit):
         """The highest asking price that's a market deal for this item, or None when there's no
@@ -490,7 +597,7 @@ class Crawler:
 
     def market_deal(self, hit):
         limit = self.market_limit(hit)
-        return (limit is not None and hit.asking <= limit
+        return (self.market_deals and limit is not None and hit.asking <= limit and self.watch.kind(hit) != "custom"
                 and not any(w in n.lower() for n in hit.names for w in self.never_buy))
 
     # ---- helpers
@@ -615,17 +722,32 @@ class Crawler:
         self.marks.set("shops", [box(*coin, SHOP, str(i)) for i, (_, coin) in enumerate(shops, 1)])
         return shops
 
-    def crawl_room(self, channel):
+    def crawl_room(self, channel, max_shops=None):
+        """Open the shops in this room, or only the first max_shops that open."""
+        self.controls.ensure_front()  # a capture with another window on top would show no shops
         frame = self.screen.grab()
         if self.find_store(frame):
             print("  a store is already open, leaving it first")
             self.leave_store()
-            frame = self.screen.grab()
         self.doing("looking for shops")
-        shops = self.find_shops(frame)
+        end = time.monotonic() + NO_SHOPS_WAIT  # the game may still be redrawing after you switched to it
+        while True:
+            self.controls.ensure_front()
+            frame = self.screen.grab()
+            shops = self.find_shops(frame)
+            if shops or time.monotonic() > end:
+                break
+            self.controls.wait(0.5)
         print(f"[channel {channel}] {len(shops)} shops on screen")
         names = self.read_shop_names(frame, shops)
+        opened_shops = 0
         for i, ((x, y), coin) in enumerate(shops, 1):
+            if self.money_low():
+                print("  low on budget: leaving the rest of this room")
+                break
+            if max_shops is not None and opened_shops >= max_shops:
+                print(f"  checked {opened_shops} shops: that's enough for this room")
+                break
             self.controls.check()
             self.handle_late_store(channel)
             skip = next((w for w in self.skip_shops_with if w in pc.norm(names[i - 1])), None)
@@ -643,6 +765,7 @@ class Crawler:
                 print(f"    didn't open within {SHOP_OPEN_WAIT:.0f}s (full, closed, or missed); skipping")
                 continue
             print(f"    opened after {time.monotonic() - started:.1f}s")
+            opened_shops += 1
             self.controls.wait(0.4)  # let the list draw
             self.read_store(channel)
             self.leave_store()
@@ -722,7 +845,11 @@ class Crawler:
     # ---- inside a store
 
     def read_store(self, channel):
-        done = set()  # listings finished with: skipped, failed, or bought MAX_BUYS_PER_LISTING times
+        # rows finished with: skipped, failed, or bought MAX_BUYS_PER_LISTING times. By where they are
+        # too, as a store can have several rows of one item at one price, and with stacks of any size
+        done = set()
+        page_number = 0
+        same_pages = 0
         reviewed = set()  # review / custom search listings already pointed out in this store
         buys = Counter()
         last_page = None
@@ -732,9 +859,29 @@ class Crawler:
             if not found:
                 return
             (lx0, ly0, lx1, ly1), _ = found  # the item list
+            row_height = (ly1 - ly0) / LIST_ROWS
+
+            def row_key(hit):
+                return hit.name, hit.asking, page_number, round((hit.box[1] - ly0) / row_height)
+
             self.doing("reading the store's listings")
             lines, _, singles, _ = pc.scan(frame, self.reader, self.finder, self.db, 1, False)
             self.mark_listings(lines, singles)
+            self.log_page(channel, page_number, lines, singles, done, row_key)
+            # a custom list item isn't missed for its price being old or still on its way
+            priced = [h for h in singles if self.custom_needs_price(h)]
+            if priced:
+                for h in priced:
+                    self.market.refresh(h.names)
+                    self.market.lowest(h.names)
+                pending = [h for h in priced if self.market.pending(h.names)]
+                if pending:
+                    self.doing(f"custom search: getting the market price of {', '.join(h.name for h in pending)}")
+                    end = time.monotonic() + CUSTOM_PRICE_WAIT
+                    while time.monotonic() < end and any(self.market.pending(h.names) for h in pending):
+                        self.controls.wait(0.25)
+                    self.mark_listings(lines, singles)
+            customs = [d for d in singles if self.custom_buy(d) and row_key(d) not in done]
             new = [h for h in singles if self.watch.kind(h) and (h.name, h.asking) not in reviewed]
             if new:
                 reviewed.update((h.name, h.asking) for h in new)
@@ -744,14 +891,23 @@ class Crawler:
                 self.doing(f"{' / '.join(sorted({self.watch.label(h) for h in new}))}: "
                            f"{', '.join(h.name for h in new)} (hold ESC to stop here)")
                 winsound.MessageBeep(winsound.MB_ICONASTERISK)
-                self.controls.wait(REVIEW_PAUSE)
+                if not customs and not (self.buy_custom and all(self.watch.kind(h) == "custom" for h in new)):
+                    self.controls.wait(REVIEW_PAUSE)  # your rules already say what to do with custom items
+            if customs:  # before any other deal: it's what you're looking for
+                deal = customs[0]
+                key = row_key(deal)
+                buys[key] += 1
+                ask = self.confirm_all or any(i["confirm"] for i in self.custom_entries(deal))
+                if not self.buy(deal, frame, channel, market=True, ask_you=ask, custom=True) \
+                        or buys[key] >= MAX_BUYS_PER_LISTING:
+                    done.add(key)
+                continue
             # NPC deals (guaranteed profit) are bought on their own; market deals wait for you
-            npc = [d for d in singles if self.worth_buying(d) and (d.name, d.asking) not in done]
-            mkt = [d for d in singles if not self.worth_buying(d) and self.market_deal(d)
-                   and (d.name, d.asking) not in done]
+            npc = [d for d in singles if self.worth_buying(d) and row_key(d) not in done]
+            mkt = [d for d in singles if not self.worth_buying(d) and self.market_deal(d) and row_key(d) not in done]
             if npc or mkt:
                 deal = (npc or mkt)[0]
-                key = (deal.name, deal.asking)
+                key = row_key(deal)
                 # a listing that's still there (not grey) after a purchase has stock left, because its
                 # stock number was read low: it gets bought again (a stack it can't read is skipped)
                 buys[key] += 1
@@ -760,15 +916,31 @@ class Crawler:
                     done.add(key)
                 continue  # the list changes after a purchase: read this page again
             page = tuple(l.text for l in lines)
-            if page == last_page:
-                return  # scrolling no longer changes anything: end of the list
-            if sum(1 for l in lines if pc.LISTING_RE.match(l.text)) < 5:
-                return  # the list shows 6 rows; fewer means it all fits and there's nothing to scroll
+            # the same again may just be rows that look alike: only twice in a row is the end of the list
+            same_pages = same_pages + 1 if page == last_page else 0
+            if same_pages >= SAME_PAGES_AT_END:
+                return
+            if not any(l.y1 > ly1 - row_height * 1.5 for l in lines):
+                return  # nothing in the bottom row: it all fits and there's nothing to scroll. Not by
+                # counting rows, as pale sold-out ones can go unread
             last_page = page
+            page_number += 1
             self.doing("scrolling the store list")
             self.controls.wheel(*self.screen.to_screen((lx0 + lx1) / 2, (ly0 + ly1) / 2))
             self.park_mouse()
             self.controls.wait(0.2)
+
+    def log_page(self, channel, page, lines, singles, done, row_key):
+        """logs/store_reads_<date>.txt: what was read on each page of each store, and what it made of
+        each listing, to look into a deal that was missed."""
+        rows = []
+        for h in singles:
+            verdict = ("done with" if row_key(h) in done else "custom buy" if self.custom_buy(h) else "NPC deal" if self.worth_buying(h)
+                       else "market deal" if self.market_deal(h) else "no")
+            rows.append(f"{h.name} at {h.asking:,}: {verdict}")
+        text = " | ".join(l.text for l in lines)
+        with open(LOG_DIR / f"store_reads_{datetime.now():%Y-%m-%d}.txt", "a", encoding="utf-8") as f:
+            f.write(f"{datetime.now():%H:%M:%S} {channel} page {page}: {'; '.join(rows) or 'nothing it could buy'}\n    read: {text}\n")
 
     def mark_listings(self, lines, singles):
         """Grey box on every OCR line; yellow on recognised single items, light green on ones it
@@ -784,6 +956,11 @@ class Crawler:
             color = DEAL if buy else watched or LISTED
             if watched:
                 parts.append(self.watch.label(h))
+            if self.custom_buy(h):
+                entries = self.custom_entries(h)
+                parts.append("CUSTOM: " + ("ASKS YOU" if self.confirm_all or any(i["confirm"] for i in entries) else "AUTO-BUY"))
+            elif self.watch.kind(h) == "custom" and self.custom_left(h) == 0:
+                parts.append("CUSTOM: limit reached")
             m = self.market.lowest(h.names)
             if m and m.get("median_24h"):
                 below = 100 * (h.asking - m["median_24h"]) / m["median_24h"]
@@ -933,16 +1110,25 @@ class Crawler:
                                        "second read agrees" if agrees else "second read DISAGREES", below=True)])
         return agrees
 
-    def buy(self, deal, frame, channel, market=False, ask_you=False):
+    def buy(self, deal, frame, channel, market=False, ask_you=False, custom=False):
         """True if it bought (some of) the listing. market: a market deal rather than an NPC
-        one; ask_you: leave its final OK to you (market deals not on the auto_buy list)."""
+        one; ask_you: leave its final OK to you (market deals not on the auto_buy list);
+        custom: from the custom search list, where the price is all that matters, and if it's
+        left to you it waits for your answer however long it takes."""
         try:
-            return self._buy(deal, frame, channel, market, ask_you)
+            return self._buy(deal, frame, channel, market, ask_you, custom)
         finally:
             self.marks.clear("quantity", "single", "total", "total_read", "stock", "recheck", "refused")
             self.update_info()
 
-    def _buy(self, deal, frame, channel, market=False, ask_you=False):
+    def buy_quantity(self, deal, stock, remaining, custom):
+        """How many of a listing to go for: its stock, what the budget allows, and a custom list
+        item's limit."""
+        quantity = min(stock, remaining // deal.asking)
+        wanted = self.custom_left(deal) if custom else None
+        return quantity if wanted is None else min(quantity, wanted)
+
+    def _buy(self, deal, frame, channel, market=False, ask_you=False, custom=False):
         remaining = self.budget - self.spent
         self.doing(f"{'market deal' if market else 'deal'} on {deal.name}: reading the stock")
         # None when unreadable, which is normal for equipment (its icon shows no number). Which buy
@@ -950,12 +1136,12 @@ class Crawler:
         # whose size isn't known, and that gets cancelled rather than guessed at.
         stock_read = self.read_stock(frame, deal)
         stock = stock_read or 1
-        quantity = min(stock, remaining // deal.asking)
+        quantity = self.buy_quantity(deal, stock, remaining, custom)
         if market:
-            median = self.market.lowest(deal.names)["median_24h"]
-            print(f"  MARKET DEAL {deal.name}: asking {deal.asking:,}, 24h median {median:,} "
-                  f"({100 * (deal.asking - median) / median:+.0f}%), stock {stock_read or 'not shown'}"
-                  f"{'; asks you' if ask_you else '; auto-buy'}")
+            median = (self.market.lowest(deal.names) or {}).get("median_24h")  # a fixed price needs none
+            against = f"24h median {median:,} ({100 * (deal.asking - median) / median:+.0f}%)" if median else "no market price"
+            print(f"  {'CUSTOM SEARCH' if custom else 'MARKET DEAL'} {deal.name}: asking {deal.asking:,}, {against}, "
+                  f"stock {stock_read or 'not shown'}{'; asks you' if ask_you else '; auto-buy'}")
         else:
             print(f"  DEAL {deal.name}: asking {deal.asking:,}, {deal.npc_label}{deal.could_be} "
                   f"(+{deal.profit:,} each), stock {stock_read or 'not shown'}")
@@ -974,11 +1160,19 @@ class Crawler:
             print(f"    not enough mesos ({before:,}); skipped")
             self.log(channel, deal, 0, "not enough mesos")
             return
-        total = quantity * self.profit_each(deal, market)
-        if total < self.min_total_profit:
-            print(f"    {quantity} x {self.profit_each(deal, market):+,} = {total:+,} profit, under the "
-                  f"{self.min_total_profit:,} minimum per purchase; skipped")
-            self.log(channel, deal, 0, f"total profit {total} < {self.min_total_profit}")
+        if not custom:  # a custom list item is wanted, not flipped
+            total = quantity * self.profit_each(deal, market)
+            if total < self.min_total_profit:
+                print(f"    {quantity} x {self.profit_each(deal, market):+,} = {total:+,} profit, under the "
+                      f"{self.min_total_profit:,} minimum per purchase; skipped")
+                self.log(channel, deal, 0, f"total profit {total} < {self.min_total_profit}")
+                return
+        if not market and self.too_thin_for_budget(deal, quantity):
+            cost = quantity * deal.asking
+            flip = 100 * deal.profit / deal.asking
+            print(f"    {cost:,} is {100 * cost / self.budget:.0f}% of the budget for a {flip:.1f}% flip "
+                  f"(over {self.big_buy_percent:g}% needs at least {self.big_buy_flip:g}%); skipped")
+            self.log(channel, deal, 0, f"{flip:.1f}% flip too thin for {cost} of the budget")
             return
         self.doing("double-checking the listing")
         if not self.confirm_listing(frame, deal):
@@ -1027,7 +1221,7 @@ class Crawler:
             quantity = 1
             expected = deal.asking
             if ask_you:
-                if not self.wait_for_you(self.find_single_dialog, market, f"1 x {deal.name} for {expected:,}"):
+                if not self.wait_for_you(self.find_single_dialog, market, f"1 x {deal.name} for {expected:,}", custom):
                     self.log(channel, deal, 0, "no answer from you, cancelled")
                     return
                 closed = True
@@ -1085,7 +1279,7 @@ class Crawler:
                 return
             if ask_you:
                 if not self.wait_for_you(self.find_total_dialog, market,
-                                         f"{quantity} x {deal.name} for {expected:,}"):
+                                         f"{quantity} x {deal.name} for {expected:,}", custom):
                     self.log(channel, deal, 0, "no answer from you, cancelled")
                     return
                 closed = True
@@ -1117,6 +1311,11 @@ class Crawler:
         if paid == expected or (paid is None and sold[0]):
             how = "" if paid is not None else " (your mesos couldn't be read; the store shows it sold)"
             self.spent += expected
+            if custom:
+                self.book.record(deal.name, quantity)
+                self.log_custom_buy(channel, deal, quantity, expected, "you confirmed" if ask_you else "auto-bought")
+                wanted = self.custom_left(deal)
+                print(f"    custom list: {'no limit' if wanted is None else f'{wanted} more to buy'} of {deal.name}")
             if market:
                 value = quantity * (self.market.lowest(deal.names) or {}).get("median_24h", 0)
                 self.bought.append((deal.name, quantity, expected, value, "market"))
@@ -1149,34 +1348,70 @@ class Crawler:
             raise Stop("the purchase didn't show up in your mesos or the store (inventory full? store "
                        "changed?); screenshot: debug\\purchase_unconfirmed.png")
         self.spent += max(paid, 0)
+        if custom and paid > 0:  # whatever happened, what was paid for counts towards the limit
+            self.book.record(deal.name, max(1, paid // deal.asking))
+            self.log_custom_buy(channel, deal, max(1, paid // deal.asking), paid, f"{expected:,} was expected")
         raise Stop(f"mesos went down by {paid:,} but {expected:,} was expected; stopping to be safe")
+
+    def start_custom_log(self):
+        """A new logs/custom_buys_<date>_<time>.txt for this run of the full sell loop."""
+        self.custom_started = datetime.now()
+        self.custom_bought = []
+        self.custom_log = LOG_DIR / f"custom_buys_{self.custom_started:%Y-%m-%d_%H%M%S}.txt"
+        self.write_custom_log()
+
+    def log_custom_buy(self, channel, deal, quantity, paid, how):
+        self.custom_bought.append((datetime.now(), deal.name, quantity, paid, channel, how))
+        self.write_custom_log()
+
+    def write_custom_log(self, ended=None):
+        """Written again after every purchase, so it's there even if the run is killed. ended: how
+        long the run took, once it's over."""
+        if not self.custom_log:
+            return
+        total = sum(b[3] for b in self.custom_bought)
+        over = f"ended {datetime.now():%H:%M}, took {ended}" if ended else "no end recorded: still running, or it was killed"
+        text = [f"Full sell loop started {self.custom_started:%Y-%m-%d %H:%M}, {over}",
+                f"Custom items bought: {sum(b[2] for b in self.custom_bought):,}, for {total:,} mesos", ""]
+        items = {}
+        for _, name, quantity, paid, _, _ in self.custom_bought:
+            count, spent = items.get(name, (0, 0))
+            items[name] = count + quantity, spent + paid
+        text += [f"{name}: {count:,} for {spent:,} (average {spent / count:,.1f} each)" for name, (count, spent) in items.items()]
+        if items:
+            text.append("")
+        text += [f"{when:%H:%M:%S}  {quantity:,} x {name} at {paid / quantity:,.0f} each = {paid:,} ({where}, {how})"
+                 for when, name, quantity, paid, where, how in self.custom_bought]
+        self.custom_log.write_text("\n".join(text) + "\n", "utf-8")
 
     def log_market_buy(self, channel, deal, quantity, how):
         """logs/market_buys.txt: one line per market deal bought (auto-bought, or confirmed by
         you), with the price to sell it back at without losing money (shops take SHOP_FEE of
         every sale from the seller)."""
-        m = self.market.lowest(deal.names)
+        m = self.market.lowest(deal.names) or {}
+        today = f"low {m['low_24h']:,}, median {m['median_24h']:,}" if m.get("median_24h") else "no market price"
         break_even = math.ceil(deal.asking / (1 - SHOP_FEE))
         line = (f"{datetime.now():%Y-%m-%d %H:%M}  bought {quantity} x {deal.name} at {deal.asking:,} each "
                 f"({quantity * deal.asking:,} total, channel {channel}, {how}) - sell for at least {break_even:,} each "
-                f"to break even after the {SHOP_FEE:.0%} shop fee (today's market: low {m['low_24h']:,}, "
-                f"median {m['median_24h']:,})\n")
+                f"to break even after the {SHOP_FEE:.0%} shop fee (today's market: {today})\n")
         with open(LOG_DIR / "market_buys.txt", "a", encoding="utf-8") as f:
             f.write(line)
         print(f"    break even: sell for at least {break_even:,} each (logs\\market_buys.txt)")
 
-    def wait_for_you(self, find_dialog, market, what):
+    def wait_for_you(self, find_dialog, market, what, custom=False):
         """For market deals (and every deal in confirm mode) it leaves the purchase window open
         for you to press OK (buy) or Cancel, and waits until the window has been gone for a
         moment (a single frame without it may just be your cursor covering it). False if nobody
-        answered within MARKET_CONFIRM_WAIT; the purchase is then cancelled."""
-        self.doing(f"{'MARKET DEAL' if market else 'DEAL'} {what}: press OK to buy or Cancel (waiting for you)")
-        print(f"    waiting for you: press OK to buy, or Cancel (up to {MARKET_CONFIRM_WAIT:.0f}s), "
-              f"then let go of the mouse")
+        answered within MARKET_CONFIRM_WAIT; the purchase is then cancelled. A custom search item
+        has no time limit (holding ESC still stops the crawler)."""
+        title = "CUSTOM SEARCH" if custom else "MARKET DEAL" if market else "DEAL"
+        self.doing(f"{title} {what}: press OK to buy or Cancel (waiting for you)")
+        limit = "no time limit" if custom else f"up to {MARKET_CONFIRM_WAIT:.0f}s"
+        print(f"    waiting for you: press OK to buy, or Cancel ({limit}), then let go of the mouse")
         for _ in range(3):
             winsound.MessageBeep(winsound.MB_ICONEXCLAMATION)
             self.controls.wait(0.3)
-        end, gone_since = time.monotonic() + MARKET_CONFIRM_WAIT, None
+        end, gone_since = float("inf") if custom else time.monotonic() + MARKET_CONFIRM_WAIT, None
         while time.monotonic() < end:
             if find_dialog(self.screen.grab()):
                 gone_since = None
@@ -1252,6 +1487,7 @@ class Crawler:
 
     def change_channel(self, target):
         print(f"changing to channel {target}")
+        self.channel_refused = False
         self.marks.clear("shops", "target")
         self.doing(f"channel {target}: opening the game menu")
         self.controls.key("esc")      # game menu
@@ -1286,9 +1522,12 @@ class Crawler:
             diff = target - current
             self.doing(f"channel {target}: moving the selection (now on {current})")
             self.controls.key("down" if diff >= 8 else "up" if diff <= -8 else "right" if diff > 0 else "left")
-            self.controls.wait(0.25)
-            frame = self.screen.grab()
-            now = self.highlighted_channel(frame, window)
+            for _ in range(8):  # the game or the capture can lag: give it 2 seconds, without pressing again
+                self.controls.wait(0.25)
+                frame = self.screen.grab()
+                now = self.highlighted_channel(frame, window)
+                if now not in (None, current):
+                    break
             print(f"    {current} -> {now}")
             if now is None or now == current:
                 return self.give_up_channel(frame, f"the arrow key didn't move the selection from {current}")
@@ -1301,7 +1540,14 @@ class Crawler:
         self.doing(f"channel {target}: waiting for the room to unload")
         _, left = self.wait_for(lambda f: f.mean() < 40 or not self.find_shops(f), 10.0, 0.3)
         if not left:
-            return self.give_up_channel(self.screen.grab(), "pressed Enter but the channel didn't change")
+            # a fast change can be over between two looks: the channel window says where we are
+            now = self.channel_now()
+            if now is None:
+                return self.give_up_channel(self.screen.grab(), "pressed Enter but the channel didn't change")
+            if now != target:
+                print(f"  still on channel {now}: the game didn't change to {target}; moving on")
+                self.channel_refused = True
+                return None
         self.doing(f"channel {target}: waiting for the room to load")
         _, back = self.wait_for(lambda f: f.mean() >= 40, 25.0, 0.5)
         if not back:
@@ -1313,6 +1559,36 @@ class Crawler:
             return None
         self.controls.wait(1.5)  # let other players' stores finish appearing
         return True
+
+    def start_channel(self, channels):
+        """Whether to crawl the channel we're on, and the channels to go to after that. Only those
+        asked for are crawled, so this one only if it's among them; with no channels asked for, we
+        stay here. If it can't tell, it doesn't crawl: changing channel settles where we are."""
+        if not channels:
+            return True, []
+        now = self.channel_now()
+        if now in channels:
+            return True, [c for c in channels if c != now]
+        print(f"  on channel {now if now is not None else 'unknown'}, which isn't on the list: not crawling it")
+        return False, list(channels)
+
+    def channel_now(self):
+        """The channel we're on, read from the channel window (opened and closed again), or None."""
+        self.doing("checking which channel we're on")
+        self.controls.key("esc")
+        self.controls.wait(0.4)
+        self.controls.key("enter")
+        _, window = self.wait_for(self.find_channel_window, 2.5)
+        if not window:
+            self.controls.key("esc")
+            return None
+        self.park_mouse()
+        self.controls.wait(0.15)
+        now = self.highlighted_channel(self.screen.grab(), window)
+        self.controls.key("esc")
+        self.wait_for(lambda f: not self.find_channel_window(f), 2.0)
+        self.marks.clear("channel", "channel_cell")
+        return now
 
     def give_up_channel(self, frame, why):
         pc.DEBUG_DIR.mkdir(exist_ok=True)
@@ -1356,6 +1632,8 @@ class Crawler:
                     how = "would buy it" if d.name in self.market_auto else "would ask you"
                     print(f"  market deal ({how}): {d.name} asking {d.asking:,}, "
                           f"24h median {self.market.lowest(d.names)['median_24h']:,}")
+                if self.custom_buy(d):
+                    print(f"  custom search: would buy {d.name}, asking {d.asking:,}")
         print(f"marked screenshot: {pc.DEBUG_DIR / 'crawler_dry_run.png'}")
         self.doing(f"dry run done: {len(shops)} shops, {len(deals)} deals in the open store (nothing clicked)")
 
@@ -1384,9 +1662,11 @@ class Crawler:
 
         try:
             t = time.monotonic()
-            self.crawl_room("start")
-            visited += 1
-            channel_done("start", t)
+            crawl_here, channels = self.start_channel(channels)
+            if crawl_here:
+                self.crawl_room("start")
+                visited += 1
+                channel_done("start", t)
             for ch in channels:
                 t = time.monotonic()
                 changed = self.change_channel(ch)
@@ -1424,18 +1704,20 @@ def duration(seconds):
 
 
 def parse_channels(spec):
-    a, _, b = spec.partition("-")
-    a, b = int(a), int(b or a)
-    return list(range(a, b - 1, -1)) if a >= b else list(range(a, b + 1))
+    return market.parse_numbers(spec, 1, 40)
 
 
-def parse_mesos(text):
-    """'250000', '250,000', '250k', '1.5m' -> int."""
-    m = re.fullmatch(r"\s*([\d.,]+)\s*([km]?)\s*", text.lower())
-    if not m:
-        raise ValueError(text)
-    number = float(m.group(1).replace(",", ""))
-    return int(number * {"": 1, "k": 1_000, "m": 1_000_000}[m.group(2)])
+def parse_rooms(spec):
+    return market.parse_numbers(spec, 1, 20)
+
+
+parse_mesos = market.parse_mesos
+
+
+def stop_requested():
+    """Whether the launcher's Stop button was pressed: it creates this file."""
+    path = os.environ.get("MAPLE_STOP_FILE")
+    return bool(path) and os.path.exists(path)
 
 
 def ask_budget():
@@ -1462,7 +1744,23 @@ def ask_confirm_mode():
         print("  please type A or C")
 
 
-def main():
+def ask_npc_only():
+    """True: only NPC deals are bought, and market prices aren't looked at."""
+    while True:
+        text = input("Buy only NPC deals, or Free Market deals too? [N]PC only / [M]arket too: ").strip().lower()
+        if text in ("n", "npc"):
+            return True
+        if text in ("m", "market"):
+            return False
+        print("  please type N or M")
+
+
+def ask_buy_custom():
+    return input("Custom list: buy its items, each by the rules set for it in the launcher? [y/N] ").strip().lower() in ("y", "yes")
+
+
+def main(sell_loop=None):
+    """sell_loop: walker.run_full, for the version that also walks to an NPC and sells."""
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--dry-run", action="store_true", help="only look: mark the shops it would open")
     ap.add_argument("--budget", type=parse_mesos, help="most it may spend this session (asked if not given)")
@@ -1471,7 +1769,13 @@ def main():
                       help="buy deals without asking (asked if neither --auto nor --confirm is given)")
     mode.add_argument("--confirm", dest="confirm", action="store_true",
                       help="stop on every purchase window for you to press OK or Cancel")
-    ap.add_argument("--channels", default="40-1", help="channels to visit after this room, in order (e.g. 40-1)")
+    deals = ap.add_mutually_exclusive_group()
+    deals.add_argument("--npc-only", dest="npc_only", action="store_true", default=None,
+                       help="only buy NPC deals (asked if neither --npc-only nor --market-deals is given)")
+    deals.add_argument("--market-deals", dest="npc_only", action="store_false",
+                       help="buy Free Market deals as well as NPC deals")
+    ap.add_argument("--channels", type=parse_channels, default="40-1",
+                    help="the only channels to visit, in order: 40-1, or 1,3,20,39, or a mix like 1-5,20")
     ap.add_argument("--no-channel-change", action="store_true", help="only crawl the current room")
     ap.add_argument("--minutes", type=float, default=0,
                     help="stop after this long (default: no limit, it stops after the last channel)")
@@ -1479,20 +1783,50 @@ def main():
     ap.add_argument("--window", default="maplestory.exe")
     ap.add_argument("--market-percent", type=market.parse_percent,
                     help="a market deal is this many %% under the 24h median (asked if not given)")
+    custom = ap.add_mutually_exclusive_group()
+    custom.add_argument("--buy-custom", dest="buy_custom", action="store_true", default=None,
+                        help="buy custom list items, each by its own rules (asked if neither is given)")
+    custom.add_argument("--no-custom-buy", dest="buy_custom", action="store_false", help="only point them out")
+    if sell_loop:
+        ap.add_argument("--rounds", type=int, default=0, help="stop after this many rooms (default: until you stop it)")
+        ap.add_argument("--rooms", type=parse_rooms,
+                        help="the only rooms to go through, in order: 6-1, or 3,10,15, or a mix like 6-1,16-13 (default: all of them)")
+        ap.add_argument("--sell-below", type=float,
+                        help="go and sell early under this percent of the budget (default: from the settings)")
+    market.add_update_flag(ap)
     ap.add_argument("--no-overlay", action="store_true",
                     help="don't draw what the crawler sees and does over the game")
     ap.add_argument("--debug", action="store_true",
                     help="save a screenshot of every click to debug/clicks (aimed vs actual cursor)")
     args = ap.parse_args()
     sys.stdout.reconfigure(line_buffering=True, errors="replace")  # OCR text can hold characters the console can't show
+    market.update_saved = args.market_update
+    if sell_loop:  # only what an NPC pays well for is worth buying to sell there, without asking. Custom
+        # list items are bought too if you say so, by their own rules, and are never sold (walker.keep_reason).
+        args.confirm, args.npc_only = False, True
 
     crawler = Crawler(args)
     if not args.dry_run:
         crawler.confirm_all = ask_confirm_mode() if args.confirm is None else args.confirm
         print("  every purchase waits for you to press OK or Cancel" if crawler.confirm_all
-              else "  deals are bought automatically (market deals off the auto_buy list still ask you)")
-    crawler.load_market()
-    if crawler.market:
+              else "  deals are bought automatically")
+    crawler.market_deals = not (ask_npc_only() if args.npc_only is None else args.npc_only)
+    if crawler.watch.custom:
+        crawler.buy_custom = ask_buy_custom() if args.buy_custom is None else args.buy_custom
+    needs_prices = crawler.buy_custom and crawler.book.needs_market()
+    if crawler.market_deals or needs_prices:
+        crawler.load_market()
+    if not crawler.market_deals:
+        print("  only NPC deals" + ("" if needs_prices else ": Free Market prices aren't looked up"))
+    if crawler.buy_custom:
+        crawler.update_custom_prices()
+        print("  custom list: buying by each item's own rules")
+        for item in crawler.book.items.values():
+            wanted = custom_items.left(item)
+            print(f"    {item['name']}: {custom_items.describe(item)}, "
+                  f"{'no limit' if wanted is None else str(wanted) + ' more of ' + str(item['limit'])}, "
+                  f"{'asks you' if item['confirm'] else 'auto-buy'}")
+    if crawler.market and crawler.market_deals:
         crawler.market_below = args.market_percent or market.ask_percent(crawler.market_below)
         print(f"  market deals: {crawler.market_below:g}% or more under the 24h median; "
               + ("you confirm each one" if crawler.confirm_all
@@ -1503,8 +1837,16 @@ def main():
     else:
         crawler.check_rights()
         budget = args.budget or ask_budget()
-        channels = [] if args.no_channel_change else parse_channels(args.channels)
-        job, linger = (lambda: crawler.run(channels, budget)), 5.0
+        channels = [] if args.no_channel_change else args.channels
+        if sell_loop:
+            sell_below = args.sell_below if args.sell_below is not None else \
+                json.loads(SETTINGS_FILE.read_text("utf-8")).get("sell_below_budget_percent", 10)
+
+            def job():
+                print(sell_loop(crawler, channels, budget, args.rounds, sell_below))
+        else:
+            job = lambda: crawler.run(channels, budget)
+        linger = 5.0
     if args.no_overlay:
         job()
         return
@@ -1525,7 +1867,7 @@ def main():
 
     def stop(*_):
         if crawler.controls:
-            crawler.controls.stop_reason = "Ctrl+C"
+            crawler.controls.stop_reason = crawler.controls.stop_reason or "Ctrl+C"
             crawler.controls.stop.set()
         else:
             overlay.root.after(0, overlay.root.destroy)
@@ -1533,6 +1875,10 @@ def main():
     signal.signal(signal.SIGINT, stop)
 
     def tick():
+        if stop_requested():
+            if crawler.controls:
+                crawler.controls.stop_reason = crawler.controls.stop_reason or "Stop button"
+            stop()
         region = crawler.screen.region if user32.IsWindow(crawler.hwnd) else None  # marks are in picture pixels
         overlay.draw_marks(region, crawler.marks)
         if finished and time.monotonic() - finished[0] > linger:  # leave the last state up a moment

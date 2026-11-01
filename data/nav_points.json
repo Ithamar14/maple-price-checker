@@ -1,0 +1,243 @@
+{
+ "entry_room_6": {
+  "x": 87.5,
+  "down": 0.739,
+  "room": null,
+  "picture": [
+   238,
+   115
+  ],
+  "saved": "2026-11-01T10:58:47"
+ },
+ "entry_room_5": {
+  "x": 70.0,
+  "down": 0.739,
+  "room": null,
+  "picture": [
+   238,
+   115
+  ],
+  "saved": "2026-11-01T10:58:58"
+ },
+ "entry_room_4": {
+  "x": 51.2,
+  "down": 0.739,
+  "room": null,
+  "picture": [
+   238,
+   115
+  ],
+  "saved": "2026-11-01T10:59:10"
+ },
+ "entry_room_3": {
+  "x": 26.9,
+  "down": 0.739,
+  "room": null,
+  "picture": [
+   238,
+   115
+  ],
+  "saved": "2026-11-01T10:59:22"
+ },
+ "entry_room_2": {
+  "x": 9.4,
+  "down": 0.739,
+  "room": null,
+  "picture": [
+   238,
+   115
+  ],
+  "saved": "2026-11-01T10:59:36"
+ },
+ "entry_room_1": {
+  "x": -9.4,
+  "down": 0.739,
+  "room": null,
+  "picture": [
+   238,
+   115
+  ],
+  "saved": "2026-11-01T10:59:46"
+ },
+ "room_exit": {
+  "x": 59.5,
+  "down": 0.703,
+  "room": 1,
+  "picture": [
+   195,
+   91
+  ],
+  "saved": "2026-11-01T11:00:01",
+  "x_as_saved": 101.7
+ },
+ "entry_room_16": {
+  "x": 68.7,
+  "down": 0.374,
+  "room": null,
+  "picture": [
+   238,
+   115
+  ],
+  "saved": "2026-11-01T11:25:39"
+ },
+ "entry_room_15": {
+  "x": 48.5,
+  "down": 0.374,
+  "room": null,
+  "picture": [
+   238,
+   115
+  ],
+  "saved": "2026-11-01T11:25:49"
+ },
+ "entry_room_14": {
+  "x": 29.6,
+  "down": 0.374,
+  "room": null,
+  "picture": [
+   238,
+   115
+  ],
+  "saved": "2026-11-01T11:25:56"
+ },
+ "entry_room_13": {
+  "x": 13.5,
+  "down": 0.374,
+  "room": null,
+  "picture": [
+   238,
+   115
+  ],
+  "saved": "2026-11-01T11:26:16"
+ },
+ "teleporter": {
+  "x": -21.5,
+  "down": 0.739,
+  "room": null,
+  "picture": [
+   238,
+   115
+  ],
+  "saved": "2026-11-01T11:26:34"
+ },
+ "entry_room_7": {
+  "x": -9.4,
+  "down": 0.556,
+  "room": null,
+  "picture": [
+   238,
+   115
+  ],
+  "worked_out_from": "entry_room_1"
+ },
+ "entry_room_8": {
+  "x": 9.4,
+  "down": 0.556,
+  "room": null,
+  "picture": [
+   238,
+   115
+  ],
+  "worked_out_from": "entry_room_2"
+ },
+ "entry_room_9": {
+  "x": 26.9,
+  "down": 0.556,
+  "room": null,
+  "picture": [
+   238,
+   115
+  ],
+  "worked_out_from": "entry_room_3"
+ },
+ "entry_room_10": {
+  "x": 51.2,
+  "down": 0.556,
+  "room": null,
+  "picture": [
+   238,
+   115
+  ],
+  "worked_out_from": "entry_room_4"
+ },
+ "entry_room_11": {
+  "x": 70.0,
+  "down": 0.556,
+  "room": null,
+  "picture": [
+   238,
+   115
+  ],
+  "worked_out_from": "entry_room_5"
+ },
+ "entry_room_12": {
+  "x": 87.5,
+  "down": 0.556,
+  "room": null,
+  "picture": [
+   238,
+   115
+  ],
+  "worked_out_from": "entry_room_6"
+ },
+ "entry_room_17": {
+  "x": 13.5,
+  "down": 0.19,
+  "room": null,
+  "picture": [
+   238,
+   115
+  ],
+  "worked_out_from": "entry_room_13"
+ },
+ "entry_room_18": {
+  "x": 29.6,
+  "down": 0.19,
+  "room": null,
+  "picture": [
+   238,
+   115
+  ],
+  "worked_out_from": "entry_room_14"
+ },
+ "entry_room_19": {
+  "x": 48.5,
+  "down": 0.19,
+  "room": null,
+  "picture": [
+   238,
+   115
+  ],
+  "worked_out_from": "entry_room_15"
+ },
+ "entry_room_20": {
+  "x": 68.7,
+  "down": 0.19,
+  "room": null,
+  "picture": [
+   238,
+   115
+  ],
+  "worked_out_from": "entry_room_16"
+ },
+ "room_exit_type2": {
+  "x": -1.2,
+  "down": 0.632,
+  "room": 10,
+  "picture": [
+   129,
+   96
+  ],
+  "worked_out_from": "printscreens/roomtype2.png and the bot's screenshots standing on those doors"
+ },
+ "room_ladder_type2": {
+  "x": -12.0,
+  "down": 0.722,
+  "room": 10,
+  "picture": [
+   129,
+   96
+  ],
+  "worked_out_from": "printscreens/roomtype2.png: 133 screen pixels left of the door"
+ }
+}
