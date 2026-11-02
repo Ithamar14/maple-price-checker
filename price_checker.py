@@ -172,6 +172,7 @@ class PriceDB:
 
 # ---------------------------------------------------------------- OCR text handling
 
+
 @dataclass
 class Line:
     text: str
@@ -218,6 +219,18 @@ def is_faded(bgr, line):
     return np.percentile(cv2.cvtColor(crop, cv2.COLOR_BGR2GRAY), 3) > 120
 
 
+# Throwing stars are sold as one item whatever number their listing shows, as they get recharged:
+# "1 for 500,000 mesos" and "800 for 500,000 mesos" are the same thing, one item for 500,000.
+THROWING_STARS = ("Subi Throwing Stars", "Wolbi Throwing Stars", "Mokbi Throwing Stars", "Kumbi Throwing Stars",
+                  "Tobi Throwing Stars", "Steely Throwing Knives", "Ilbi Throwing Stars", "Hwabi Throwing Stars",
+                  "Snowball", "Wooden Top", "Icicle")
+STAR_KEYS = frozenset(norm(n) for n in THROWING_STARS)
+
+
+def is_star(name):
+    return norm(name) in STAR_KEYS
+
+
 @dataclass
 class Hit:
     name: str
@@ -226,6 +239,10 @@ class Hit:
     npc_pays: int  # 0: no NPC buys it (or, for a cut-off name, not every item it can be)
     box: tuple
     options: tuple = ()  # for a cut-off name that fits several items: all of them
+
+    @property
+    def stars(self):
+        return any(is_star(n) for n in self.names)
 
     @property
     def profit(self):
@@ -341,9 +358,14 @@ def analyze(lines, bgr, db, min_profit, scale=None):
         if name is None or is_faded(bgr, name):
             continue
         qty, asking = to_int(m.group(1)), to_int(m.group(2))
-        found = db.candidates(name.text) if qty == 1 else []
+        # "throw" for a name the game cut off: looking up every other stack would take time
+        found = db.candidates(name.text) if qty == 1 or is_star(name.text) or "throw" in name.text.lower() else []
+        if qty != 1:
+            found = [f for f in found if is_star(f[0])]
         if not found:
             continue
+        # what an NPC pays for stars depends on how many there are, which is no use here: never an NPC deal
+        found = [(n, 0 if is_star(n) else pays) for n, pays in found]
         found = resolve(found, bgr, name, l, s)
         if len(found) > MAX_OPTIONS:
             continue  # too little of the name to go on

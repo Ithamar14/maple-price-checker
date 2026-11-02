@@ -24,6 +24,7 @@ The full loop (full_sell_loop.bat) is run_full below: every channel in a room, s
 """
 import argparse
 import re
+import shutil
 import signal
 import sys
 import threading
@@ -141,6 +142,8 @@ LOG_DIR = Path(__file__).parent / "logs"
 STEPS_DIR = pc.DEBUG_DIR / "nav_steps"
 STEP_EVERY = 1.0       # seconds between marked screenshots while walking
 MAX_STEPS = 150        # per run; at about 450 KB each
+STEPS_LIMIT_MB = 300   # older runs' screenshots go once they add up to more than this
+STEPS_RUN_RE = re.compile(r"\d{4}-\d{2}-\d{2}_\d{6}")
 MINIMAP_ZOOM = 3
 
 MAP_COLOR = crawler.FOUND
@@ -272,6 +275,8 @@ class Walker:
         """A marked screenshot along the way, named after what it was doing."""
         if self.steps >= MAX_STEPS or getattr(self.screen, "frame", None) is None:
             return
+        if self.steps == 0:
+            prune_steps()
         self.steps += 1
         self.step_due = time.monotonic() + STEP_EVERY
         self.steps_dir.mkdir(parents=True, exist_ok=True)
@@ -1457,13 +1462,33 @@ def next_room(room, rooms=FULL_ROOMS):
     return rooms[(rooms.index(room) + 1) % len(rooms)] if room in rooms else rooms[0]
 
 
+def prune_steps(folder=None, limit_mb=STEPS_LIMIT_MB):
+    """Deletes the oldest runs' folders of step screenshots until the rest fit in limit_mb, always
+    leaving the newest. Only folders named like a run's. One that can't be deleted now stays for next time."""
+    folder = Path(folder or STEPS_DIR)
+    if not folder.is_dir():
+        return
+    runs = sorted((d for d in folder.iterdir() if d.is_dir() and STEPS_RUN_RE.fullmatch(d.name)), key=lambda d: d.name, reverse=True)
+    total = 0
+    for i, run in enumerate(runs):
+        total += sum(f.stat().st_size for f in run.iterdir() if f.is_file())
+        if i and total > limit_mb * 1024 * 1024:
+            shutil.rmtree(run, ignore_errors=True)
+
+
 def run_full(shops, channels, budget, rounds=0, sell_below=10):
     """Every channel asked for in a room (skipping any it can't get into, as they may be full), then the
     same in the next room. When under sell_below percent of the budget is left, to the NPC to
     sell everything, and on to the next room with what the budget has become. Only NPC deals
     are bought. Goes on until you stop it (or for this many rounds). Anything going wrong falls
     back to closing what's open, working out where it is and carrying on from there."""
-    shops.budget = budget
+    # the overall budget, of which some can be set aside for custom deals from the start
+    start = (getattr(shops.args, "custom_start", 0) or 0) if getattr(shops, "custom_from_profits", False) else 0
+    if start >= budget:
+        return f"stopped: {start:,} for custom deals leaves nothing of the {budget:,} budget for NPC deals"
+    shops.npc_budget = budget
+    shops.budget = budget - start
+    shops.profit_pool = shops.custom_reserve = start
     shops.spent = 0
     shops.sell_below = sell_below
     shops.update_info()
@@ -1474,7 +1499,7 @@ def run_full(shops, channels, budget, rounds=0, sell_below=10):
     walker.marks = shops.marks
     walker.shops = shops
     walker.selling = True
-    walker.keep, walker.known = shops.watch.custom, shops.db.keys
+    walker.keep, walker.known = frozenset(shops.watch.custom) | pc.STAR_KEYS, shops.db.keys
     rooms = rooms_for(walker.points)
     asked = getattr(shops.args, "rooms", None)
     if asked:
@@ -1485,8 +1510,11 @@ def run_full(shops, channels, budget, rounds=0, sell_below=10):
         rooms = tuple(asked)
     print(f"Rooms, in order: {', '.join(map(str, rooms))}")
     print(f"Channels, in order: {', '.join(map(str, channels)) or 'only the one you are on'}")
+    if getattr(shops, "custom_from_profits", False):
+        print(f"{budget - start:,} of the budget is only for NPC deals. Custom list items are bought with no limit, from the "
+              f"{start:,} set aside, then only from profits once the money is past {budget:,}.")
     print(f"Budget {budget:,} mesos. At the NPC it SELLS EVERYTHING on the Equip, Use and Etc tabs, except "
-          f"the {len(walker.keep)} items on your custom list.")
+          f"the {len(shops.watch.custom)} items on your custom list and throwing stars.")
     print("Switch to MapleStory now. Starting in 3 seconds... (hold ESC for 1s to stop)")
     walker.doing("switch to MapleStory: starting in 3 seconds (hold ESC 1s to stop)")
     time.sleep(3)
@@ -1499,6 +1527,9 @@ def run_full(shops, channels, budget, rounds=0, sell_below=10):
 
     def duration():
         return crawler.duration(time.monotonic() - started)
+
+    def profits():
+        return f", for custom deals {shops.profit_pool:,}" if getattr(shops, "custom_from_profits", False) else ""
 
     try:
         while True:
@@ -1513,11 +1544,10 @@ def run_full(shops, channels, budget, rounds=0, sell_below=10):
                     walker.on_door = False
                     walker.mesos_from_sales = 0
                     walker.trip()
-                    left = shops.budget - shops.spent
                     earned += walker.mesos_from_sales
-                    shops.budget, shops.spent = left + walker.mesos_from_sales, 0
+                    shops.sold_for(walker.mesos_from_sales)
                     shops.update_info()
-                    walker.note(f"-- sold for {walker.mesos_from_sales:,}: budget is now {shops.budget:,} ({duration()} so far)")
+                    walker.note(f"-- sold for {walker.mesos_from_sales:,}: budget is now {shops.budget:,}{profits()} ({duration()} so far)")
                     sell_next = False
                     if rounds and finished_rounds >= rounds:
                         return f"{finished_rounds} rounds done"
@@ -1580,7 +1610,7 @@ def run_full(shops, channels, budget, rounds=0, sell_below=10):
     finally:
         controls.stop.set()
         walker.marks.clear("click", "target", "minimap", "npc")
-        walker.note(f"{finished_rounds} rounds in {duration()}; {earned:,} mesos from the NPC; budget left {shops.budget - shops.spent:,}")
+        walker.note(f"{finished_rounds} rounds in {duration()}; {earned:,} mesos from the NPC; budget left {shops.budget - shops.spent:,}{profits()}")
         shops.write_custom_log(duration())
 
 

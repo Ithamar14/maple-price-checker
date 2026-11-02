@@ -6,6 +6,9 @@
              "price": at or below price, whatever the market says
     limit    how many to buy in all (None: no limit); bought counts them, across sessions
     confirm  True: wait for you to press OK; False: buy without asking
+    only_one True: buy 1 in all and never more, in every mode, like an upgrade to wear
+    finder   from the equipment finder: {"slots": at least this many scroll slots left or None,
+             "stats": {stat: at least this}}, checked on its tooltip in the store. Always only 1
 
 Whatever is on the list is never sold at the NPC. Edit it in the launcher's Custom list tab.
 A list from before this file (custom_search.txt) is read as a starting point, until the first save.
@@ -20,7 +23,12 @@ import market
 HERE = Path(__file__).parent
 FILE = HERE / "custom_items.json"
 OLD_FILE = HERE / "custom_search.txt"
+EQUIPMENT_FILE = HERE / "data" / "equipment_stats.json"
 SAVE_TRIES = 20
+# the stats the equipment finder can ask about, by MeowDB's name for them, as tooltips word them
+STAT_NAMES = {"wdef": "Weapon Def.", "mdef": "Magic Def.", "watk": "Weapon Attack", "matk": "Magic Attack", "str": "STR", "dex": "DEX", "int": "INT", "luk": "LUK",
+              "hp": "Max HP", "mp": "Max MP", "acc": "Accuracy", "avoid": "Evasion", "speed": "Speed", "jump": "Jump", "critRate": "Critical Rate", "critDamage": "Critical Damage"}
+MAX_SPREAD = 5  # the most a stat is taken to differ from the item's usual value
 MAX_OVER = 1000  # percent over the median that "over" can be set to
 
 
@@ -31,7 +39,7 @@ def key(name):
 
 def new_item(name):
     """What an item starts as: nothing is spent on it without asking, and only one."""
-    return {"name": name, "when": "under", "percent": 20.0, "price": 0, "limit": 1, "bought": 0, "confirm": True}
+    return {"name": name, "when": "under", "percent": 20.0, "price": 0, "limit": 1, "bought": 0, "confirm": True, "only_one": False, "finder": None}
 
 
 def load():
@@ -87,6 +95,95 @@ def update(name, **changes):
         save(items)
 
 
+def save_finder(name, finder, confirm, rules):
+    """An equipment finder item, always for 1. "added", "updated", or "taken" if the item is already on
+    the list as an ordinary item: there's only ever one of an item, and it's left as it was."""
+    items = load()
+    item = find(items, name)
+    if item and not item.get("finder"):
+        return "taken"
+    result = "updated" if item else "added"
+    if not item:
+        item = new_item(name)
+        items.append(item)
+    item.update(rules)
+    item.update(finder=finder, confirm=confirm, only_one=True, limit=1)
+    save(items)
+    return result
+
+
+def parse_finder(values, slots):
+    """What's typed in the equipment finder's boxes (stat: text) as an item's finder; ValueError says
+    what's wrong. Empty boxes aren't checked, but something has to be."""
+    stats = {}
+
+    def number(text, name):
+        try:
+            value = int(text)
+        except ValueError:
+            value = -1
+        if value < 0:
+            raise ValueError(f"{name}: type a whole number, or leave it empty to not check it.")
+        return value
+
+    for key, text in values.items():
+        if text.strip():
+            stats[key] = number(text.strip(), STAT_NAMES[key])
+    least = number(slots.strip(), "Scroll slots") if slots.strip() else None
+    if not stats and least is None:
+        raise ValueError("Fill in at least one stat or the scroll slots: without them use the Custom list tab.")
+    return {"slots": least, "stats": stats}
+
+
+def stat_range(usual):
+    """(lowest, highest) a stat should be found at when new: an estimate, as MeowDB only has the
+    usual value. About 10% either way, at least 1 and at most MAX_SPREAD."""
+    spread = max(1, min(MAX_SPREAD, (usual + 9) // 10))
+    return max(0, usual - spread), usual + spread
+
+
+def load_equipment():
+    """{name: {"subtype", "level", "job", "slots", "stats": {stat: usual value}}}, empty if not fetched yet."""
+    try:
+        return json.loads(EQUIPMENT_FILE.read_text("utf-8"))
+    except (OSError, ValueError):
+        return {}
+
+
+def equipment_entries(items):
+    """MeowDB's item list, as what load_equipment reads."""
+    found = {}
+    for item in items:
+        stats = item.get("stats")
+        if item.get("type") != "Equip" or not isinstance(stats, dict) or stats.get("untradeable"):
+            continue
+        found[item["name"]] = {"subtype": item.get("subtype"), "level": item.get("levelReq") or 0, "job": stats.get("reqJob"), "slots": stats.get("slots") or 0,
+                               "stats": {k: stats[k] for k in STAT_NAMES if stats.get(k)}}
+    return dict(sorted(found.items()))
+
+
+def fetch_equipment():
+    """From MeowDB, about 11 requests. Returns how many items."""
+    items, number = [], 1
+    while True:
+        page = market._get("items", limit=500, page=number)
+        time.sleep(market.REQUEST_GAP)
+        for item in page["items"]:
+            if isinstance(item.get("stats"), str):
+                try:
+                    item["stats"] = json.loads(item["stats"])
+                except ValueError:
+                    pass
+        items += page["items"]
+        if not page["items"] or not page.get("hasMore"):
+            break
+        number += 1
+    found = equipment_entries(items)
+    EQUIPMENT_FILE.parent.mkdir(exist_ok=True)
+    EQUIPMENT_FILE.write_text(json.dumps(found), "utf-8")
+    return len(found)
+
+
 def parse_rules(when, percent, price, limit):
     """What's typed in the launcher, as an item's fields; ValueError says what's wrong."""
     changes = {"when": when}
@@ -120,7 +217,14 @@ def parse_rules(when, percent, price, limit):
     return changes
 
 
-def describe(item):
+def describe_finder(finder):
+    parts = [f"{STAT_NAMES[k]} {v}+" for k, v in finder["stats"].items()]
+    if finder.get("slots") is not None:
+        parts.append(f"{finder['slots']}+ slots")
+    return ", ".join(parts)
+
+
+def describe_price(item):
     if item["when"] == "price":
         return f"at or under {item['price']:,}"
     if item["when"] == "over":
@@ -128,9 +232,16 @@ def describe(item):
     return f"{item['percent']:g}%+ under median"
 
 
-def left(item):
-    """How many more may be bought; None: no limit."""
-    return None if item["limit"] is None else max(0, item["limit"] - item["bought"])
+def describe(item):
+    text = describe_price(item)
+    return f"{text}; {describe_finder(item['finder'])}" if item.get("finder") else text
+
+
+def left(item, ignore_limits=False):
+    """How many more may be bought; None: no limit. ignore_limits doesn't get past only_one."""
+    if item["only_one"] or item.get("finder"):
+        return max(0, 1 - item["bought"])
+    return None if ignore_limits or item["limit"] is None else max(0, item["limit"] - item["bought"])
 
 
 class Book:
@@ -142,8 +253,8 @@ class Book:
     def get(self, name):
         return self.items.get(key(name))
 
-    def needs_market(self):
-        return any(i["when"] != "price" and left(i) != 0 for i in self.items.values())
+    def needs_market(self, ignore_limits=False):
+        return any(i["when"] != "price" and left(i, ignore_limits) != 0 for i in self.items.values())
 
     def record(self, name, quantity):
         """Count a purchase; what's read back from disk first keeps edits made in the launcher."""

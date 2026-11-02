@@ -30,6 +30,7 @@ SETTINGS_FILE = HERE / "launcher_settings.json"
 BOT_SETTINGS_FILE = HERE / "crawler_settings.json"
 PRICES_FILE = HERE / "data" / "prices.json"
 MANUAL_FILE = HERE / "data" / "manual_prices.json"
+EQUIP_ROWS = 5  # rows of stats the equipment finder has room for, in two columns
 RECIPES_FILE = HERE / "data" / "recipes.json"
 CRAFT_PAGE = HERE / "craft_calculator.html"
 ICON_FILE = HERE / "launcher.ico"
@@ -67,7 +68,7 @@ def defaults():
         "cr_dry": False, "cr_budget": "", "cr_mode": "auto", "cr_deals": "npc", "cr_percent": percent,
         "cr_custom_stop": False, "cr_channels": "40-1", "cr_single": False,
         "cr_minutes": "", "cr_debug": False,
-        "fl_budget": "", "fl_custom_stop": False, "fl_channels": "40-1", "fl_rooms": ALL_ROOMS,
+        "fl_budget": "", "fl_custom": "off", "fl_custom_start": "0", "fl_channels": "40-1", "fl_rooms": ALL_ROOMS,
         "fl_rounds": "", "fl_minutes": "", "fl_sell_below": str(cfg.get("sell_below_budget_percent", 10)),
         "cf_margin": str(craft.get("margin_percent", 10)), "cf_disciplines": craft.get("disciplines") or ["Arcforge"],
     }
@@ -79,6 +80,8 @@ def load_settings():
         saved = json.loads(SETTINGS_FILE.read_text("utf-8"))
     except (OSError, ValueError):
         return values
+    if saved.get("fl_custom_stop") is True and "fl_custom" not in saved:  # the tick box this used to be
+        saved["fl_custom"] = "limit"
     values.update({k: v for k, v in saved.items() if k in values and isinstance(v, type(values[k]))})
     return values
 
@@ -99,6 +102,16 @@ def budget_of(text):
     if budget <= 0:
         raise ValueError("Type a budget, like 50000, 250k or 1.5m.")
     return str(budget)
+
+
+def custom_start_of(text, budget):
+    try:
+        start = market.parse_mesos(text) if text.strip() else 0
+    except ValueError:
+        raise ValueError("Type the starting money for custom deals, like 0 or 10k.") from None
+    if start >= int(budget):
+        raise ValueError("The starting money for custom deals has to be less than the budget.")
+    return str(start)
 
 
 def percent_of(text, what):
@@ -171,7 +184,10 @@ def full_args(v):
     args = ["full_sell_loop.py", "--market-update", "no", "--budget", budget_of(v["fl_budget"]),
             "--channels", channels_of(v["fl_channels"]), "--rooms", rooms_of(v["fl_rooms"]),
             "--sell-below", percent_of(v["fl_sell_below"], "The sell-below %")]
-    args += custom_args(v["fl_custom_stop"])
+    if v["fl_custom"] == "profits":
+        args += ["--custom-from-profits", "--custom-start", custom_start_of(v["fl_custom_start"], budget_of(v["fl_budget"]))]
+    else:
+        args += custom_args(v["fl_custom"] == "limit")
     rounds = number_of(v["fl_rounds"], "Rounds", whole=True)
     minutes = number_of(v["fl_minutes"], "The time limit")
     return args + (["--rounds", rounds] if rounds else []) + (["--minutes", minutes] if minutes else [])
@@ -338,7 +354,7 @@ class App:
         panes.add(tabs, weight=3)
         for title, make in (("Overlay", self.build_overlay), ("Crawler", self.build_crawler),
                             ("Full sell loop", self.build_full), ("Crafting", self.build_craft),
-                            ("Custom list", self.build_custom)):
+                            ("Custom list", self.build_custom), ("Equipment finder", self.build_finder)):
             page = ttk.Frame(tabs, padding=12)
             page.columnconfigure(1, weight=1)
             tabs.add(page, text=title)
@@ -435,7 +451,9 @@ class App:
         self.entry(page, 3, "Channels", "fl_channels", "only these, in order: 40-1, or 1,3,20,39")
         self.entry(page, 4, "Sell when under", "fl_sell_below", "% of the budget left")
         self.entry(page, 10, "Rooms", "fl_rooms", "only these, in order: all are " + ALL_ROOMS + ", or 3,10,15")
-        self.check(page, 5, "Buy custom list items, by the rules on the Custom list tab (those set to wait for my OK wait until I answer)", "fl_custom_stop")
+        self.choice(page, 5, "Custom deals", "fl_custom", (("off", "Ignore them"), ("limit", "Buy up to each item's limit"),
+                                                           ("profits", "Split the budget, no limit")))
+        self.entry(page, 6, "Custom start", "fl_custom_start", "split only: how much of the budget custom deals start with (0: profits only)")
         self.entry(page, 7, "Rounds", "fl_rounds", "rooms (empty: until stopped)")
         self.entry(page, 8, "Time limit", "fl_minutes", "minutes (empty: none)")
         self.controls(page, 11, "full")
@@ -499,10 +517,14 @@ class App:
         ttk.Label(form, text="%").grid(row=1, column=2, rowspan=2, sticky="w")
         ttk.Entry(form, textvariable=self.item_price, width=10).grid(row=3, column=1, sticky="w", padx=4)
         ttk.Label(form, text="Buy limit").grid(row=4, column=0, sticky="w", pady=(4, 0))
-        ttk.Entry(form, textvariable=self.item_limit, width=8).grid(row=4, column=1, sticky="w", padx=4, pady=(4, 0))
+        self.limit_entry = ttk.Entry(form, textvariable=self.item_limit, width=8)
+        self.limit_entry.grid(row=4, column=1, sticky="w", padx=4, pady=(4, 0))
         ttk.Label(form, text="empty: no limit", foreground="#666").grid(row=4, column=2, columnspan=2, sticky="w", pady=(4, 0))
-        ttk.Radiobutton(form, text="Wait for my OK", value=True, variable=self.item_confirm).grid(row=5, column=0, sticky="w", pady=(4, 0))
-        ttk.Radiobutton(form, text="Buy without asking", value=False, variable=self.item_confirm).grid(row=5, column=1, columnspan=3, sticky="w", pady=(4, 0))
+        self.item_only_one = tk.BooleanVar(value=False)
+        ttk.Checkbutton(form, text="Only 1: never buy more than one, in any mode (an upgrade, not for merching)",
+                        variable=self.item_only_one, command=self.only_one_changed).grid(row=5, column=0, columnspan=4, sticky="w", pady=(4, 0))
+        ttk.Radiobutton(form, text="Wait for my OK", value=True, variable=self.item_confirm).grid(row=6, column=0, sticky="w", pady=(4, 0))
+        ttk.Radiobutton(form, text="Buy without asking", value=False, variable=self.item_confirm).grid(row=6, column=1, columnspan=3, sticky="w", pady=(4, 0))
         buttons = ttk.Frame(right)
         buttons.pack(fill="x", pady=(6, 0))
         ttk.Button(buttons, text="Save item", command=self.save_item).pack(side="left")
@@ -511,6 +533,202 @@ class App:
         self.list_time = None
         self.show_results()
         self.show_list()
+
+    # ---- the equipment finder
+
+    def build_finder(self, page):
+        page.columnconfigure(0, weight=1)
+        page.columnconfigure(1, weight=2)
+        page.rowconfigure(1, weight=1)
+        self.note(page, 0, "Finds one piece of equipment with the stats you want: it checks the tooltip before buying, and only buys when it's sure. "
+                           "Always 1 item, never sold at the NPC. Buys when Custom deals on the bot's tab allows it.")
+        left = ttk.Frame(page)
+        right = ttk.Frame(page)
+        left.grid(row=1, column=0, sticky="nsew", padx=(0, 8))
+        right.grid(row=1, column=1, sticky="nsew")
+        self.equipment = custom_items.load_equipment()
+        ttk.Label(left, text="Find equipment").pack(anchor="w")
+        self.equip_search = tk.StringVar()
+        self.equip_search.trace_add("write", lambda *_: self.show_equipment())
+        ttk.Entry(left, textvariable=self.equip_search).pack(fill="x", pady=(2, 4))
+        self.equip_box = tk.Listbox(left, height=8, exportselection=False)
+        self.equip_box.pack(fill="both", expand=True)
+        self.equip_box.bind("<<ListboxSelect>>", lambda _: self.pick_equipment())
+        self.equip_get = ttk.Button(left, text="Get the equipment list from MeowDB", command=self.fetch_equipment)
+        self.equip_title = tk.StringVar(value="Pick a piece of equipment")
+        ttk.Label(right, textvariable=self.equip_title).pack(anchor="w")
+        ttk.Label(right, text="The least to buy at; empty boxes aren't checked. Ranges are estimates.", foreground="#666").pack(anchor="w")
+        # room for the most an item has, as the window doesn't grow to fit what's put in it later
+        self.equip_stats = ttk.Frame(right, height=int(EQUIP_ROWS * 22 * self.root.winfo_fpixels("1i") / 96))
+        self.equip_stats.grid_propagate(False)
+        self.equip_stats.pack(fill="x", pady=(4, 0))
+        self.equip_vars, self.equip_slots, self.equip_name = {}, tk.StringVar(), None
+        form = ttk.Frame(right)
+        form.pack(fill="x", pady=(6, 0))
+        self.equip_when = tk.StringVar(value="price")
+        self.equip_percent, self.equip_price = tk.StringVar(value="20"), tk.StringVar()
+        self.equip_confirm = tk.BooleanVar(value=True)
+        ttk.Radiobutton(form, text="Under median by", value="under", variable=self.equip_when).grid(row=0, column=0, sticky="w")
+        ttk.Radiobutton(form, text="Up to over median by", value="over", variable=self.equip_when).grid(row=1, column=0, sticky="w")
+        ttk.Radiobutton(form, text="At or under a price of", value="price", variable=self.equip_when).grid(row=2, column=0, sticky="w")
+        ttk.Entry(form, textvariable=self.equip_percent, width=8).grid(row=0, column=1, rowspan=2, sticky="w", padx=4)
+        ttk.Label(form, text="%").grid(row=0, column=2, rowspan=2, sticky="w")
+        ttk.Entry(form, textvariable=self.equip_price, width=10).grid(row=2, column=1, sticky="w", padx=4)
+        ttk.Radiobutton(form, text="Wait for my OK", value=True, variable=self.equip_confirm).grid(row=3, column=0, sticky="w", pady=(4, 0))
+        ttk.Radiobutton(form, text="Buy without asking", value=False, variable=self.equip_confirm).grid(row=3, column=1, columnspan=3, sticky="w", pady=(4, 0))
+        buttons = ttk.Frame(right)
+        buttons.pack(fill="x", pady=(6, 0))
+        ttk.Button(buttons, text="Save item", command=self.save_equipment).pack(side="left")
+        ttk.Button(buttons, text="Reset bought count", command=self.reset_equipment).pack(side="left", padx=6)
+        ttk.Button(buttons, text="Remove", command=self.remove_equipment).pack(side="right")
+        below = ttk.Frame(page)
+        below.grid(row=2, column=0, columnspan=2, sticky="nsew", pady=(8, 0))
+        scale = self.root.winfo_fpixels("1i") / 96
+        columns = {"name": ("Item", 150), "stats": ("Has at least", 230), "price": ("Buy when", 150), "bought": ("Bought", 60), "ask": ("Purchase", 65)}
+        self.finder_box = ttk.Treeview(below, columns=list(columns), show="headings", height=5, selectmode="browse")
+        for column, (title, width) in columns.items():
+            self.finder_box.heading(column, text=title)
+            self.finder_box.column(column, width=int(width * scale), stretch=column in ("name", "stats"))
+        self.finder_box.pack(fill="both", expand=True)
+        self.finder_box.bind("<<TreeviewSelect>>", lambda _: self.pick_finder_row())
+        self.finder_box.bind("<Delete>", lambda _: self.remove_equipment())
+        self.show_equipment()
+        self.show_finder_list()
+
+    def show_finder_list(self, select=None):
+        """The equipment finder's items as they are on disk, which a bot may be counting in."""
+        self.finder_listed = [i for i in custom_items.load() if i.get("finder")]
+        chosen = select or self.finder_chosen()
+        self.finder_box.delete(*self.finder_box.get_children())
+        for number, item in enumerate(self.finder_listed):
+            self.finder_box.insert("", "end", iid=str(number), values=(item["name"], custom_items.describe_finder(item["finder"]), custom_items.describe_price(item),
+                                                                       f"{item['bought']} / 1", "asks me" if item["confirm"] else "auto"))
+            if chosen and custom_items.key(chosen) == custom_items.key(item["name"]):
+                self.finder_box.selection_set(str(number))
+
+    def finder_chosen(self):
+        chosen = self.finder_box.selection()
+        return self.finder_listed[int(chosen[0])]["name"] if chosen and int(chosen[0]) < len(self.finder_listed) else None
+
+    def pick_finder_row(self):
+        """Its saved values in the form, unless it's already there: the list refreshes while you type."""
+        name = self.finder_chosen()
+        if not name or name == self.equip_name:
+            return
+        if name in self.equipment:
+            self.show_equipment_form(name)
+        else:
+            self.equip_name = name
+            self.equip_title.set(f"{name}: not in the equipment list, so it can't be edited here, only removed")
+            for widget in self.equip_stats.winfo_children():
+                widget.destroy()
+            self.equip_vars = {}
+
+    def reset_equipment(self):
+        name = self.finder_chosen()
+        if name:
+            custom_items.update(name, bought=0)
+            self.log("list", f"bought count of {name} reset")
+            self.show_finder_list(select=name)
+
+    def show_equipment(self):
+        self.equip_results = search_items(list(self.equipment), self.equip_search.get())
+        self.equip_box.delete(0, "end")
+        self.equip_box.insert("end", *self.equip_results)
+        if self.equipment:
+            self.equip_get.pack_forget()
+        else:
+            self.equip_get.pack(anchor="e", pady=(4, 0))
+
+    def fetch_equipment(self):
+        self.equip_get.configure(state="disabled")
+        self.log("list", "getting the equipment list from MeowDB...")
+        result = queue.Queue()
+
+        def work():
+            try:
+                result.put(f"{custom_items.fetch_equipment()} pieces of equipment")
+            except (OSError, ValueError) as e:
+                result.put(f"couldn't get the equipment list: {e}")
+
+        def check():
+            if result.empty():
+                self.root.after(300, check)
+                return
+            self.log("list", result.get())
+            self.equip_get.configure(state="normal")
+            self.equipment = custom_items.load_equipment()
+            self.show_equipment()
+
+        threading.Thread(target=work, daemon=True).start()
+        check()
+
+    def pick_equipment(self):
+        chosen = self.equip_box.curselection()
+        if chosen:
+            self.show_equipment_form(self.equip_results[chosen[0]])
+
+    def show_equipment_form(self, name):
+        """A box for each stat the item has, its usual range next to it, and what's saved of it."""
+        info = self.equipment[name]
+        self.equip_name = name
+        saved = custom_items.find(custom_items.load(), name)
+        finder = (saved or {}).get("finder") or {}
+        job = f", {info['job']}" if info.get("job") else ""
+        self.equip_title.set(f"{name} ({info['subtype']}, level {info['level']}{job}): at least...")
+        for widget in self.equip_stats.winfo_children():
+            widget.destroy()
+        self.equip_vars = {}
+
+        def stat_row(number, name, var, hint):
+            row, column = number % EQUIP_ROWS, 3 * (number // EQUIP_ROWS)
+            ttk.Label(self.equip_stats, text=name).grid(row=row, column=column, sticky="w", padx=(0 if column == 0 else 12, 0))
+            ttk.Entry(self.equip_stats, textvariable=var, width=5).grid(row=row, column=column + 1, sticky="w", padx=3)
+            ttk.Label(self.equip_stats, text=hint, foreground="#666").grid(row=row, column=column + 2, sticky="w")
+
+        least = finder.get("slots")
+        self.equip_slots.set("" if least is None else str(least))
+        stat_row(0, "Slots left", self.equip_slots, f"0-{info['slots']}")
+        for number, (key, usual) in enumerate(info["stats"].items(), 1):
+            low, high = custom_items.stat_range(usual)
+            self.equip_vars[key] = tk.StringVar(value=str((finder.get("stats") or {}).get(key, "")))
+            stat_row(number, custom_items.STAT_NAMES[key], self.equip_vars[key], f"{low}-{high}")
+        if saved and finder:
+            self.equip_when.set(saved["when"])
+            self.equip_percent.set(f"{saved['percent']:g}")
+            self.equip_price.set(str(saved["price"]) if saved["price"] else "")
+            self.equip_confirm.set(saved["confirm"])
+
+    def save_equipment(self):
+        name = self.equip_name
+        if not name:
+            return
+        try:
+            finder = custom_items.parse_finder({k: v.get() for k, v in self.equip_vars.items()}, self.equip_slots.get())
+            rules = custom_items.parse_rules(self.equip_when.get(), self.equip_percent.get(), self.equip_price.get(), "1")
+        except ValueError as e:
+            messagebox.showerror("Equipment finder", str(e))
+            return
+        result = custom_items.save_finder(name, finder, self.equip_confirm.get(), rules)
+        if result == "taken":
+            messagebox.showerror("Equipment finder", f"{name} is already on the Custom list tab. There's only ever one of an item: remove it there first.")
+            return
+        self.log("list", f"{result} {name}: {custom_items.describe_finder(finder)}, 1 only")
+        self.list_time = self.list_file_time()
+        self.show_finder_list(select=name)
+
+    def remove_equipment(self):
+        name = self.finder_chosen() or self.equip_name
+        saved = name and custom_items.find(custom_items.load(), name)
+        if not saved or not saved.get("finder"):
+            return
+        custom_items.remove(name)
+        self.log("list", f"removed {name}")
+        self.list_time = self.list_file_time()
+        self.finder_box.selection_set(())
+        self.show_finder_list()
+        if name in self.equipment:
+            self.show_equipment_form(name)
 
     # ---- the custom list
 
@@ -525,12 +743,14 @@ class App:
         """The list as it is on disk, which a bot may be counting in."""
         known = {custom_items.key(n) for n in self.items}
         chosen = select or self.chosen_name()
-        self.listed = custom_items.load()
+        self.listed = [i for i in custom_items.load() if not i.get("finder")]  # those have their own tab
         self.list_time = self.list_file_time()
+        if hasattr(self, "finder_box"):
+            self.show_finder_list()
         self.list_box.delete(*self.list_box.get_children())
         for number, item in enumerate(self.listed):
             name = item["name"] if custom_items.key(item["name"]) in known else f"{item['name']} (not a known item)"
-            bought = f"{item['bought']} / {item['limit']}" if item["limit"] else f"{item['bought']}"
+            bought = f"{item['bought']} / only 1" if item["only_one"] else f"{item['bought']} / {item['limit']}" if item["limit"] else f"{item['bought']}"
             self.list_box.insert("", "end", iid=str(number), values=(name, custom_items.describe(item), bought,
                                                                     "asks me" if item["confirm"] else "auto"))
             if chosen and custom_items.key(chosen) == custom_items.key(item["name"]):
@@ -557,6 +777,13 @@ class App:
         self.item_price.set(str(item["price"]) if item["price"] else "")
         self.item_limit.set("" if item["limit"] is None else str(item["limit"]))
         self.item_confirm.set(item["confirm"])
+        self.item_only_one.set(item["only_one"])
+        self.only_one_changed()
+
+    def only_one_changed(self):
+        if self.item_only_one.get():
+            self.item_limit.set("1")
+        self.limit_entry.configure(state="disabled" if self.item_only_one.get() else "normal")
 
     def save_item(self):
         name = self.chosen_name()
@@ -567,7 +794,7 @@ class App:
         except ValueError as e:
             messagebox.showerror("Custom list", str(e))
             return
-        custom_items.update(name, confirm=self.item_confirm.get(), **changes)
+        custom_items.update(name, confirm=self.item_confirm.get(), only_one=self.item_only_one.get(), **changes)
         self.log("list", f"saved {name}")
         self.show_list(select=name)
 
@@ -584,7 +811,7 @@ class App:
             return
         name = self.results[chosen[0]]
         self.log("list", f"added {name}: starts as 1 item, 20% under median, waiting for your OK" if custom_items.add(name)
-                 else f"{name} is already on the list")
+                 else f"{name} is already on the list, here or on the Equipment finder tab")
         self.show_list(select=name)
         self.show_item()
 

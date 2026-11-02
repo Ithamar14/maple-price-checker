@@ -215,6 +215,33 @@ that were never looked up before. Once every 24 hours is plenty, and keeps the l
 It doesn't walk around: stand somewhere that shows the shops you want. Everything it
 bought or skipped is logged to `logs\crawl_<date>.csv`, with a summary at the end.
 
+In the full sell loop, the launcher's Custom deals setting (or `--buy-custom`, `--no-custom-buy`,
+`--custom-from-profits`) has three choices. Ignore them. Buy up to each item's limit, sharing the budget.
+Or split the money, with no limit on any item: Custom start (`--custom-start`) is how much of the budget
+custom deals begin with, and the rest is only for NPC deals. Sales fill the money back up to the overall
+budget first, and whatever they bring in past it is the only other money for custom deals. With a budget
+of 70k and a start of 10k, once the 10k is spent nothing more is spent on custom deals until the money
+climbs past 70k. Each item's price rule still applies, and so does its confirm setting.
+
+The launcher's Equipment finder tab is for one piece of equipment with the stats you want. Pick it, fill in
+the least of each stat and of scroll slots left (empty boxes aren't checked), and a price rule, and it goes on
+that tab's own list, as 1 only. It's kept in `custom_items.json` with the rest, and bought and protected from
+selling like the rest, but only shows on that tab. In a store, the bot hovers a listing that passes the price rule and reads its
+tooltip twice. It only buys when every stat asked for was read the same and is high enough: when unsure, it
+doesn't. `logs/equipment_finder.csv` has every check, and `debug/equipment_finder/` screenshots of the
+matches and unsure ones. The ranges shown are estimates, as MeowDB only has an item's usual values.
+
+An item set to Only 1 on the Custom list tab is bought once and never again, in every mode, even when the
+split has no limits. It's for an upgrade you mean to wear. Reset bought count lets it buy one more.
+
+Throwing stars (with Steely Throwing Knives, Snowball, Wooden Top and Icicle) count as one item at the
+listed price, whatever number the listing shows, as they get recharged. They're market or custom list
+items, never NPC deals, and are never sold to the NPC.
+
+Every store it opens goes into `data\market_scans.sqlite` (never uploaded): each listing's price,
+amount and whether it's grey (sold), with the shop's owner, title, room and channel. An owner's shop
+is added once in `scan_log.hours_between_same_shop` hours (`crawler_settings.json`). See `scan_log.py`.
+
 Try it without any input first:
 
 ```
@@ -243,7 +270,7 @@ everything on the Equip, Use and Etc tabs**, and starts again in the next room w
 what the sale brought in. It sells early when under 10% of the budget is left
 (`sell_below_budget_percent`). Keep nothing you want to keep on those tabs. Keep the minimap on the
 setting that shows the map's name. `--rounds 2` stops after two rooms; otherwise hold ESC to stop.
-Log: `logs/walk_<date>.log`. Each run of the full sell loop also writes the custom items it bought,
+Log: `logs/walk_<date>.log`. Step screenshots in `debug/nav_steps` are capped at 300 MB (`STEPS_LIMIT_MB` in `walker.py`), oldest runs deleted first. Each run of the full sell loop also writes the custom items it bought,
 and at what prices, to `logs/custom_buys_<date>_<time>.txt`.
 
 | option | what it does |

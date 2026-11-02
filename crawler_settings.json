@@ -8,6 +8,7 @@
   "min_total_profit": 50,
   "big_buy": {"over_budget_percent": 25, "min_flip_percent": 5},
   "sell_below_budget_percent": 10,
+  "scan_log": {"hours_between_same_shop": 12},
   "never_buy": ["arrow"],
   "skip_shops_with": ["nx"],
   "review_items": ["Work Gloves", "Yellow Square", "Red Cross Earrings", "Squishy Shoes"],

@@ -28,6 +28,7 @@ import ctypes.wintypes as wt
 import os
 import re
 import signal
+import sqlite3
 import sys
 import threading
 import time
@@ -43,6 +44,8 @@ import numpy as np
 import custom_items
 import market
 import price_checker as pc
+import scan_log
+import equip_check
 
 HERE = Path(__file__).parent
 TEMPLATES = HERE / "templates"
@@ -444,6 +447,12 @@ def near(s, spread=0.03, step=0.01):
 # ---------------------------------------------------------------- the crawler
 
 class Crawler:
+    custom_from_profits = False  # the full sell loop's split: see sold_for
+    profit_pool = 0     # all the money for custom deals
+    custom_reserve = 0  # how much of it is what's left of the overall budget set aside at the start
+    npc_budget = 0      # the overall budget
+    scans = None  # the store log (scan_log)
+    scan_owner = ""
     def __init__(self, args):
         self.args = args
         found = pc.find_window(args.window)
@@ -489,6 +498,11 @@ class Crawler:
         self.budget = 0
         self.spent = 0
         self.bought = []  # (name, quantity, paid, value, "npc" or "market")
+        self.scans = None
+        try:
+            self.scans = scan_log.ScanLog(hours=settings.get("scan_log", {}).get("hours_between_same_shop", scan_log.HOURS_BETWEEN))
+        except (sqlite3.Error, OSError) as e:
+            print(f"Not logging store listings: {e}")
         self.custom_log = None  # the full sell loop's list of custom items bought
         self.custom_started = None
         self.custom_bought = []  # (time, name, quantity, paid, where, how)
@@ -516,6 +530,23 @@ class Crawler:
             return False
         need = self.required_profit(hit.asking)
         return need is not None and hit.profit >= need
+
+    def sold_for(self, mesos):
+        """Mesos from the NPC go to what's left of the budget. With custom_from_profits the budget is
+        for NPC deals, and together with what's unspent of the money set aside at the start it's
+        only filled back up to the overall budget: anything past that is profit, the only other
+        money for custom deals, which then have no limit."""
+        money = self.budget - self.spent + mesos
+        most = self.npc_budget - self.custom_reserve
+        if self.custom_from_profits and money > most:
+            self.profit_pool += money - most
+            money = most
+        self.budget, self.spent = money, 0
+
+    def pay_custom(self, mesos):
+        """Comes off the money set aside first: once it's spent, only profits are left."""
+        self.profit_pool -= mesos
+        self.custom_reserve = max(0, self.custom_reserve - mesos)
 
     def money_low(self):
         return self.sell_below is not None and self.budget - self.spent < self.budget * self.sell_below / 100
@@ -545,13 +576,16 @@ class Crawler:
 
     def custom_left(self, hit):
         """How many more of this listing's item may be bought; None: no limit."""
-        counts = [n for n in map(custom_items.left, self.custom_entries(hit) or ()) if n is not None]
+        counts = [custom_items.left(i, self.custom_from_profits) for i in self.custom_entries(hit) or ()]
+        counts = [n for n in counts if n is not None]
         return min(counts) if counts else None
 
     def custom_buy(self, hit):
         """Whether to buy this listing, by its own item's rules: its limit, then its price."""
         entries = self.buy_custom and self.custom_entries(hit)
         if not entries or self.custom_left(hit) == 0:
+            return False
+        if self.custom_from_profits and hit.asking > self.profit_pool:
             return False
         top = self.custom_top_price(entries, hit)
         return top is not None and hit.asking <= top
@@ -577,7 +611,7 @@ class Crawler:
         names = []
         for item in self.book.items.values():
             known = self.db.items.get(pc.norm(item["name"]))
-            if known and custom_items.left(item) != 0:
+            if known and custom_items.left(item, self.custom_from_profits) != 0:
                 names.append(known[0])  # as MeowDB's lookups and the listings spell it
         if not names or not self.market:
             return
@@ -646,7 +680,8 @@ class Crawler:
         npc = [b for b in self.bought if b[4] == "npc"]
         mkt = [b for b in self.bought if b[4] == "market"]
         value, paid = sum(b[3] for b in npc), sum(b[2] for b in npc)
-        info = (f"budget {self.budget:,} | spent {self.spent:,} | bought {sum(b[1] for b in self.bought)} items\n"
+        split = f" | for custom deals {self.profit_pool:,}" if self.custom_from_profits else ""
+        info = (f"budget {self.budget:,} | spent {self.spent:,}{split} | bought {sum(b[1] for b in self.bought)} items\n"
                 f"profit {value - paid:+,} once sold to an NPC (worth {value:,})")
         if mkt:
             info += (f"\nmarket buys: {sum(b[1] for b in mkt)} items for {sum(b[2] for b in mkt):,}, "
@@ -845,6 +880,97 @@ class Crawler:
     # ---- inside a store
 
     def read_store(self, channel):
+        """Buys what's worth buying, and logs everything listed (see scan_log)."""
+        visit = scan_log.ShopVisit(channel)
+        self.scan_owner = ""
+        self.park_mouse()  # a cursor on the list brings up a tooltip over its rows
+        try:
+            visit.complete = self.read_store_pages(channel, visit)
+        finally:
+            self.save_scan(visit)
+
+    def equipment_ok(self, deal, visit, page, channel):
+        """Whether an item from the equipment finder has the stats asked for: hover it twice, read its
+        tooltip each time. Only a sure yes buys. What's asked of a row is only worked out once, even
+        if the row is on the page read again."""
+        entries = self.custom_entries(deal)
+        finder = entries and len(entries) == 1 and entries[0].get("finder")
+        if not finder:
+            return not (entries and any(i.get("finder") for i in entries))  # a cut-off name can't be checked
+        s = self.finder.last_scale or 1
+        x0, y0, x1, y1 = deal.box
+        key = (deal.name, deal.asking, round(y0 / (20 * s)), page)
+        if key in visit.equip_checked:
+            return visit.equip_checked[key]
+        wanted = equip_check.wanted_stats(finder)
+        spots = (("icon", x0 - 40 * s, (y0 + y1) / 2), ("text", (x0 + x1) / 2, (y0 + y1) / 2))
+        self.doing(f"equipment finder: checking the stats of {deal.name}")
+        reads, frame, x, y = [], None, x0, y0
+        for hover, x, y in spots:  # if the icon brings up nothing, the row's text might
+            for _ in range(2):
+                self.controls.move(*self.screen.to_screen(x, y))
+                self.controls.wait(0.6)
+                frame = self.screen.grab()
+                try:
+                    reads += [equip_check.stats_in(lines, wanted) for lines in equip_check.read_area(frame, self.reader, x, y, s)]
+                except (cv2.error, ValueError) as e:
+                    print(f"    equipment finder: couldn't read it: {e}")
+                self.park_mouse()  # so the next look is a tooltip opened afresh
+            if any(reads):
+                break
+        verdict, values = equip_check.judge(reads, wanted)
+        print(f"  EQUIPMENT FINDER {deal.name} at {deal.asking:,}: read {values}, wanted at least {wanted}: "
+              + {"yes": "it matches", "no": "not this one", "unsure": "couldn't be sure, so not buying it"}[verdict])
+        self.log(channel, deal, 0, f"equipment finder: {verdict}, read {values}")
+        try:
+            equip_check.record(frame, channel, self.scan_owner, deal, wanted, values, verdict, x, y)
+        except OSError as e:
+            print(f"    equipment finder: couldn't log it: {e}")
+        visit.equip_checked[key] = verdict == "yes"
+        return visit.equip_checked[key]
+
+    def scan_page(self, visit, page_number, frame, lines):
+        """Adds a page to what's logged of this store. Only the first look at a page, as buying
+        from it turns rows grey. Never gets in the way of the crawling."""
+        if not self.scans or page_number in visit.pages:
+            return
+        visit.pages.add(page_number)
+        try:
+            if not visit.begun:
+                loc, s = self.finder.last_loc, self.finder.last_scale or 1
+                visit.owner, visit.score = scan_log.read_box(frame, self.reader, scan_log.OWNER_BOX, loc, s)
+                visit.title, _ = scan_log.read_box(frame, self.reader, scan_log.TITLE_BOX, loc, s)
+                visit.begun = True
+                self.scan_owner = visit.owner
+            visit.rows = scan_log.merge_page(visit.rows, scan_log.read_rows(lines, frame))
+        except Exception as e:  # the log isn't worth stopping for
+            print(f"    couldn't log this store's page: {e}")
+
+    def save_scan(self, visit):
+        if not self.scans:
+            return
+
+        def match(name):
+            found = self.db.candidates(name)
+            return found[0][0] if len(found) == 1 else None
+
+        try:
+            result = self.scans.save(visit, match)
+            if result:
+                print(f"    store of {visit.owner or '(name not read)'}: " + (f"{len(visit.rows)} listings logged" if result == "logged"
+                      else f"logged less than {self.scans.hours:g}h ago, not added again"))
+        except Exception as e:
+            print(f"    couldn't log this store: {e}")
+
+    def log_own_buy(self, channel, deal, quantity):
+        if self.scans:
+            try:
+                self.scans.bought(channel, self.scan_owner, deal.name, quantity, deal.asking)
+            except sqlite3.Error as e:
+                print(f"    couldn't log this purchase: {e}")
+
+    def read_store_pages(self, channel, visit):
+        """True when it got to the end of the store's list, False if the store went away first."""
         # rows finished with: skipped, failed, or bought MAX_BUYS_PER_LISTING times. By where they are
         # too, as a store can have several rows of one item at one price, and with stacks of any size
         done = set()
@@ -857,7 +983,7 @@ class Crawler:
             frame = self.screen.grab()
             found = self.find_store(frame)
             if not found:
-                return
+                return False
             (lx0, ly0, lx1, ly1), _ = found  # the item list
             row_height = (ly1 - ly0) / LIST_ROWS
 
@@ -868,6 +994,7 @@ class Crawler:
             lines, _, singles, _ = pc.scan(frame, self.reader, self.finder, self.db, 1, False)
             self.mark_listings(lines, singles)
             self.log_page(channel, page_number, lines, singles, done, row_key)
+            self.scan_page(visit, page_number, frame, lines)
             # a custom list item isn't missed for its price being old or still on its way
             priced = [h for h in singles if self.custom_needs_price(h)]
             if priced:
@@ -896,6 +1023,9 @@ class Crawler:
             if customs:  # before any other deal: it's what you're looking for
                 deal = customs[0]
                 key = row_key(deal)
+                if not self.equipment_ok(deal, visit, tuple(l.text for l in lines), channel):
+                    done.add(key)
+                    continue
                 buys[key] += 1
                 ask = self.confirm_all or any(i["confirm"] for i in self.custom_entries(deal))
                 if not self.buy(deal, frame, channel, market=True, ask_you=ask, custom=True) \
@@ -919,9 +1049,9 @@ class Crawler:
             # the same again may just be rows that look alike: only twice in a row is the end of the list
             same_pages = same_pages + 1 if page == last_page else 0
             if same_pages >= SAME_PAGES_AT_END:
-                return
+                return True
             if not any(l.y1 > ly1 - row_height * 1.5 for l in lines):
-                return  # nothing in the bottom row: it all fits and there's nothing to scroll. Not by
+                return True  # nothing in the bottom row: it all fits and there's nothing to scroll. Not by
                 # counting rows, as pale sold-out ones can go unread
             last_page = page
             page_number += 1
@@ -929,6 +1059,7 @@ class Crawler:
             self.controls.wheel(*self.screen.to_screen((lx0 + lx1) / 2, (ly0 + ly1) / 2))
             self.park_mouse()
             self.controls.wait(0.2)
+        return True
 
     def log_page(self, channel, page, lines, singles, done, row_key):
         """logs/store_reads_<date>.txt: what was read on each page of each store, and what it made of
@@ -1100,7 +1231,7 @@ class Crawler:
         for l in lines:
             m = pc.LISTING_RE.match(l.text)
             name = pc.name_above(l, lines) if m else None
-            if name and pc.to_int(m.group(1)) == 1 and pc.to_int(m.group(2)) == deal.asking:
+            if name and pc.to_int(m.group(1)) == deal.qty and pc.to_int(m.group(2)) == deal.asking:
                 # a cut-off name agrees when it fits every item the first read narrowed it to
                 # (the icon may have narrowed that further than the text alone can)
                 found = {n for n, _ in self.db.candidates(name.text)}
@@ -1129,12 +1260,14 @@ class Crawler:
         return quantity if wanted is None else min(quantity, wanted)
 
     def _buy(self, deal, frame, channel, market=False, ask_you=False, custom=False):
-        remaining = self.budget - self.spent
+        from_profits = custom and self.custom_from_profits
+        remaining = self.profit_pool if from_profits else self.budget - self.spent
         self.doing(f"{'market deal' if market else 'deal'} on {deal.name}: reading the stock")
         # None when unreadable, which is normal for equipment (its icon shows no number). Which buy
         # window opens settles it: "Are you sure?" means a single item; "How many?" means a stack
         # whose size isn't known, and that gets cancelled rather than guessed at.
-        stock_read = self.read_stock(frame, deal)
+        # the number on the icon of throwing stars is how many stars: they're always one item to buy
+        stock_read = None if deal.stars else self.read_stock(frame, deal)
         stock = stock_read or 1
         quantity = self.buy_quantity(deal, stock, remaining, custom)
         if market:
@@ -1310,7 +1443,11 @@ class Crawler:
         paid = before - changed[0] if changed else None
         if paid == expected or (paid is None and sold[0]):
             how = "" if paid is not None else " (your mesos couldn't be read; the store shows it sold)"
-            self.spent += expected
+            if from_profits:
+                self.pay_custom(expected)
+            else:
+                self.spent += expected
+            self.log_own_buy(channel, deal, quantity)
             if custom:
                 self.book.record(deal.name, quantity)
                 self.log_custom_buy(channel, deal, quantity, expected, "you confirmed" if ask_you else "auto-bought")
@@ -1330,7 +1467,8 @@ class Crawler:
                     how += " (you confirmed)"
                 if self.market.lowest(deal.names):  # a market item too: log it with the others
                     self.log_market_buy(channel, deal, quantity, f"NPC deal, NPC pays {deal.npc_pays:,}")
-            print(f"    BOUGHT {quantity} for {expected:,}{how} ({worth}). Budget left {self.budget - self.spent:,}")
+            left = f"Left for custom deals {self.profit_pool:,}" if from_profits else f"Budget left {self.budget - self.spent:,}"
+            print(f"    BOUGHT {quantity} for {expected:,}{how} ({worth}). {left}")
             self.log(channel, deal, quantity, f"bought for {expected}{how}")
             self.doing(f"bought {quantity} x {deal.name} for {expected:,}")
             winsound.MessageBeep(winsound.MB_OK)
@@ -1347,7 +1485,12 @@ class Crawler:
         if paid is None:
             raise Stop("the purchase didn't show up in your mesos or the store (inventory full? store "
                        "changed?); screenshot: debug\\purchase_unconfirmed.png")
-        self.spent += max(paid, 0)
+        if from_profits:
+            self.pay_custom(max(paid, 0))
+        else:
+            self.spent += max(paid, 0)
+        if paid > 0:
+            self.log_own_buy(channel, deal, max(1, paid // deal.asking))
         if custom and paid > 0:  # whatever happened, what was paid for counts towards the limit
             self.book.record(deal.name, max(1, paid // deal.asking))
             self.log_custom_buy(channel, deal, max(1, paid // deal.asking), paid, f"{expected:,} was expected")
@@ -1788,6 +1931,11 @@ def main(sell_loop=None):
                         help="buy custom list items, each by its own rules (asked if neither is given)")
     custom.add_argument("--no-custom-buy", dest="buy_custom", action="store_false", help="only point them out")
     if sell_loop:
+        custom.add_argument("--custom-from-profits", action="store_true",
+                            help="the budget is only for NPC deals; custom list items are bought with no limit, only from profits past it")
+        ap.add_argument("--custom-start", type=parse_mesos, default=0,
+                        help="with --custom-from-profits: how much of the budget custom deals may spend from the start (default 0)")
+    if sell_loop:
         ap.add_argument("--rounds", type=int, default=0, help="stop after this many rooms (default: until you stop it)")
         ap.add_argument("--rooms", type=parse_rooms,
                         help="the only rooms to go through, in order: 6-1, or 3,10,15, or a mix like 6-1,16-13 (default: all of them)")
@@ -1812,19 +1960,22 @@ def main(sell_loop=None):
               else "  deals are bought automatically")
     crawler.market_deals = not (ask_npc_only() if args.npc_only is None else args.npc_only)
     if crawler.watch.custom:
-        crawler.buy_custom = ask_buy_custom() if args.buy_custom is None else args.buy_custom
-    needs_prices = crawler.buy_custom and crawler.book.needs_market()
+        crawler.custom_from_profits = getattr(args, "custom_from_profits", False)
+        crawler.buy_custom = crawler.custom_from_profits or (ask_buy_custom() if args.buy_custom is None else args.buy_custom)
+    needs_prices = crawler.buy_custom and crawler.book.needs_market(crawler.custom_from_profits)
     if crawler.market_deals or needs_prices:
         crawler.load_market()
     if not crawler.market_deals:
         print("  only NPC deals" + ("" if needs_prices else ": Free Market prices aren't looked up"))
     if crawler.buy_custom:
         crawler.update_custom_prices()
-        print("  custom list: buying by each item's own rules")
+        print("  custom list: from what's set aside and profits past the budget, with no limit on any item" if crawler.custom_from_profits
+              else "  custom list: buying by each item's own rules")
         for item in crawler.book.items.values():
-            wanted = custom_items.left(item)
+            wanted = custom_items.left(item, crawler.custom_from_profits)
+            amount = "only 1" if item["only_one"] else str(item["limit"])
             print(f"    {item['name']}: {custom_items.describe(item)}, "
-                  f"{'no limit' if wanted is None else str(wanted) + ' more of ' + str(item['limit'])}, "
+                  f"{'no limit' if wanted is None else str(wanted) + ' more of ' + amount}, "
                   f"{'asks you' if item['confirm'] else 'auto-buy'}")
     if crawler.market and crawler.market_deals:
         crawler.market_below = args.market_percent or market.ask_percent(crawler.market_below)
