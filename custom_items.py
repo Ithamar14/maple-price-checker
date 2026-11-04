@@ -7,6 +7,7 @@
     limit    how many to buy in all (None: no limit); bought counts them, across sessions
     confirm  True: wait for you to press OK; False: buy without asking
     only_one True: buy 1 in all and never more, in every mode, like an upgrade to wear
+    store    True: store.py lists it in your own store; False: it's only held (never Only 1 ones)
     finder   from the equipment finder: {"slots": at least this many scroll slots left or None,
              "stats": {stat: at least this}}, checked on its tooltip in the store. Always only 1
 
@@ -39,7 +40,8 @@ def key(name):
 
 def new_item(name):
     """What an item starts as: nothing is spent on it without asking, and only one."""
-    return {"name": name, "when": "under", "percent": 20.0, "price": 0, "limit": 1, "bought": 0, "confirm": True, "only_one": False, "finder": None}
+    return {"name": name, "when": "under", "percent": 20.0, "price": 0, "limit": 1, "bought": 0, "confirm": True, "only_one": False,
+            "store": False, "finder": None}
 
 
 def load():

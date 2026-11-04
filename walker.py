@@ -28,6 +28,7 @@ import shutil
 import signal
 import sys
 import threading
+import json
 import time
 from datetime import datetime
 from pathlib import Path
@@ -37,6 +38,7 @@ import numpy as np
 from rapidfuzz import fuzz, process
 
 import crawler
+import holdings
 import navigation as nav
 import price_checker as pc
 
@@ -1265,6 +1267,7 @@ class Walker:
             return
         if not self.known:
             raise crawler.Stop("no item names to check what's sold against: not selling anything")
+        self.keep = frozenset(self.keep) | {pc.norm(n) for n in holdings.load()}  # bought for your store
         self.park()
         self.controls.wait(0.3)
         spot = self.find_sell_button(self.screen.grab())
@@ -1476,21 +1479,60 @@ def prune_steps(folder=None, limit_mb=STEPS_LIMIT_MB):
             shutil.rmtree(run, ignore_errors=True)
 
 
+STATE_FILE = Path(__file__).parent / "data" / "loop_state.json"
+STATE_MONEY = ("budget", "spent", "npc_budget", "profit_pool", "custom_reserve", "npc_cap")
+
+
+def save_state(shops, room, todo, finished_rounds, sell_next, path=None):
+    """Where the full sell loop is and its money, so a stopped one goes on from there next time."""
+    path = Path(path or STATE_FILE)
+    state = {"saved": datetime.now().isoformat(timespec="seconds"), "room": room, "todo": list(todo) if todo is not None else None,
+             "finished_rounds": finished_rounds, "sell_next": sell_next, **{k: getattr(shops, k, 0) for k in STATE_MONEY}}
+    path.parent.mkdir(exist_ok=True)
+    part = path.with_name(path.name + ".part")
+    part.write_text(json.dumps(state, indent=1), "utf-8")
+    part.replace(path)
+
+
+def load_state(path=None):
+    try:
+        return json.loads(Path(path or STATE_FILE).read_text("utf-8"))
+    except (OSError, ValueError):
+        return None
+
+
+def clear_state(path=None):
+    Path(path or STATE_FILE).unlink(missing_ok=True)
+
+
 def run_full(shops, channels, budget, rounds=0, sell_below=10):
     """Every channel asked for in a room (skipping any it can't get into, as they may be full), then the
     same in the next room. When under sell_below percent of the budget is left, to the NPC to
     sell everything, and on to the next room with what the budget has become. Only NPC deals
-    are bought. Goes on until you stop it (or for this many rounds). Anything going wrong falls
+    are bought. Each room asked for once, in order (or this many rooms), then a last sell trip. Anything going wrong falls
     back to closing what's open, working out where it is and carrying on from there."""
     # the overall budget, of which some can be set aside for custom deals from the start
-    start = (getattr(shops.args, "custom_start", 0) or 0) if getattr(shops, "custom_from_profits", False) else 0
+    split = getattr(shops, "custom_from_profits", False) or getattr(shops, "store_deals", False)
+    npc_money = getattr(shops.args, "npc_money", None) if split else None
+    if npc_money:  # NPC deals get this much and no more: the rest, and every profit past it, is for the others
+        npc_money = min(npc_money, budget)
+        start = budget - npc_money
+    else:
+        start = (getattr(shops.args, "custom_start", 0) or 0) if split else 0
     if start >= budget:
         return f"stopped: {start:,} for custom deals leaves nothing of the {budget:,} budget for NPC deals"
     shops.npc_budget = budget
+    shops.npc_cap = npc_money or 0
     shops.budget = budget - start
     shops.profit_pool = shops.custom_reserve = start
     shops.spent = 0
     shops.sell_below = sell_below
+    resumed = None if getattr(shops.args, "fresh", False) else load_state()
+    if getattr(shops.args, "fresh", False):
+        clear_state()
+    if resumed:
+        for k in STATE_MONEY:
+            setattr(shops, k, resumed.get(k, getattr(shops, k)))
     shops.update_info()
     limit = shops.args.minutes * 60 if shops.args.minutes else float("inf")
     deadline = time.monotonic() + limit
@@ -1508,11 +1550,18 @@ def run_full(shops, channels, budget, rounds=0, sell_below=10):
             controls.stop.set()
             return f"stopped: no saved door for room {', '.join(map(str, unknown))}"
         rooms = tuple(asked)
+    total = rounds or len(rooms)  # each room asked for once, in order, then a last sell trip
     print(f"Rooms, in order: {', '.join(map(str, rooms))}")
     print(f"Channels, in order: {', '.join(map(str, channels)) or 'only the one you are on'}")
-    if getattr(shops, "custom_from_profits", False):
-        print(f"{budget - start:,} of the budget is only for NPC deals. Custom list items are bought with no limit, from the "
-              f"{start:,} set aside, then only from profits once the money is past {budget:,}.")
+    if split:
+        what = " and ".join(w for w, on in (("custom list items (no limit)", getattr(shops, "custom_from_profits", False)),
+                                             ("store deals", getattr(shops, "store_deals", False))) if on)
+        if shops.npc_cap:
+            print(f"{shops.npc_cap:,} of the budget is for NPC deals, and stays that: {what} get the other {start:,}, "
+                  f"and everything NPC deals make past {shops.npc_cap:,}.")
+        else:
+            print(f"{budget - start:,} of the budget is only for NPC deals. {what[0].upper() + what[1:]} are bought from the "
+                  f"{start:,} set aside, then only from profits once the money is past {budget:,}.")
     print(f"Budget {budget:,} mesos. At the NPC it SELLS EVERYTHING on the Equip, Use and Etc tabs, except "
           f"the {len(shops.watch.custom)} items on your custom list and throwing stars.")
     print("Switch to MapleStory now. Starting in 3 seconds... (hold ESC for 1s to stop)")
@@ -1524,20 +1573,32 @@ def run_full(shops, channels, budget, rounds=0, sell_below=10):
     todo = None  # channels left in this round; None: the round hasn't started
     room = None
     sell_next = False
+    ended = False  # a finish that's not to be gone on from: the next run starts fresh
 
     def duration():
         return crawler.duration(time.monotonic() - started)
 
-    def profits():
-        return f", for custom deals {shops.profit_pool:,}" if getattr(shops, "custom_from_profits", False) else ""
+    def store_ends():
+        """The store's items are ready, and it's set to end there rather than carry on scanning."""
+        return getattr(shops, "store_ready", False) and not shops.store_cfg.get("keep_scanning", True)
 
+    def profits():
+        split = getattr(shops, "custom_from_profits", False) or getattr(shops, "store_deals", False)
+        return f", for custom and store deals {shops.profit_pool:,}" if split else ""
+
+    if resumed:
+        room = resumed.get("room") if resumed.get("room") in rooms else None
+        todo = None if resumed.get("todo") is None or room is None else [c for c in resumed["todo"] if c in channels]
+        finished_rounds, sell_next = resumed.get("finished_rounds", 0), resumed.get("sell_next", False)
+        where = f"room {room}" + (f", channels {', '.join(map(str, todo))} still to do" if todo else "") if room else "the room it's in"
+        walker.note(f"-- going on from where it stopped ({resumed.get('saved')}): {where}, budget {shops.budget - shops.spent:,}{profits()}"
+                    f"{', selling first' if sell_next else ''}. Reset on the launcher's tab to start fresh instead")
     try:
         while True:
             try:
                 controls.ensure_front()
-                if room is None:
-                    kind, number = walker.place()
-                    room = number if kind == "room" and number in rooms else rooms[0]
+                if room is None:  # the rooms go in the order asked, from the first
+                    room = rooms[0]
                 if sell_next:
                     if not walker.on_door and room not in OTHER_LAYOUT:
                         walker.drop_to_portal()
@@ -1549,21 +1610,31 @@ def run_full(shops, channels, budget, rounds=0, sell_below=10):
                     shops.update_info()
                     walker.note(f"-- sold for {walker.mesos_from_sales:,}: budget is now {shops.budget:,}{profits()} ({duration()} so far)")
                     sell_next = False
-                    if rounds and finished_rounds >= rounds:
-                        return f"{finished_rounds} rounds done"
+                    save_state(shops, room, None, finished_rounds, False)
+                    if store_ends():
+                        ended = True
+                        return "the store's items are ready"
+                    if finished_rounds >= total:
+                        ended = True
+                        walker.note(f"-- all {total} rooms done")
+                        return f"all {total} rooms done"
                     if shops.budget <= 0:
+                        ended = True
                         return "no budget left, even after selling"
                     room = next_room(room, rooms)
                 if walker.place() != ("room", room):
                     walker.go_to_room(room)
                 if todo is None:
-                    walker.note(f"-- round {finished_rounds + 1}: room {room}, budget {shops.budget:,} ({duration()} so far)")
+                    walker.note(f"-- room {room} ({finished_rounds + 1} of {total}), budget {shops.budget:,} ({duration()} so far)")
                     walker.marks.clear("minimap", "npc")
                     walker.target = None
                     crawl_here, todo = shops.start_channel(channels)
                     if crawl_here:
+                        here = [c for c in channels if c not in todo][:1]  # if it's stopped in this one, it's done again
+                        save_state(shops, room, here + todo, finished_rounds, False)
                         shops.crawl_room(f"room {room}")
-                while todo and not shops.money_low():
+                    save_state(shops, room, todo, finished_rounds, False)
+                while todo and not shops.money_low() and not store_ends():
                     target = todo[0]
                     walker.target = None
                     walker.marks.clear("minimap", "npc")
@@ -1581,20 +1652,24 @@ def run_full(shops, channels, budget, rounds=0, sell_below=10):
                         shops.crawl_room(f"room {room} channel {target}")
                     todo.pop(0)
                     problems = 0
-                low = shops.money_low()
-                walker.note(f"-- room {room} done" + (": budget low, going to sell" if low else "") + f" ({duration()} so far)")
+                    save_state(shops, room, todo, finished_rounds, False)
+                ready = store_ends()
+                last = finished_rounds + 1 >= total  # sold before it ends, so its profits are made
+                low = shops.money_low() or ready or last
+                walker.note(f"-- room {room} done" + (": store deals ready, selling the rest" if ready else ": the last room, going to sell"
+                                                      if last else ": budget low, going to sell" if low else "") + f" ({duration()} so far)")
                 finished_rounds += 1
                 todo = None
                 if low:
                     sell_next = True
+                    save_state(shops, room, None, finished_rounds, True)
                     continue
-                if rounds and finished_rounds >= rounds:
-                    return f"{finished_rounds} rounds done"
                 following = next_room(room, rooms)
                 if following != room:
                     if not walker.on_door and room not in OTHER_LAYOUT:
                         walker.drop_to_portal()
                     room = following
+                save_state(shops, room, None, finished_rounds, False)
             except crawler.Stop as e:
                 if controls.stop.is_set() or time.monotonic() > deadline:
                     raise
@@ -1606,11 +1681,19 @@ def run_full(shops, channels, budget, rounds=0, sell_below=10):
                     todo.pop(0)  # a channel that keeps failing isn't tried for ever
                 walker.recover()
     except crawler.Stop as e:
+        walker.note(f"-- stopped: {e}")  # in the log too, to tell later what ended a run
         return f"stopped: {e}"
     finally:
         controls.stop.set()
         walker.marks.clear("click", "target", "minimap", "npc")
-        walker.note(f"{finished_rounds} rounds in {duration()}; {earned:,} mesos from the NPC; budget left {shops.budget - shops.spent:,}{profits()}")
+        npc = [b for b in getattr(shops, "bought", []) if b[4] == "npc"]  # its profit counts when bought, sold yet or not
+        deals = f"; NPC deals {sum(b[2] for b in npc):,} for {sum(b[3] for b in npc):,} of NPC value ({sum(b[3] - b[2] for b in npc):+,})" if npc else ""
+        walker.note(f"{finished_rounds} rounds in {duration()}; {earned:,} mesos from the NPC{deals}; budget left {shops.budget - shops.spent:,}{profits()}")
+        if ended:
+            clear_state()
+        else:  # stopped (Esc, Stop, the time limit, a problem): the next run goes on from here
+            save_state(shops, room, todo, finished_rounds, sell_next)
+            walker.note("-- saved where it stopped: the next run goes on from there (Reset on the launcher's tab to start fresh)")
         shops.write_custom_log(duration())
 
 

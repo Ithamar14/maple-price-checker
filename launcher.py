@@ -20,10 +20,12 @@ import time
 import tkinter as tk
 import webbrowser
 from pathlib import Path
-from tkinter import messagebox, ttk
+from tkinter import messagebox, simpledialog, ttk
 
 import custom_items
+import holdings
 import market
+import sync
 
 HERE = Path(__file__).parent
 SETTINGS_FILE = HERE / "launcher_settings.json"
@@ -37,13 +39,16 @@ ICON_FILE = HERE / "launcher.ico"
 
 ALL_ROOMS = "6-1,16-13,12-7,20-17"
 STOP_WAIT = 20.0        # seconds a bot gets to stop by itself after Stop, before it's ended by force
+SYNC_EVERY = 60.0       # seconds between rounds with the bots' server
+SYNC_FILES_EVERY = 600.0
 MEOW_READ_EVERY = 5.0   # seconds between looks at the saved prices
 MAX_LOG_LINES = 3000
 MAX_RESULTS = 200       # items shown in the custom list's search
 PROGRESS_RE = re.compile(r"progress (\d+) (\d+)")
 
-TOOLS = {"overlay": "Overlay", "crawler": "Crawler", "full": "Full sell loop", "craft": "Crafting", "update": "MeowDB update"}
-ON_GAME = ("overlay", "crawler", "full")  # these use the game's screen: one at a time
+TOOLS = {"overlay": "Overlay", "crawler": "Crawler", "full": "Full sell loop", "store": "My store", "craft": "Crafting",
+         "update": "MeowDB update"}
+ON_GAME = ("overlay", "crawler", "full", "store")  # these use the game's screen: one at a time
 PRESS_KEYS = (0x25, 0x26, 0x27, 0x28, 0x12, 0x11, 0x10)  # arrows, alt, ctrl, shift: what a bot can hold down
 KEYEVENTF_KEYUP = 2
 CREATE_NO_WINDOW = 0x08000000
@@ -65,11 +70,12 @@ def defaults():
     return {
         "ov_market": True, "ov_percent": percent, "ov_min_profit": "1", "ov_interval": "1.0",
         "ov_tooltips": False, "ov_debug": False,
-        "cr_dry": False, "cr_budget": "", "cr_mode": "auto", "cr_deals": "npc", "cr_percent": percent,
+        "sv_on": False, "sv_url": "", "sv_name": "", "sv_key": "",
+        "st_dry": False, "st_place": False, "st_name": "", "cr_dry": False, "cr_budget": "", "cr_mode": "auto", "cr_deals": "npc", "cr_percent": percent,
         "cr_custom_stop": False, "cr_channels": "40-1", "cr_single": False,
         "cr_minutes": "", "cr_debug": False,
-        "fl_budget": "", "fl_custom": "off", "fl_custom_start": "0", "fl_channels": "40-1", "fl_rooms": ALL_ROOMS,
-        "fl_rounds": "", "fl_minutes": "", "fl_sell_below": str(cfg.get("sell_below_budget_percent", 10)),
+        "fl_budget": "", "fl_custom": "off", "fl_npc_money": "", "fl_channels": "40-1", "fl_rooms": ALL_ROOMS,
+        "fl_store": False, "fl_store_percent": "15", "fl_rounds": "", "fl_minutes": "", "fl_sell_below": str(cfg.get("sell_below_budget_percent", 10)),
         "cf_margin": str(craft.get("margin_percent", 10)), "cf_disciplines": craft.get("disciplines") or ["Arcforge"],
     }
 
@@ -104,14 +110,15 @@ def budget_of(text):
     return str(budget)
 
 
-def custom_start_of(text, budget):
+def npc_money_of(text, budget):
+    """The NPC deals' share of the budget; empty: all of it."""
     try:
-        start = market.parse_mesos(text) if text.strip() else 0
+        money = market.parse_mesos(text) if text.strip() else int(budget)
     except ValueError:
-        raise ValueError("Type the starting money for custom deals, like 0 or 10k.") from None
-    if start >= int(budget):
-        raise ValueError("The starting money for custom deals has to be less than the budget.")
-    return str(start)
+        raise ValueError("Type the money for NPC deals, like 20k, or leave it empty for the whole budget.") from None
+    if not 0 < money <= int(budget):
+        raise ValueError("The money for NPC deals has to be more than 0, and no more than the budget.")
+    return str(money)
 
 
 def percent_of(text, what):
@@ -185,12 +192,15 @@ def full_args(v):
             "--channels", channels_of(v["fl_channels"]), "--rooms", rooms_of(v["fl_rooms"]),
             "--sell-below", percent_of(v["fl_sell_below"], "The sell-below %")]
     if v["fl_custom"] == "profits":
-        args += ["--custom-from-profits", "--custom-start", custom_start_of(v["fl_custom_start"], budget_of(v["fl_budget"]))]
+        args += ["--custom-from-profits"]
     else:
         args += custom_args(v["fl_custom"] == "limit")
-    rounds = number_of(v["fl_rounds"], "Rounds", whole=True)
+    if v["fl_store"]:
+        args += ["--store-deals", "--market-percent", percent_of(v["fl_store_percent"], "The store deal %")]
+    if v["fl_custom"] == "profits" or v["fl_store"]:  # NPC deals' share: the rest is for these
+        args += ["--npc-money", npc_money_of(v["fl_npc_money"], budget_of(v["fl_budget"]))]
     minutes = number_of(v["fl_minutes"], "The time limit")
-    return args + (["--rounds", rounds] if rounds else []) + (["--minutes", minutes] if minutes else [])
+    return args + (["--minutes", minutes] if minutes else [])
 
 
 def craft_args(v):
@@ -208,7 +218,16 @@ def craft_args(v):
     return args
 
 
-ARGS = {"overlay": overlay_args, "crawler": crawler_args, "full": full_args, "craft": craft_args,
+def store_args(v):
+    args = ["store.py"] + ["--dry-run"] * v["st_dry"]
+    if v["st_place"]:
+        if not v["st_name"].strip():
+            raise ValueError("Type the store's name, to set it up.")
+        args += ["--place", v["st_name"].strip()]
+    return args
+
+
+ARGS = {"overlay": overlay_args, "crawler": crawler_args, "full": full_args, "store": store_args, "craft": craft_args,
         "update": lambda v: ["market.py", "--update-stale"]}
 
 
@@ -335,6 +354,11 @@ class App:
         self.results = []
         self.listed = []
 
+        self.sync_now = threading.Event()   # Sync now, or something to tell the server at once
+        self.sync_events = queue.Queue()     # ("started" / "ended", text) for the server's events
+        self.server_cfg, self.running_now, self.last_outcome = {}, set(), ""
+        threading.Thread(target=self.sync_loop, daemon=True).start()
+
         root.title("Maple tools")
         root.protocol("WM_DELETE_WINDOW", self.close)
         self.build()
@@ -353,8 +377,8 @@ class App:
         tabs = ttk.Notebook(panes)
         panes.add(tabs, weight=3)
         for title, make in (("Overlay", self.build_overlay), ("Crawler", self.build_crawler),
-                            ("Full sell loop", self.build_full), ("Crafting", self.build_craft),
-                            ("Custom list", self.build_custom), ("Equipment finder", self.build_finder)):
+                            ("Full sell loop", self.build_full), ("My store", self.build_store), ("Crafting", self.build_craft),
+                            ("Custom list", self.build_custom), ("Equipment finder", self.build_finder), ("Server", self.build_server)):
             page = ttk.Frame(tabs, padding=12)
             page.columnconfigure(1, weight=1)
             tabs.add(page, text=title)
@@ -450,13 +474,95 @@ class App:
         self.entry(page, 2, "Budget", "fl_budget", "like 50000, 250k or 1.5m")
         self.entry(page, 3, "Channels", "fl_channels", "only these, in order: 40-1, or 1,3,20,39")
         self.entry(page, 4, "Sell when under", "fl_sell_below", "% of the budget left")
-        self.entry(page, 10, "Rooms", "fl_rooms", "only these, in order: all are " + ALL_ROOMS + ", or 3,10,15")
+        self.entry(page, 10, "Rooms", "fl_rooms", "each once, in this order, then it sells and ends: all are " + ALL_ROOMS + ", or 3,10,15")
         self.choice(page, 5, "Custom deals", "fl_custom", (("off", "Ignore them"), ("limit", "Buy up to each item's limit"),
                                                            ("profits", "Split the budget, no limit")))
-        self.entry(page, 6, "Custom start", "fl_custom_start", "split only: how much of the budget custom deals start with (0: profits only)")
-        self.entry(page, 7, "Rounds", "fl_rounds", "rooms (empty: until stopped)")
+        self.entry(page, 6, "NPC deals get", "fl_npc_money", "of the budget, and no more; the rest is for store and split custom deals (empty: all)")
         self.entry(page, 8, "Time limit", "fl_minutes", "minutes (empty: none)")
-        self.controls(page, 11, "full")
+        self.check(page, 12, "Store deals: also buy market deals from profits, to sell in my store (ends at 10 items)", "fl_store")
+        self.entry(page, 13, "Store deal", "fl_store_percent", "% or more under the price the store would list it at")
+        self.controls(page, 14, "full", lambda parent: ttk.Button(parent, text="Reset where it stopped", command=self.reset_loop))
+        self.note(page, 15, "Stopped (Esc held, Stop, the time limit), it goes on next time from the room and channel it was on, with "
+                            "the money it had. Reset starts the next run fresh, with the budget above.")
+
+    def build_store(self, page):
+        self.note(page, 0, "Lists what's on the custom list and in your inventory in your own store, priced from MeowDB and the "
+                           "bot's scans, and opens it. Find a spot and set the store up yourself first, with your inventory "
+                           "window showing beside it. It places everything at its own prices, then asks before it opens the store.")
+        self.note(page, 1, "Never listed: Only 1 and equipment finder items, equipment, and anything not on the custom list.")
+        self.check(page, 2, "Dry run: read and price only, place nothing", "st_dry")
+        self.check(page, 3, "Set the store up first: find a free spot on this floor and use the store permit", "st_place")
+        self.entry(page, 4, "Store name", "st_name", "the name it's set up with")
+        self.controls(page, 5, "store", lambda parent: ttk.Button(parent, text="Forget store deals held", command=self.forget_holdings))
+
+    def build_server(self, page):
+        self.note(page, 0, "Shares this bot's store scans with your other bots, and theirs with it, through your server "
+                           "(see server/README.md): prices are then worked out from all of them. Also what each bot is doing. "
+                           "Join once with the server's address and its admin key; the admin key isn't kept.")
+        self.entry(page, 1, "Server address", "sv_url", "like https://maple-server.up.railway.app")
+        self.entry(page, 2, "This bot's name", "sv_name", "how the other bots and Discord see it")
+        line = ttk.Frame(page)
+        line.grid(row=3, column=1, sticky="w", pady=3)
+        ttk.Button(line, text="Join the server", command=self.join_server).pack(side="left")
+        ttk.Button(line, text="Sync now", command=self.sync_now.set).pack(side="left", padx=6)
+        self.server_state = tk.StringVar()
+        tk.Label(line, textvariable=self.server_state, fg="#666").pack(side="left", padx=6)
+        self.check(page, 4, "Share scans and status with the server (every minute, in the background)", "sv_on")
+        self.var("sv_key")  # this bot's key from joining: kept with the settings, not shown
+        self.show_server_state()
+
+    def show_server_state(self):
+        joined = bool(self.vars["sv_key"].get())
+        self.server_state.set("joined" if joined else "not joined yet")
+
+    def join_server(self):
+        url, name = self.vars["sv_url"].get().strip(), self.vars["sv_name"].get().strip()
+        if not url.startswith(("http://", "https://")) or not name:
+            messagebox.showerror("Server", "Type the server's address (starting with https://) and a name for this bot first.")
+            return
+        admin = simpledialog.askstring("Server", "The server's admin key (ADMIN_KEY in Railway). It's only used to join, not kept:",
+                                       show="*", parent=self.root)
+        if not admin:
+            return
+        try:
+            key = sync.join(url, admin.strip(), name)
+        except sync.SyncError as e:
+            messagebox.showerror("Server", f"Couldn't join: {e}")
+            return
+        self.vars["sv_key"].set(key)
+        self.vars["sv_on"].set(True)
+        self.remember()
+        self.show_server_state()
+        self.log("server", f"joined {url} as {name}: sharing is on")
+        self.sync_now.set()
+
+    def sync_loop(self):
+        """The server, every SYNC_EVERY seconds (or at once on Sync now), on its own thread: it never
+        holds up the window or a bot. Its lines go to the log through the same queue as the tools'."""
+        last_files, said = 0.0, ""
+        while True:
+            self.sync_now.wait(SYNC_EVERY)
+            self.sync_now.clear()
+            cfg, running = dict(self.server_cfg), set(self.running_now)
+            if not (cfg.get("on") and cfg.get("url") and cfg.get("key")):
+                continue
+            client = sync.Client(cfg["url"], cfg["key"])
+            try:
+                while not self.sync_events.empty():
+                    sync.event(client, *self.sync_events.get_nowait())
+                files = time.monotonic() - last_files > SYNC_FILES_EVERY
+                summary = sync.run_once(client, running=running, last_outcome=cfg.get("last", ""), files=files)
+                if files:
+                    last_files = time.monotonic()
+                text = f"synced: {summary}"
+                if not summary.startswith("0 up, 0 down") or said.startswith("can't"):
+                    self.lines.put(("server", text))
+                said = text
+            except (sync.SyncError, OSError, ValueError) as e:  # the bots carry on regardless: tried again next round
+                text = f"can't sync: {e}"
+                if text != said:
+                    self.lines.put(("server", text))
+                said = text
 
     def build_craft(self, page):
         self.note(page, 0, "Works out what's profitable to craft, from saved prices, and opens the results in your browser.")
@@ -523,8 +629,11 @@ class App:
         self.item_only_one = tk.BooleanVar(value=False)
         ttk.Checkbutton(form, text="Only 1: never buy more than one, in any mode (an upgrade, not for merching)",
                         variable=self.item_only_one, command=self.only_one_changed).grid(row=5, column=0, columnspan=4, sticky="w", pady=(4, 0))
-        ttk.Radiobutton(form, text="Wait for my OK", value=True, variable=self.item_confirm).grid(row=6, column=0, sticky="w", pady=(4, 0))
-        ttk.Radiobutton(form, text="Buy without asking", value=False, variable=self.item_confirm).grid(row=6, column=1, columnspan=3, sticky="w", pady=(4, 0))
+        self.item_store = tk.BooleanVar(value=False)
+        self.store_box = ttk.Checkbutton(form, text="Sell it in my store (My store tab); otherwise it's only held", variable=self.item_store)
+        self.store_box.grid(row=6, column=0, columnspan=4, sticky="w")
+        ttk.Radiobutton(form, text="Wait for my OK", value=True, variable=self.item_confirm).grid(row=7, column=0, sticky="w", pady=(4, 0))
+        ttk.Radiobutton(form, text="Buy without asking", value=False, variable=self.item_confirm).grid(row=7, column=1, columnspan=3, sticky="w", pady=(4, 0))
         buttons = ttk.Frame(right)
         buttons.pack(fill="x", pady=(6, 0))
         ttk.Button(buttons, text="Save item", command=self.save_item).pack(side="left")
@@ -778,12 +887,16 @@ class App:
         self.item_limit.set("" if item["limit"] is None else str(item["limit"]))
         self.item_confirm.set(item["confirm"])
         self.item_only_one.set(item["only_one"])
+        self.item_store.set(item["store"])
         self.only_one_changed()
 
     def only_one_changed(self):
         if self.item_only_one.get():
             self.item_limit.set("1")
         self.limit_entry.configure(state="disabled" if self.item_only_one.get() else "normal")
+        if self.item_only_one.get():  # an upgrade to wear: never sold
+            self.item_store.set(False)
+        self.store_box.configure(state="disabled" if self.item_only_one.get() else "normal")
 
     def save_item(self):
         name = self.chosen_name()
@@ -794,7 +907,8 @@ class App:
         except ValueError as e:
             messagebox.showerror("Custom list", str(e))
             return
-        custom_items.update(name, confirm=self.item_confirm.get(), only_one=self.item_only_one.get(), **changes)
+        custom_items.update(name, confirm=self.item_confirm.get(), only_one=self.item_only_one.get(),
+                            store=self.item_store.get() and not self.item_only_one.get(), **changes)
         self.log("list", f"saved {name}")
         self.show_list(select=name)
 
@@ -849,12 +963,13 @@ class App:
             return
         self.remember()
         try:
-            self.jobs[tool] = Job(tool, args, self.lines, graceful=tool in ("crawler", "full"))
+            self.jobs[tool] = Job(tool, args, self.lines, graceful=tool in ("crawler", "full", "store"))
         except OSError as e:
             messagebox.showerror(TOOLS[tool], f"Couldn't start it: {e}")
             return
         self.outcome.pop(tool, None)
         self.log(tool, "started: " + " ".join(args))
+        self.sync_events.put(("started", TOOLS[tool]))
         self.refresh_buttons()
 
     def stop(self, tool):
@@ -873,6 +988,8 @@ class App:
         else:
             self.outcome[tool] = (f"ended with an error ({code}): see the log", "#c0392b")
         self.log(tool, self.outcome[tool][0])
+        self.sync_events.put(("ended", f"{TOOLS[tool]}: {self.outcome[tool][0]}"))
+        self.last_outcome = f"{TOOLS[tool]} {self.outcome[tool][0]}"
         if tool == "update":
             self.progress = None
             self.read_dump(force=True)
@@ -895,6 +1012,26 @@ class App:
             else:
                 text, color = self.outcome.get(tool, ("not running", "#666"))
             status.configure(text=text, fg=color)
+
+    def reset_loop(self):
+        state = HERE / "data" / "loop_state.json"
+        if not state.exists():
+            messagebox.showinfo(TOOLS["full"], "Nothing to reset: the next run starts fresh.")
+            return
+        if messagebox.askyesno(TOOLS["full"], "Forget where the last run stopped, and its money? The next run starts fresh, with the "
+                                              "budget on this tab. Store deals held stay held."):
+            state.unlink(missing_ok=True)
+            self.log("full", "reset: the next run starts fresh")
+
+    def forget_holdings(self):
+        held = holdings.load()
+        if not held:
+            messagebox.showinfo(TOOLS["store"], "No store deals are held.")
+            return
+        if messagebox.askyesno(TOOLS["store"], f"Forget the {len(held)} store deals held ({', '.join(sorted(held))})? Do this once they've "
+                                               "sold. Any still in your inventory get sold at the NPC on the next sell trip."):
+            holdings.save({})
+            self.log("store", f"forgot {len(held)} store deals held")
 
     def open_page(self):
         if CRAFT_PAGE.exists():
@@ -945,6 +1082,11 @@ class App:
             self.meow_button.state(["!disabled"] if due else ["disabled"])
 
     def tick_meow(self):
+        # what the sync thread works from: read here, on the window's own thread
+        if "sv_on" in self.vars:
+            self.server_cfg = {"on": self.vars["sv_on"].get(), "url": self.vars["sv_url"].get().strip(),
+                               "key": self.vars["sv_key"].get(), "last": self.last_outcome}
+        self.running_now = set(self.jobs)
         self.read_dump()
         if self.list_file_time() != self.list_time:  # a bot bought something
             self.show_list()

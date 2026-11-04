@@ -165,8 +165,9 @@ pays, up to the full stock. After the room it changes channel with the keyboard
   spend 9,999 to make 1.
 - **Big buys need a real margin** (`big_buy`, default 25% and 5%): an NPC deal costing more than
   25% of the session budget is skipped unless its profit is at least 5% of the asking price.
-- **Minimum profit per purchase** (`min_total_profit`, default 50): quantity × profit per item
-  must reach it, so one item at +2 is skipped but 30 of them at +2 are bought. For market deals
+- **Minimum profit per purchase** (`min_total_profit`, set to 300): quantity × profit per item
+  must reach it, so 83 ores at +1 are skipped but 200 at +10 in one purchase are bought. Store
+  deals don't need it: they can stack up from small buys. For market deals
   the profit is estimated from selling at the 24h median after the 3% shop fee.
 - **Never-buy list** in the same file: items whose name contains any of these words are
   always skipped. The default is `"arrow"`, which covers every arrow for bows and crossbows.
@@ -217,11 +218,12 @@ bought or skipped is logged to `logs\crawl_<date>.csv`, with a summary at the en
 
 In the full sell loop, the launcher's Custom deals setting (or `--buy-custom`, `--no-custom-buy`,
 `--custom-from-profits`) has three choices. Ignore them. Buy up to each item's limit, sharing the budget.
-Or split the money, with no limit on any item: Custom start (`--custom-start`) is how much of the budget
-custom deals begin with, and the rest is only for NPC deals. Sales fill the money back up to the overall
-budget first, and whatever they bring in past it is the only other money for custom deals. With a budget
-of 70k and a start of 10k, once the 10k is spent nothing more is spent on custom deals until the money
-climbs past 70k. Each item's price rule still applies, and so does its confirm setting.
+Or split the money, with no limit on any item: "NPC deals get" (`--npc-money`) is NPC deals' share of
+the budget, and the rest is for custom (and store) deals. NPC money is only ever filled back up to that
+share: everything sales bring in past it goes to the custom and store deals. With a budget of 70k and
+NPC deals getting 20k, custom and store deals start with 50k, and every NPC profit past 20k adds to
+it. Empty: NPC deals get the whole budget, and the others only profits. Each item's price rule still
+applies, and so does its confirm setting.
 
 The launcher's Equipment finder tab is for one piece of equipment with the stats you want. Pick it, fill in
 the least of each stat and of scroll slots left (empty boxes aren't checked), and a price rule, and it goes on
@@ -237,6 +239,10 @@ split has no limits. It's for an upgrade you mean to wear. Reset bought count le
 Throwing stars (with Steely Throwing Knives, Snowball, Wooden Top and Icicle) count as one item at the
 listed price, whatever number the listing shows, as they get recharged. They're market or custom list
 items, never NPC deals, and are never sold to the NPC.
+
+`data\freemarket_scans.json` holds all of that log and the `logs\crawl_<date>.csv` deals in one file, for
+sharing: rewritten every 5 minutes of crawling and at the end of a run. It's named by a random contributor id,
+and holds other players' shop names as they were read, and what your bot bought.
 
 Every store it opens goes into `data\market_scans.sqlite` (never uploaded): each listing's price,
 amount and whether it's grey (sold), with the shop's owner, title, room and channel. An owner's shop
@@ -289,6 +295,52 @@ MapleStory runs as administrator, and Windows silently drops clicks and keys sen
 by normal programs. So `crawler.bat` asks for administrator rights when it starts (the
 Windows "allow changes" prompt). The crawler refuses to run without them rather than
 clicking into nothing.
+
+## Your own store (My store tab)
+
+`store.py` lists what the bot bought to sell on in your own store, and opens it. Find a spot and set
+the store up yourself, with your inventory window showing beside it, then press Start.
+
+- **What it lists:** the full sell loop's store deals (`data\holdings.json`), and custom list items
+  ticked "Sell it in my store", from your inventory's Equip, Use and Etc tabs (the rows that show
+  without scrolling). Never Only 1 or equipment finder items, equipment, or anything else.
+- **How it knows an item:** by hovering it and reading its tooltip (not by its icon: some ores look
+  alike). Each row is read back once listed, and has to show the item's name and price: one that
+  doesn't is taken back out, and it goes on with the next item.
+- **Prices:** 1 mesos under the reference price (`pricing.py`, the same one store deals are bought
+  by): MeowDB's median and the bot's scans of the last 7 days (the midpoint of what was asked and
+  what sold), each weighted by how much data it has. Troll asks, and grey rows left by the bot's
+  own purchases, are left out. Never under what was paid plus the store's 3%, or
+  what the NPC pays. When that floor sets the price, or there's no market data, it says why.
+- **Asking you:** it places each item as soon as it knows it, at its own price, until the store is
+  full, for you to check in the store, and asks before it opens it. Everything goes in `logs\store_<time>.txt`.
+
+### Store deals (Full sell loop tab)
+
+With "Store deals" ticked, the full sell loop also buys market deals to sell in your store. "NPC
+deals get" is their share of the budget, and stays that: the rest of the budget is for store deals
+from the start, and so is everything NPC deals make past their share. Empty: NPC deals get it all,
+and store deals only have profits. Only kinds of item worth trading are bought (`store_rules.py`):
+scrolls (not HP, MP, Magic Def., Evasion, Cape Weapon Def. or Bottomwear DEF), throwing stars the
+NPC doesn't sell, Elixirs, and ETC items used in crafting, but not monster drops (except those in
+`allow_drops`) or ingots and gems selling at about what making them costs. How much of the budget
+one item can take goes by how often it sells: `demand_caps`. The restore items under `consumables` (Orange and White
+Potions, Unagi, Pure Water) are bought only at the NPC store's best value or better (Meat's 2 HP
+and Lemon's 1 MP a meso), and valued at what sellers with 50+ in stock ask. Of the store's 10 slots,
+`reserved_slots` keeps 2 for consumables and 3 for scrolls: other items get at most the other 5. A store deal is an ETC or USE item,
+not equipment and not on the custom list, at least the set % under its reference price, that the
+scans saw sold 5+ times in the last week. Each item is capped at 20% of the budget, unless one alone
+makes 10,000+. They're never sold at the NPC. An item takes one of the store's 10 slots once
+selling what's held would make 1,000+, or after it's been held 24 hours; at 10 the loop sells
+the rest at the NPC and ends. Smaller stacks keep building up, up to 15 different items, but
+no more than 20% of the budget can sit in stacks that don't take a slot yet. The store lists
+the 10 best: slots first (most profit first), then custom items set to sell, then stacks. The numbers are under `store_deals` in `crawler_settings.json`.
+
+## Several bots (Server tab)
+
+Bots on different PCs can share their store scans, so each works out prices from all of them, and
+see what the others are doing, through a small server of your own: `server/README.md` has how to
+put it on Railway and hook a second PC up. Each PC only needs this folder and `launcher.bat`.
 
 ## Disclaimer
 

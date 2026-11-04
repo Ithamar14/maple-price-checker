@@ -9,9 +9,14 @@ data/prices_lvl30_backup.json
 custom_search.txt
 custom_items.json
 data/market_scans.sqlite*
+data/freemarket_scans.json*
 data/equipment_stats.json
 launcher_settings.json
 tools/
 craft_calculator.html
 data/meowdb_snapshots/
 data/recipes_meowdb.json
+data/holdings.json*
+printscreens/store_setup/
+server/*.sqlite*
+data/loop_state.json*

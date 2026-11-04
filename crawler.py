@@ -42,9 +42,12 @@ import mss
 import numpy as np
 
 import custom_items
+import holdings
 import market
 import price_checker as pc
+import pricing
 import scan_log
+import store_rules
 import equip_check
 
 HERE = Path(__file__).parent
@@ -245,6 +248,26 @@ class Controls:
             time.sleep(0.05)
             _send(INPUT(1, _INPUTUNION(ki=KEYBDINPUT(vk, scan, 0x0008 | ext | 0x0002, 0, 0))))
             self.wait(0.12)
+
+    def type_text(self, text):
+        """Types text as key presses (with Shift where a character needs it), for a name box."""
+        for ch in text:
+            res = user32.VkKeyScanW(ord(ch))
+            if res == -1 or res & 0xFF == 0xFF:
+                raise ValueError(f"can't type {ch!r} on this keyboard layout")
+            vk, shift = res & 0xFF, bool(res & 0x100)
+            if shift:
+                self.key_down("shift")
+            try:
+                self.ensure_front()
+                scan = user32.MapVirtualKeyW(vk, 0)
+                _send(INPUT(1, _INPUTUNION(ki=KEYBDINPUT(vk, scan, 0x0008, 0, 0))))
+                time.sleep(0.04)
+                _send(INPUT(1, _INPUTUNION(ki=KEYBDINPUT(vk, scan, 0x0008 | 0x0002, 0, 0))))
+            finally:
+                if shift:
+                    self.key_up("shift")
+            self.wait(0.08)
 
     def key_down(self, name):
         self.ensure_front()
@@ -451,7 +474,13 @@ class Crawler:
     profit_pool = 0     # all the money for custom deals
     custom_reserve = 0  # how much of it is what's left of the overall budget set aside at the start
     npc_budget = 0      # the overall budget
+    npc_cap = 0         # with --npc-money: NPC deals' money is filled back up to this and no more
     scans = None  # the store log (scan_log)
+    store_deals = False  # the full sell loop's market deals: bought from profits, to sell in your store
+    review_pause = True  # keep a store open REVIEW_PAUSE for check stats / custom search items, for you to look
+    store_ready = False  # as many store deals held as a store takes: the loop ends
+    prices = None  # pricing.Prices, once market prices are loaded
+    store_rules = None  # store_rules.Rules, the same
     scan_owner = ""
     def __init__(self, args):
         self.args = args
@@ -487,6 +516,20 @@ class Crawler:
         self.market_below = market_cfg.get("below_24h_median_percent", 30)
         self.market_min_reports = market_cfg.get("min_reports_24h", 5)
         self.market_auto = set(market_cfg.get("auto_buy", []))  # market deals bought without asking you
+        cfg = settings.get("store_deals", {})
+        self.store_cfg = {"below_reference_percent": cfg.get("below_reference_percent", 15),
+                          "min_slot_profit": cfg.get("min_slot_profit", 2000), "min_sold_7d": cfg.get("min_sold_7d", 5),
+                          "max_budget_percent": cfg.get("max_budget_percent", 20), "big_deal_profit": cfg.get("big_deal_profit", 10000),
+                          "full_after_hours": cfg.get("full_after_hours", 24), "max_items": cfg.get("max_items", 10),
+                          "max_held": cfg.get("max_held", 15), "max_waiting_percent": cfg.get("max_waiting_percent", 20),
+                          "ready_when_broke": cfg.get("ready_when_broke", 8), "keep_scanning": cfg.get("keep_scanning", True),
+                          "npc_sell_below_percent": cfg.get("npc_sell_below_percent", 30),
+                          "demand_caps": cfg.get("demand_caps", [[50, 20], [15, 10], [5, 5]]),
+                          "allow_drops": cfg.get("allow_drops", ["Leather", "Fragment of Magic"]),
+                          "refined_premium": cfg.get("refined_premium", 1.25),
+                          "consumables": cfg.get("consumables", {}), "hp_per_meso": cfg.get("hp_per_meso", 2),
+                          "mp_per_meso": cfg.get("mp_per_meso", 1),
+                          "reserved_slots": cfg.get("reserved_slots", {"consumable": 2, "scroll": 3})}
         self.market = market.Live(enabled=False)  # Free Market prices, after load_market()
         self.channel_refused = False  # the last channel change didn't take: the channel may be full
         self.sell_below = None  # stop opening shops once under this percent of the budget is left
@@ -519,6 +562,9 @@ class Crawler:
     def profit_each(self, hit, market=False):
         """Profit per item: what an NPC pays minus the price, or for a market deal, what selling
         it at today's 24h median brings after the shop fee, minus the price (an estimate)."""
+        if market and self.store_deals and self.prices:
+            reference = self.prices.reference(hit.name)[0]
+            return int((reference or 0) * (1 - SHOP_FEE)) - hit.asking
         if market:
             return int(self.market.lowest(hit.names)["median_24h"] * (1 - SHOP_FEE)) - hit.asking
         return hit.profit
@@ -537,8 +583,8 @@ class Crawler:
         only filled back up to the overall budget: anything past that is profit, the only other
         money for custom deals, which then have no limit."""
         money = self.budget - self.spent + mesos
-        most = self.npc_budget - self.custom_reserve
-        if self.custom_from_profits and money > most:
+        most = self.npc_cap or self.npc_budget - self.custom_reserve
+        if (self.custom_from_profits or self.store_deals) and money > most:
             self.profit_pool += money - most
             money = most
         self.budget, self.spent = money, 0
@@ -549,7 +595,13 @@ class Crawler:
         self.custom_reserve = max(0, self.custom_reserve - mesos)
 
     def money_low(self):
-        return self.sell_below is not None and self.budget - self.spent < self.budget * self.sell_below / 100
+        """Under sell_below percent of the money for NPC deals left. When they only have a share of the
+        budget (--npc-money), under npc_sell_below_percent of it at least: a small share runs dry
+        before 10% of it is left, and has nothing to spend in the meantime."""
+        if self.sell_below is None:
+            return False
+        percent = max(self.sell_below, self.store_cfg["npc_sell_below_percent"]) if self.npc_cap else self.sell_below
+        return self.budget - self.spent < self.budget * percent / 100
 
     def custom_entries(self, hit):
         """The custom list items this listing is; None if it could also be something not on the
@@ -604,6 +656,9 @@ class Crawler:
     def load_market(self):
         """Ask about and load the Free Market price dump (see market.py)."""
         self.market = market.prepare(self.db.ids)
+        self.prices = pricing.Prices(self.market, scan_log.FILE, self.store_cfg["consumables"])
+        self.store_rules = store_rules.Rules(self.db.ids, lambda name: self.prices.reference(name)[0],
+                                             self.store_cfg["allow_drops"], self.store_cfg["refined_premium"])
 
     def update_custom_prices(self):
         """The latest prices of everything on the custom list still to be bought, before the first
@@ -629,7 +684,135 @@ class Crawler:
         24 hours, and that median has to come from at least min_reports_24h reports."""
         return market.deal_limit(self.market.lowest(hit.names), self.market_below, self.market_min_reports)
 
+    def is_full(self, name, held):
+        cfg = self.store_cfg
+        return holdings.is_full(held, self.prices.reference(name)[0] if self.prices else None, cfg["min_slot_profit"],
+                                cfg["full_after_hours"], SHOP_FEE)
+
+    def store_full(self, held=None):
+        """How many held store deals take a store slot yet (see holdings.is_full)."""
+        held = holdings.load() if held is None else held
+        return sum(self.is_full(name, h) for name, h in held.items())
+
+    def slot_kind(self, name):
+        return store_rules.slot_kind(name, self.db.ids, self.store_cfg["consumables"])
+
+    def slot_counts(self, held):
+        """{kind: store slots its full items take}."""
+        counts = {}
+        for name, h in held.items():
+            if self.is_full(name, h):
+                counts[self.slot_kind(name)] = counts.get(self.slot_kind(name), 0) + 1
+        return counts
+
+    def slot_free(self, name, held):
+        """Whether a new item of this one's kind would have a store slot (reserved_slots: some are kept
+        for consumables and scrolls, so other items can't take them all)."""
+        return store_rules.fits(self.slot_kind(name), self.slot_counts(held), self.store_cfg["reserved_slots"], self.store_cfg["max_items"])
+
+    def waiting_money(self, held=None):
+        """Mesos in held store deals that don't take a slot yet: stacks still building up."""
+        held = holdings.load() if held is None else held
+        return sum(h["paid"] for name, h in held.items() if not self.is_full(name, h))
+
+    def waiting_cap(self):
+        return int(self.npc_budget * self.store_cfg["max_waiting_percent"] / 100)
+
+    def store_deal(self, hit):
+        """Whether to buy this listing to sell in your store: an ETC or USE item (not equipment, whose
+        stats set its price, nor a custom list item) at least below_reference_percent under its
+        reference price (pricing.py: the one the store lists it by), that's sold at least min_sold_7d
+        times in the bot's scans of the last week, from what's set aside and profits only. Out of
+        money with ready_when_broke slots full, the store's items count as ready. At most
+        max_held different items are held, and stacks still too small for a slot can't have more than
+        max_waiting_percent of the budget in them."""
+        cfg = self.store_cfg
+        if not self.prices or hit.options or self.watch.kind(hit) == "custom" \
+                or hit.name in self.db.slots or any(w in hit.name.lower() for w in self.never_buy):
+            return False
+        consumable = cfg["consumables"].get(hit.name)  # [HP, MP] it restores: bought by its value, not its market
+        if not consumable and self.store_rules and self.store_rules.why_not(hit.name):  # not worth trading (store_rules.py)
+            return False
+        reference = self.prices.reference(hit.name)[0]
+        if consumable:  # at the NPC store's best value (Meat's HP, Lemon's MP a meso) or better
+            limit = consumable[0] / cfg["hp_per_meso"] + consumable[1] / cfg["mp_per_meso"]
+            if reference:  # and selling it at its value has to make something after the store's 3%
+                limit = min(limit, int(reference * (1 - SHOP_FEE)) - 1)
+        else:
+            limit = reference * (100 - self.market_below) / 100 if reference else 0
+        if not reference or hit.asking > limit:
+            return False
+        # cheap enough: an opportunity, logged whether it's bought or not
+        sold = self.prices.sold(hit.name)
+        held = holdings.load()
+        if not self.store_ready and hit.asking > self.profit_pool and sold >= cfg["min_sold_7d"]:
+            full = self.store_full(held)
+            if full >= cfg["ready_when_broke"]:
+                self.set_store_ready(f"out of money for store deals with {full} store slots full")
+        why = ("the store's items are ready" if self.store_ready
+               else f"sold only {sold} times in a week" if sold < cfg["min_sold_7d"]
+               else f"no money for store deals yet ({self.profit_pool:,})" if hit.asking > self.profit_pool
+               else f"already {len(held)} different items held" if hit.name not in held and len(held) >= cfg["max_held"]
+               else f"no {self.slot_kind(hit.name)} slot left: {self.slot_counts(held)}" if hit.name not in held and not self.slot_free(hit.name, held)
+               else f"{self.waiting_money(held):,} already in stacks not worth a slot yet"
+               if self.waiting_money(held) + hit.asking > self.waiting_cap() and not (hit.name in held and self.is_full(hit.name, held[hit.name]))
+               else "")
+        self.log_opportunity(hit, reference, sold, why or "to buy")
+        return not why
+
+    def set_store_ready(self, why):
+        self.store_ready = True
+        then = ("store deals stop; it carries on crawling for NPC deals and the scans" if self.store_cfg["keep_scanning"]
+                else "the loop ends after this room")
+        print(f"    STORE READY: {why}: {then}")
+        self.doing(f"store ready ({why}): {then}")
+
+    def log_opportunity(self, hit, reference, sold, verdict):
+        """logs/store_opportunities.csv: every listing cheap enough to be a store deal, once per store
+        visit, with why it wasn't bought if it wasn't."""
+        key = (getattr(self, "current_place", ""), self.scan_owner, hit.name, hit.asking)
+        seen = self.__dict__.setdefault("opportunities_seen", set())
+        if key in seen:
+            return
+        seen.add(key)
+        path = LOG_DIR / "store_opportunities.csv"
+        new = not path.exists()
+        with open(path, "a", newline="", encoding="utf-8") as f:
+            w = csv.writer(f)
+            if new:
+                w.writerow(["time", "place", "owner", "item", "asking", "reference", "under_percent", "profit_each", "sold_7d", "verdict"])
+            w.writerow([f"{datetime.now():%Y-%m-%d %H:%M:%S}", key[0], key[1], hit.name, hit.asking, round(reference),
+                        round(100 * (1 - hit.asking / reference)), int(reference * (1 - SHOP_FEE)) - hit.asking, sold, verdict])
+
+    def item_cap_percent(self, name):
+        """How much of the budget one item may have in it, by how often the scans saw it sell in a
+        week (demand_caps: [[sales, percent], ...], most first): a slow seller ties money up longer."""
+        sold = self.prices.sold(name) if self.prices else 0
+        for least, percent in self.store_cfg["demand_caps"]:
+            if sold >= least:
+                return min(percent, self.store_cfg["max_budget_percent"])
+        return 0
+
+    def store_deal_cap(self, deal, quantity):
+        """Fewer of a store deal than quantity when all of that item held would cost over its share of
+        the budget (item_cap_percent), unless each one makes big_deal_profit or more. And when the item
+        still wouldn't take a slot after buying them, no more than fits under the cap on money in
+        stacks still building up."""
+        cfg = self.store_cfg
+        held = holdings.load()
+        was = held.get(deal.name, {"quantity": 0, "paid": 0, "first": time.time()})
+        if self.profit_each(deal, True) < cfg["big_deal_profit"]:  # all of it held, not this purchase alone
+            room = int(self.npc_budget * self.item_cap_percent(deal.name) / 100) - was["paid"]
+            quantity = max(0, min(quantity, room // max(deal.asking, 1)))
+        after = {**was, "quantity": was["quantity"] + quantity, "paid": was["paid"] + quantity * deal.asking}
+        if quantity and self.is_full(deal.name, after):
+            return quantity  # this purchase makes it worth a slot
+        waiting = self.waiting_money({k: v for k, v in held.items() if k != deal.name}) + was["paid"]
+        return max(0, min(quantity, (self.waiting_cap() - waiting) // max(deal.asking, 1)))
+
     def market_deal(self, hit):
+        if self.store_deals:
+            return self.store_deal(hit)
         limit = self.market_limit(hit)
         return (self.market_deals and limit is not None and hit.asking <= limit and self.watch.kind(hit) != "custom"
                 and not any(w in n.lower() for n in hit.names for w in self.never_buy))
@@ -883,6 +1066,8 @@ class Crawler:
         """Buys what's worth buying, and logs everything listed (see scan_log)."""
         visit = scan_log.ShopVisit(channel)
         self.scan_owner = ""
+        self.current_place = channel
+        self.opportunities_seen = set()  # a new store: its listings are new opportunities
         self.park_mouse()  # a cursor on the list brings up a tooltip over its rows
         try:
             visit.complete = self.read_store_pages(channel, visit)
@@ -961,6 +1146,15 @@ class Crawler:
                       else f"logged less than {self.scans.hours:g}h ago, not added again"))
         except Exception as e:
             print(f"    couldn't log this store: {e}")
+        if self.scans.export_due():
+            self.export_scans()
+
+    def export_scans(self):
+        if self.scans:
+            try:
+                self.scans.export()
+            except (sqlite3.Error, OSError) as e:  # another program can have the file open: next time
+                print(f"    couldn't update {scan_log.EXPORT_FILE.name}: {e}")
 
     def log_own_buy(self, channel, deal, quantity):
         if self.scans:
@@ -1018,7 +1212,7 @@ class Crawler:
                 self.doing(f"{' / '.join(sorted({self.watch.label(h) for h in new}))}: "
                            f"{', '.join(h.name for h in new)} (hold ESC to stop here)")
                 winsound.MessageBeep(winsound.MB_ICONASTERISK)
-                if not customs and not (self.buy_custom and all(self.watch.kind(h) == "custom" for h in new)):
+                if self.review_pause and not customs and not (self.buy_custom and all(self.watch.kind(h) == "custom" for h in new)):
                     self.controls.wait(REVIEW_PAUSE)  # your rules already say what to do with custom items
             if customs:  # before any other deal: it's what you're looking for
                 deal = customs[0]
@@ -1041,7 +1235,7 @@ class Crawler:
                 # a listing that's still there (not grey) after a purchase has stock left, because its
                 # stock number was read low: it gets bought again (a stack it can't read is skipped)
                 buys[key] += 1
-                ask = self.confirm_all or (not npc and deal.name not in self.market_auto)
+                ask = self.confirm_all or (not npc and not self.store_deals and deal.name not in self.market_auto)
                 if not self.buy(deal, frame, channel, market=not npc, ask_you=ask) or buys[key] >= MAX_BUYS_PER_LISTING:
                     done.add(key)
                 continue  # the list changes after a purchase: read this page again
@@ -1260,7 +1454,8 @@ class Crawler:
         return quantity if wanted is None else min(quantity, wanted)
 
     def _buy(self, deal, frame, channel, market=False, ask_you=False, custom=False):
-        from_profits = custom and self.custom_from_profits
+        store_deal = market and not custom and self.store_deals
+        from_profits = (custom and self.custom_from_profits) or store_deal
         remaining = self.profit_pool if from_profits else self.budget - self.spent
         self.doing(f"{'market deal' if market else 'deal'} on {deal.name}: reading the stock")
         # None when unreadable, which is normal for equipment (its icon shows no number). Which buy
@@ -1270,7 +1465,17 @@ class Crawler:
         stock_read = None if deal.stars else self.read_stock(frame, deal)
         stock = stock_read or 1
         quantity = self.buy_quantity(deal, stock, remaining, custom)
-        if market:
+        if store_deal:
+            capped = self.store_deal_cap(deal, quantity)
+            if capped < quantity:
+                print(f"    {quantity} would be over {self.item_cap_percent(deal.name):g}% of the budget, or put too much in "
+                      f"stacks not worth a slot yet ({self.waiting_money():,} of {self.waiting_cap():,}): buying {capped}")
+            quantity = capped
+            reference = self.prices.reference(deal.name)[0]
+            print(f"  STORE DEAL {deal.name}: asking {deal.asking:,}, reference {reference:,.0f} "
+                  f"({100 * (deal.asking - reference) / reference:+.0f}%), sold {self.prices.sold(deal.name)} times in a week, "
+                  f"stock {stock_read or 'not shown'}; auto-buy")
+        elif market:
             median = (self.market.lowest(deal.names) or {}).get("median_24h")  # a fixed price needs none
             against = f"24h median {median:,} ({100 * (deal.asking - median) / median:+.0f}%)" if median else "no market price"
             print(f"  {'CUSTOM SEARCH' if custom else 'MARKET DEAL'} {deal.name}: asking {deal.asking:,}, {against}, "
@@ -1293,7 +1498,7 @@ class Crawler:
             print(f"    not enough mesos ({before:,}); skipped")
             self.log(channel, deal, 0, "not enough mesos")
             return
-        if not custom:  # a custom list item is wanted, not flipped
+        if not custom and not store_deal:  # a custom list item is wanted, not flipped; a store deal can stack up from small buys
             total = quantity * self.profit_each(deal, market)
             if total < self.min_total_profit:
                 print(f"    {quantity} x {self.profit_each(deal, market):+,} = {total:+,} profit, under the "
@@ -1453,8 +1658,15 @@ class Crawler:
                 self.log_custom_buy(channel, deal, quantity, expected, "you confirmed" if ask_you else "auto-bought")
                 wanted = self.custom_left(deal)
                 print(f"    custom list: {'no limit' if wanted is None else f'{wanted} more to buy'} of {deal.name}")
+            if store_deal:
+                held = holdings.record(deal.name, quantity, expected)
+                full = self.store_full()
+                print(f"    held for your store: {held['quantity']:,} x {deal.name}, {full} of {self.store_cfg['max_items']} store slots full")
+                if full >= self.store_cfg["max_items"]:
+                    self.set_store_ready(f"{full} store slots full")
             if market:
-                value = quantity * (self.market.lowest(deal.names) or {}).get("median_24h", 0)
+                value = quantity * ((self.prices.reference(deal.name)[0] or 0) if store_deal
+                                    else (self.market.lowest(deal.names) or {}).get("median_24h", 0))
                 self.bought.append((deal.name, quantity, expected, value, "market"))
                 worth = f"about {value:,} at today's market median"
                 how += " (market deal, you confirmed)" if ask_you else " (market deal, auto-bought)"
@@ -1525,6 +1737,10 @@ class Crawler:
             text.append("")
         text += [f"{when:%H:%M:%S}  {quantity:,} x {name} at {paid / quantity:,.0f} each = {paid:,} ({where}, {how})"
                  for when, name, quantity, paid, where, how in self.custom_bought]
+        npc = [b for b in getattr(self, "bought", []) if b[4] == "npc"]
+        if npc:  # counted when bought, sold yet or not
+            paid, worth = sum(b[2] for b in npc), sum(b[3] for b in npc)
+            text += ["", f"NPC deals: {sum(b[1] for b in npc):,} items for {paid:,} mesos, worth {worth:,} at the NPC: {worth - paid:+,} profit"]
         self.custom_log.write_text("\n".join(text) + "\n", "utf-8")
 
     def log_market_buy(self, channel, deal, quantity, how):
@@ -1934,7 +2150,15 @@ def main(sell_loop=None):
         custom.add_argument("--custom-from-profits", action="store_true",
                             help="the budget is only for NPC deals; custom list items are bought with no limit, only from profits past it")
         ap.add_argument("--custom-start", type=parse_mesos, default=0,
-                        help="with --custom-from-profits: how much of the budget custom deals may spend from the start (default 0)")
+                        help="with --custom-from-profits or --store-deals: how much of the budget they may spend from the start (default 0)")
+        ap.add_argument("--npc-money", type=parse_mesos,
+                        help="with --store-deals or --custom-from-profits: NPC deals get this much of the budget and no more; "
+                             "the rest, and every profit past it, is for store and custom deals (instead of --custom-start)")
+        ap.add_argument("--fresh", action="store_true",
+                        help="start fresh instead of going on from where the last run stopped (data/loop_state.json)")
+        ap.add_argument("--store-deals", action="store_true",
+                        help="also buy market deals, from profits only, to sell in your own store (see store_deals in crawler_settings.json); "
+                             "--market-percent is how far under their reference price")
     if sell_loop:
         ap.add_argument("--rounds", type=int, default=0, help="stop after this many rooms (default: until you stop it)")
         ap.add_argument("--rooms", type=parse_rooms,
@@ -1951,9 +2175,12 @@ def main(sell_loop=None):
     market.update_saved = args.market_update
     if sell_loop:  # only what an NPC pays well for is worth buying to sell there, without asking. Custom
         # list items are bought too if you say so, by their own rules, and are never sold (walker.keep_reason).
-        args.confirm, args.npc_only = False, True
+        args.confirm, args.npc_only = False, not args.store_deals
 
     crawler = Crawler(args)
+    crawler.store_deals = bool(getattr(args, "store_deals", False))
+    if sell_loop:  # nobody is watching the full sell loop: those items are only logged, not waited on
+        crawler.review_pause = False
     if not args.dry_run:
         crawler.confirm_all = ask_confirm_mode() if args.confirm is None else args.confirm
         print("  every purchase waits for you to press OK or Cancel" if crawler.confirm_all
@@ -1977,7 +2204,13 @@ def main(sell_loop=None):
             print(f"    {item['name']}: {custom_items.describe(item)}, "
                   f"{'no limit' if wanted is None else str(wanted) + ' more of ' + amount}, "
                   f"{'asks you' if item['confirm'] else 'auto-buy'}")
-    if crawler.market and crawler.market_deals:
+    if crawler.store_deals:
+        crawler.market_below = args.market_percent or crawler.store_cfg["below_reference_percent"]
+        cfg = crawler.store_cfg
+        print(f"  store deals: {crawler.market_below:g}% or more under their reference price, sold {cfg['min_sold_7d']}+ times in "
+              f"the last week, from profits only, up to {cfg['max_budget_percent']:g}% of the budget each (no cap at "
+              f"{cfg['big_deal_profit']:,}+ profit each); ends once {cfg['max_items']} items are ready for your store")
+    elif crawler.market and crawler.market_deals:
         crawler.market_below = args.market_percent or market.ask_percent(crawler.market_below)
         print(f"  market deals: {crawler.market_below:g}% or more under the 24h median; "
               + ("you confirm each one" if crawler.confirm_all
@@ -2012,6 +2245,7 @@ def main(sell_loop=None):
             crawler.marks.doing("crashed: see the console")
             raise
         finally:
+            crawler.export_scans()
             finished.append(time.monotonic())
 
     overlay = CrawlOverlay()
