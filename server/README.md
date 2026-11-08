@@ -68,5 +68,10 @@ stores to** gets its own copy, so a scroll bot and an equipment bot can each pic
 A buyer (the full sell loop, with its **Server** tab on) judges the scouter's stores between shops,
 by its own rules and money. It goes straight to the store with the most profit in it, finds the
 shop by the name on its sign or by its owner, and buys. Then it goes back to the room and channel
-it was on. Stores over 10 minutes old are too late. Every PC needs the server joined. The game
+it was on. Stores over 10 minutes old are too late.
+
+A buyer can also just wait for finds (**Wait for the scouters' finds** on the Full sell loop tab):
+it stays where it is, crawls nothing, and only moves to buy what the scouters find, by the same
+rules and money. It waits again wherever the last find was, and still goes to sell when the
+money runs low. Every PC needs the server joined. The game
 windows can be different sizes, as shops are found by name and owner, not by screen position.

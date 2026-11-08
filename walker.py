@@ -1512,6 +1512,8 @@ def prune_steps(folder=None, limit_mb=STEPS_LIMIT_MB):
 
 STATE_FILE = Path(__file__).parent / "data" / "loop_state.json"
 SCOUT_STATE_FILE = Path(__file__).parent / "data" / "scout_state.json"  # a scouter's place: never mixed up with a buyer's money
+WAIT_POLL = 2.0          # seconds between looks at the scouters' finds, for a buyer that waits for them
+WAIT_NOTE_EVERY = 600.0  # seconds between "still waiting" lines
 STATE_MONEY = ("budget", "spent", "npc_budget", "profit_pool", "custom_reserve", "npc_cap")
 
 
@@ -1565,6 +1567,7 @@ def run_full(shops, channels, budget, rounds=0, sell_below=10):
     shops.spent = 0
     shops.sell_below = sell_below
     scout = getattr(shops, "scout", False)
+    waiting = getattr(shops, "waiting", False) and not scout  # a buyer that stays put, only moving for finds
     resumed = None if getattr(shops.args, "fresh", False) else load_state(state_file(shops))
     if getattr(shops.args, "fresh", False):
         clear_state(state_file(shops))
@@ -1688,6 +1691,64 @@ def run_full(shops, channels, budget, rounds=0, sell_below=10):
                     walker.note(f"couldn't get back into channel {back_channel}: moving on")
                     return
 
+    def wait_for_finds():
+        """Stays where it is and crawls nothing: only goes for the scouters' finds that pass this bot's own rules
+        and money (check_tips), and waits again wherever it ends up. Sells when the money runs low, then walks
+        back to the room it was last in."""
+        nonlocal room, sell_next, earned, problems
+        if not getattr(shops, "tips", None):
+            return "stopped: waiting for finds needs the server (the launcher's Server tab, joined and on)"
+        kind, here = walker.place()
+        room = here if kind == "room" else room
+        walker.note(f"-- waiting for the scouters' finds, budget {shops.budget - shops.spent:,}{profits()}: "
+                    f"it stays here and only moves to buy one")
+        followed, noted = 0, time.monotonic()
+        while True:
+            try:
+                controls.ensure_front()
+                if sell_next:
+                    if walker.place()[0] == "room" and not walker.on_door and room not in OTHER_LAYOUT:
+                        walker.drop_to_portal()
+                    walker.on_door = False
+                    walker.mesos_from_sales = 0
+                    walker.trip()
+                    earned += walker.mesos_from_sales
+                    shops.sold_for(walker.mesos_from_sales)
+                    shops.update_info()
+                    walker.note(f"-- sold for {walker.mesos_from_sales:,}: budget is now {shops.budget:,}{profits()} ({duration()} so far)")
+                    sell_next = False
+                    save_state(shops, room, None, 0, False)
+                    if shops.budget <= 0:
+                        return "no budget left, even after selling"
+                    walker.go_to_room(room or rooms[0])  # back to a room to wait in
+                    room = room or rooms[0]
+                try:
+                    shops.check_tips()
+                except crawler.TipCall as call:
+                    follow(call.task)
+                    followed += 1
+                    kind, here = walker.place()
+                    room = here if kind == "room" else room
+                    problems = 0
+                    sell_next = shops.money_low()
+                    if sell_next:
+                        walker.note("-- budget low, going to sell")
+                    save_state(shops, room, None, 0, sell_next)
+                    continue
+                if time.monotonic() - noted > WAIT_NOTE_EVERY:
+                    noted = time.monotonic()
+                    walker.note(f"-- still waiting: {followed} find{'s' if followed != 1 else ''} gone for, "
+                                f"budget {shops.budget - shops.spent:,}{profits()} ({duration()} so far)")
+                controls.wait(WAIT_POLL)
+            except crawler.Stop as e:
+                if controls.stop.is_set() or time.monotonic() > deadline:
+                    raise
+                problems += 1
+                walker.shot(f"{e} (problem {problems} of {MAX_RECOVERIES} in a row)")
+                if problems >= MAX_RECOVERIES:
+                    raise crawler.Stop(f"{e}, {problems} times in a row")
+                walker.recover()
+
     if resumed:
         room = resumed.get("room") if resumed.get("room") in rooms else None
         todo = None if resumed.get("todo") is None or room is None else [c for c in resumed["todo"] if c in channels]
@@ -1696,6 +1757,8 @@ def run_full(shops, channels, budget, rounds=0, sell_below=10):
         walker.note(f"-- going on from where it stopped ({resumed.get('saved')}): {where}, budget {shops.budget - shops.spent:,}{profits()}"
                     f"{', selling first' if sell_next else ''}. Reset on the launcher's tab to start fresh instead")
     try:
+        if waiting:
+            return wait_for_finds()
         while True:
             try:
                 controls.ensure_front()
@@ -1799,7 +1862,7 @@ def run_full(shops, channels, budget, rounds=0, sell_below=10):
         walker.marks.clear("click", "target", "minimap", "npc")
         npc = [b for b in getattr(shops, "bought", []) if b[4] == "npc"]  # its profit counts when bought, sold yet or not
         deals = f"; NPC deals {sum(b[2] for b in npc):,} for {sum(b[3] for b in npc):,} of NPC value ({sum(b[3] - b[2] for b in npc):+,})" if npc else ""
-        walker.note(f"{finished_rounds} rounds in {duration()}" + ("; scouting, nothing bought" if scout else
+        walker.note((f"waited {duration()}" if waiting else f"{finished_rounds} rounds in {duration()}") + ("; scouting, nothing bought" if scout else
                     f"; {earned:,} mesos from the NPC{deals}; budget left {shops.budget - shops.spent:,}{profits()}"))
         if ended:
             clear_state(state_file(shops))

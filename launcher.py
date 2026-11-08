@@ -86,7 +86,7 @@ def defaults():
         "sv_on": False, "sv_url": "", "sv_name": "", "sv_key": "",
         "st_dry": False, "st_place": False, "st_name": "",
         "fl_budget": "", "fl_custom": "off", "fl_npc_money": "", "fl_channels": "40-1", "fl_rooms": ALL_ROOMS,
-        "fl_store": False, "fl_store_percent": "15", "fl_minutes": "", "fl_sell_below": str(cfg.get("sell_below_budget_percent", 10)),
+        "fl_store": False, "fl_store_percent": "15", "fl_wait": False, "fl_minutes": "", "fl_sell_below": str(cfg.get("sell_below_budget_percent", 10)),
         "sc_channels": "40-1", "sc_rooms": ALL_ROOMS, "sc_send_to": "", "sc_minutes": "",
         "cf_margin": str(craft.get("margin_percent", 10)), "cf_disciplines": craft.get("disciplines") or ["Arcforge"],
     }
@@ -245,6 +245,10 @@ def full_args(v):
         args += ["--store-deals", "--market-percent", percent_of(v["fl_store_percent"], "The store deal %")]
     if v["fl_custom"] == "profits" or v["fl_store"]:  # NPC deals' share: the rest is for these
         args += ["--npc-money", npc_money_of(v["fl_npc_money"], budget_of(v["fl_budget"]))]
+    if v["fl_wait"]:
+        if not (v.get("sv_on") and v.get("sv_url", "").strip() and v.get("sv_key")):
+            raise ValueError("Join the server on the Server tab first, with sharing on: waiting for finds gets them from there.")
+        args += ["--wait-for-finds"]
     minutes = number_of(v["fl_minutes"], "The time limit")
     return args + (["--minutes", minutes] if minutes else [])
 
@@ -532,6 +536,8 @@ class App:
                                                            ("profits", "Split the budget, no limit")))
         self.entry(page, 6, "NPC deals get", "fl_npc_money", "of the budget, and no more; the rest is for store and split custom deals (empty: all)")
         self.entry(page, 8, "Time limit", "fl_minutes", "minutes (empty: none)")
+        self.check(page, 9, "Wait for the scouters' finds: stay put, crawl nothing, and only move to buy what they find "
+                            "(by the rules and money above; Rooms and Channels aren't used)", "fl_wait")
         self.check(page, 12, "Store deals: also buy market deals from profits, to sell in my store (ends at 10 items)", "fl_store")
         self.entry(page, 13, "Store deal", "fl_store_percent", "% or more under the price the store would list it at")
         self.controls(page, 14, "full", lambda parent: ttk.Button(parent, text="Reset where it stopped", command=self.reset_loop))

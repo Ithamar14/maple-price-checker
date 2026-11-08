@@ -2413,6 +2413,9 @@ def main(sell_loop=None):
         ap.add_argument("--scout-for", default="*", metavar="BOT",
                         help="with --scout: the buyer's name on the server (default: any bot that takes finds)")
         ap.add_argument("--no-finds", action="store_true", help="a buyer that doesn't go for a scouter's finds")
+        ap.add_argument("--wait-for-finds", action="store_true",
+                        help="a buyer that stays where it is, crawls nothing, and only moves to buy the scouters' finds "
+                             "(by its own rules and money); it still sells when the money runs low")
     market.add_update_flag(ap)
     ap.add_argument("--no-overlay", action="store_true",
                     help="don't draw what the crawler sees and does over the game")
@@ -2430,12 +2433,14 @@ def main(sell_loop=None):
     if sell_loop:
         import tips
         crawler.scout = bool(args.scout)
-        if args.scout or not args.no_finds:
+        crawler.waiting = bool(args.wait_for_finds) and not args.scout
+        if args.scout or not args.no_finds or crawler.waiting:
             crawler.tips = tips.Tips.from_settings(send_to=args.scout_for)
             if crawler.tips:
                 crawler.tips.start(take=not args.scout)
                 print(f"  scouting: buys nothing, sends finds to {args.scout_for if args.scout_for != '*' else 'any buyer'} through the server"
-                      if args.scout else "  takes the scouter's finds from the server, the most profitable first")
+                      if args.scout else "  waits where it is for the scouters' finds, and only moves to buy them" if crawler.waiting
+                      else "  takes the scouter's finds from the server, the most profitable first")
             elif args.scout:
                 print("  scouting, but the server isn't set up (the launcher's Server tab): finds are only logged")
     if sell_loop:  # nobody is watching the full sell loop: those items are only logged, not waited on
