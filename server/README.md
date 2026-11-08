@@ -60,8 +60,8 @@ scouter and a buyer before the server is on Railway.
 
 ## A scouter and a buyer
 
-A scouter (the **Full sell loop** tab, **Scout** ticked) goes round every room and channel. It
-buys, sells and judges nothing, and needs no budget. After each store, everything still for sale
+A scouter (the launcher's **Scouter** tab) goes round the rooms and channels you give it, for as
+long as it runs. It buys, sells and judges nothing, and needs no budget. After each store, everything still for sale
 there goes to the server, with where the store is and who owns it. Each buyer named in **Send
 stores to** gets its own copy, so a scroll bot and an equipment bot can each pick what they want.
 

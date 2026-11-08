@@ -22,6 +22,7 @@ import scan_log
 HERE = Path(__file__).parent
 SHARED_FILES = [HERE / "data" / "recipes_meowdb.json", HERE / "data" / "equipment_stats.json"]
 STATE_FILE = HERE / "data" / "loop_state.json"
+SCOUT_STATE_FILE = HERE / "data" / "scout_state.json"
 HOLDINGS_FILE = HERE / "data" / "holdings.json"
 TIMEOUT = 20
 UPLOAD_BATCH = 200   # store visits a request
@@ -175,7 +176,8 @@ def status(running, last_outcome=""):
     return {"time": datetime.now().astimezone().isoformat(timespec="seconds"), "running": sorted(running),
             "last": last_outcome, "room": state.get("room"), "channels_left": len(state.get("todo") or []),
             "npc_money": (state.get("budget") or 0) - (state.get("spent") or 0) if state else None,
-            "store_money": state.get("profit_pool") if state else None, "held": len(held)}
+            "store_money": state.get("profit_pool") if state else None, "held": len(held),
+            "scout_room": (read_json(SCOUT_STATE_FILE) or {}).get("room")}
 
 
 def run_once(client, log_path=None, running=(), last_outcome="", files=True):

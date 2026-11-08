@@ -1511,12 +1511,13 @@ def prune_steps(folder=None, limit_mb=STEPS_LIMIT_MB):
 
 
 STATE_FILE = Path(__file__).parent / "data" / "loop_state.json"
+SCOUT_STATE_FILE = Path(__file__).parent / "data" / "scout_state.json"  # a scouter's place: never mixed up with a buyer's money
 STATE_MONEY = ("budget", "spent", "npc_budget", "profit_pool", "custom_reserve", "npc_cap")
 
 
 def save_state(shops, room, todo, finished_rounds, sell_next, path=None):
     """Where the full sell loop is and its money, so a stopped one goes on from there next time."""
-    path = Path(path or STATE_FILE)
+    path = Path(path or state_file(shops))
     state = {"saved": datetime.now().isoformat(timespec="seconds"), "room": room, "todo": list(todo) if todo is not None else None,
              "finished_rounds": finished_rounds, "sell_next": sell_next, "scout": bool(getattr(shops, "scout", False)),
              **({} if getattr(shops, "scout", False) else {k: getattr(shops, k, 0) for k in STATE_MONEY})}  # a scouter has no money to keep
@@ -1524,6 +1525,10 @@ def save_state(shops, room, todo, finished_rounds, sell_next, path=None):
     part = path.with_name(path.name + ".part")
     part.write_text(json.dumps(state, indent=1), "utf-8")
     part.replace(path)
+
+
+def state_file(shops):
+    return SCOUT_STATE_FILE if getattr(shops, "scout", False) else STATE_FILE
 
 
 def load_state(path=None):
@@ -1560,9 +1565,9 @@ def run_full(shops, channels, budget, rounds=0, sell_below=10):
     shops.spent = 0
     shops.sell_below = sell_below
     scout = getattr(shops, "scout", False)
-    resumed = None if getattr(shops.args, "fresh", False) else load_state()
+    resumed = None if getattr(shops.args, "fresh", False) else load_state(state_file(shops))
     if getattr(shops.args, "fresh", False):
-        clear_state()
+        clear_state(state_file(shops))
     if resumed and not resumed.get("scout"):
         for k in STATE_MONEY:
             setattr(shops, k, resumed.get(k, getattr(shops, k)))
@@ -1797,7 +1802,7 @@ def run_full(shops, channels, budget, rounds=0, sell_below=10):
         walker.note(f"{finished_rounds} rounds in {duration()}" + ("; scouting, nothing bought" if scout else
                     f"; {earned:,} mesos from the NPC{deals}; budget left {shops.budget - shops.spent:,}{profits()}"))
         if ended:
-            clear_state()
+            clear_state(state_file(shops))
         else:  # stopped (Esc, Stop, the time limit, a problem): the next run goes on from here
             save_state(shops, room, todo, finished_rounds, sell_next)
             walker.note("-- saved where it stopped: the next run goes on from there (Reset on the launcher's tab to start fresh)")

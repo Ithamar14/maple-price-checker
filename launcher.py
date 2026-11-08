@@ -1,11 +1,16 @@
-"""One window for all the tools: start and stop the price checker overlay, the crawler, the full
-sell loop and the crafting calculator, keep MeowDB's prices up to date and edit the custom list.
-Everything you set stays set (launcher_settings.json).
+"""One window for the bots: the full sell loop, the scouter and your store, the custom list, the
+equipment finder and the bots' server, and MeowDB's prices kept up to date. Everything you set
+stays set (launcher_settings.json).
+
+    launcher.py            the bots (launcher.bat)
+    launcher.py overlay    the price checker overlay on its own (overlay.bat)
+    launcher.py craft      the crafting calculator on its own (crafting.bat)
 
 Each tool runs as its own program, with what it prints shown in the log at the bottom, so one
-crashing leaves this window open. The three that use the game's screen run one at a time.
+crashing leaves the window open. The ones that use the game's screen run one at a time, across
+these windows too (data/game_in_use.json): the overlay's boxes would be in a bot's screenshots.
 
-Start it with launcher.bat, which asks for the administrator rights the bots need.
+Start the bots with launcher.bat, which asks for the administrator rights they need.
 """
 import ctypes
 import json
@@ -46,9 +51,17 @@ MAX_LOG_LINES = 3000
 MAX_RESULTS = 200       # items shown in the custom list's search
 PROGRESS_RE = re.compile(r"progress (\d+) (\d+)")
 
-TOOLS = {"overlay": "Overlay", "crawler": "Crawler", "full": "Full sell loop", "store": "My store", "craft": "Crafting",
+TOOLS = {"overlay": "Overlay", "full": "Full sell loop", "scout": "Scouter", "store": "My store", "craft": "Crafting",
          "update": "MeowDB update"}
-ON_GAME = ("overlay", "crawler", "full", "store")  # these use the game's screen: one at a time
+ON_GAME = ("overlay", "full", "scout", "store")  # these use the game's screen: one at a time
+GRACEFUL = ("full", "scout", "store")           # told to stop, and given STOP_WAIT to do it
+GAME_LOCK = HERE / "data" / "game_in_use.json"   # which window's tool has the game, across the windows
+SCOUT_STATE = HERE / "data" / "scout_state.json"  # where the scouter stopped (walker.SCOUT_STATE_FILE)
+WINDOWS = {  # which window shows what: title, tabs, whether it talks to the server and updates MeowDB
+    "main": ("Maple tools", ("full", "scout", "store", "custom", "finder", "server"), True),
+    "overlay": ("Maple overlay", ("overlay",), False),
+    "craft": ("Maple crafting", ("craft",), False),
+}
 PRESS_KEYS = (0x25, 0x26, 0x27, 0x28, 0x12, 0x11, 0x10)  # arrows, alt, ctrl, shift: what a bot can hold down
 KEYEVENTF_KEYUP = 2
 CREATE_NO_WINDOW = 0x08000000
@@ -71,11 +84,10 @@ def defaults():
         "ov_market": True, "ov_percent": percent, "ov_min_profit": "1", "ov_interval": "1.0",
         "ov_tooltips": False, "ov_debug": False,
         "sv_on": False, "sv_url": "", "sv_name": "", "sv_key": "",
-        "st_dry": False, "st_place": False, "st_name": "", "cr_dry": False, "cr_budget": "", "cr_mode": "auto", "cr_deals": "npc", "cr_percent": percent,
-        "cr_custom_stop": False, "cr_channels": "40-1", "cr_single": False,
-        "cr_minutes": "", "cr_debug": False,
+        "st_dry": False, "st_place": False, "st_name": "",
         "fl_budget": "", "fl_custom": "off", "fl_npc_money": "", "fl_channels": "40-1", "fl_rooms": ALL_ROOMS,
-        "fl_store": False, "fl_store_percent": "15", "fl_scout": False, "fl_scout_for": "", "fl_rounds": "", "fl_minutes": "", "fl_sell_below": str(cfg.get("sell_below_budget_percent", 10)),
+        "fl_store": False, "fl_store_percent": "15", "fl_minutes": "", "fl_sell_below": str(cfg.get("sell_below_budget_percent", 10)),
+        "sc_channels": "40-1", "sc_rooms": ALL_ROOMS, "sc_send_to": "", "sc_minutes": "",
         "cf_margin": str(craft.get("margin_percent", 10)), "cf_disciplines": craft.get("disciplines") or ["Arcforge"],
     }
 
@@ -88,14 +100,62 @@ def load_settings():
         return values
     if saved.get("fl_custom_stop") is True and "fl_custom" not in saved:  # the tick box this used to be
         saved["fl_custom"] = "limit"
+    if "sc_send_to" not in saved and saved.get("fl_scout_for"):  # from when scouting was a tick box on the full sell loop
+        saved["sc_send_to"] = saved["fl_scout_for"]
     values.update({k: v for k, v in saved.items() if k in values and isinstance(v, type(values[k]))})
     return values
 
 
 def save_settings(values):
+    """Only the values given change: each window saves its own, and leaves the others' as they are."""
+    try:
+        saved = json.loads(SETTINGS_FILE.read_text("utf-8"))
+    except (OSError, ValueError):
+        saved = {}
+    known = defaults()
+    saved = {k: v for k, v in saved.items() if k in known}  # settings of tabs that are gone
+    saved.update(values)
     tmp = SETTINGS_FILE.with_suffix(".tmp")
-    tmp.write_text(json.dumps(values, indent=1), "utf-8")
+    tmp.write_text(json.dumps(saved, indent=1), "utf-8")
     tmp.replace(SETTINGS_FILE)
+
+
+def alive(pid):
+    """Whether a program with this id is still running."""
+    handle = ctypes.windll.kernel32.OpenProcess(0x1000, False, int(pid))  # PROCESS_QUERY_LIMITED_INFORMATION
+    if not handle:
+        return False
+    try:
+        code = ctypes.c_ulong()
+        return bool(ctypes.windll.kernel32.GetExitCodeProcess(handle, ctypes.byref(code))) and code.value == 259  # STILL_ACTIVE
+    finally:
+        ctypes.windll.kernel32.CloseHandle(handle)
+
+
+def game_taken(path=None):
+    """The tool another window has running on the game, or None."""
+    try:
+        lock = json.loads(Path(path or GAME_LOCK).read_text("utf-8"))
+    except (OSError, ValueError):
+        return None
+    if lock.get("pid") == os.getpid() or not alive(lock.get("pid", 0)):
+        return None
+    return lock.get("tool", "a tool")
+
+
+def take_game(tool, path=None):
+    path = Path(path or GAME_LOCK)
+    path.parent.mkdir(exist_ok=True)
+    path.write_text(json.dumps({"pid": os.getpid(), "tool": TOOLS[tool]}), "utf-8")
+
+
+def free_game(path=None):
+    path = Path(path or GAME_LOCK)
+    try:
+        if json.loads(path.read_text("utf-8")).get("pid") == os.getpid():
+            path.unlink()
+    except (OSError, ValueError):
+        pass
 
 
 # ---------------------------------------------------------------- what each tool is started with
@@ -173,22 +233,8 @@ def overlay_args(v):
     return args + ["--tooltip-slots"] * v["ov_tooltips"] + ["--debug"] * v["ov_debug"]
 
 
-def crawler_args(v):
-    args = ["crawler.py", "--market-update", "no",
-            "--npc-only" if v["cr_deals"] == "npc" else "--market-deals"]
-    if v["cr_deals"] == "market":
-        args += ["--market-percent", percent_of(v["cr_percent"], "The market deal %")]
-    args += custom_args(v["cr_custom_stop"])
-    if v["cr_dry"]:
-        return args + ["--dry-run"] + ["--debug"] * v["cr_debug"]
-    args += ["--auto" if v["cr_mode"] == "auto" else "--confirm", "--budget", budget_of(v["cr_budget"])]
-    args += ["--no-channel-change"] if v["cr_single"] else ["--channels", channels_of(v["cr_channels"])]
-    minutes = number_of(v["cr_minutes"], "The time limit")
-    return args + (["--minutes", minutes] if minutes else []) + ["--debug"] * v["cr_debug"]
-
-
 def full_args(v):
-    args = ["full_sell_loop.py", "--market-update", "no", "--budget", "1" if v["fl_scout"] else budget_of(v["fl_budget"]),
+    args = ["full_sell_loop.py", "--market-update", "no", "--budget", budget_of(v["fl_budget"]),
             "--channels", channels_of(v["fl_channels"]), "--rooms", rooms_of(v["fl_rooms"]),
             "--sell-below", percent_of(v["fl_sell_below"], "The sell-below %")]
     if v["fl_custom"] == "profits":
@@ -199,9 +245,19 @@ def full_args(v):
         args += ["--store-deals", "--market-percent", percent_of(v["fl_store_percent"], "The store deal %")]
     if v["fl_custom"] == "profits" or v["fl_store"]:  # NPC deals' share: the rest is for these
         args += ["--npc-money", npc_money_of(v["fl_npc_money"], budget_of(v["fl_budget"]))]
-    if v["fl_scout"]:
-        args += ["--scout"] + (["--scout-for", v["fl_scout_for"].strip()] if v["fl_scout_for"].strip() else [])
     minutes = number_of(v["fl_minutes"], "The time limit")
+    return args + (["--minutes", minutes] if minutes else [])
+
+
+def scout_args(v):
+    """The full sell loop as a scouter: no money, nothing bought or sold, every store sent to the server."""
+    if not (v.get("sv_on") and v.get("sv_url", "").strip() and v.get("sv_key")):
+        raise ValueError("Join the server on the Server tab first, with sharing on: the scouter only sends what it sees there.")
+    send_to = ", ".join(n.strip() for n in v["sc_send_to"].split(",") if n.strip())
+    args = ["full_sell_loop.py", "--market-update", "no", "--budget", "1", "--no-custom-buy",
+            "--channels", channels_of(v["sc_channels"]), "--rooms", rooms_of(v["sc_rooms"]), "--scout"]
+    args += ["--scout-for", send_to] if send_to else []
+    minutes = number_of(v["sc_minutes"], "The time limit")
     return args + (["--minutes", minutes] if minutes else [])
 
 
@@ -229,7 +285,7 @@ def store_args(v):
     return args
 
 
-ARGS = {"overlay": overlay_args, "crawler": crawler_args, "full": full_args, "store": store_args, "craft": craft_args,
+ARGS = {"overlay": overlay_args, "full": full_args, "scout": scout_args, "store": store_args, "craft": craft_args,
         "update": lambda v: ["market.py", "--update-stale"]}
 
 
@@ -339,8 +395,10 @@ class Job:
 # ---------------------------------------------------------------- the window
 
 class App:
-    def __init__(self, root):
+    def __init__(self, root, window="main"):
         self.root = root
+        self.window = window
+        title, self.tabs, self.server = WINDOWS[window]
         self.lines = queue.Queue()
         self.jobs = {}
         self.vars = {}
@@ -359,9 +417,11 @@ class App:
         self.sync_now = threading.Event()   # Sync now, or something to tell the server at once
         self.sync_events = queue.Queue()     # ("started" / "ended", text) for the server's events
         self.server_cfg, self.running_now, self.last_outcome = {}, set(), ""
-        threading.Thread(target=self.sync_loop, daemon=True).start()
+        self.discipline_vars, self.list_time = {}, None
+        if self.server:  # one window talks to the server
+            threading.Thread(target=self.sync_loop, daemon=True).start()
 
-        root.title("Maple tools")
+        root.title(title)
         root.protocol("WM_DELETE_WINDOW", self.close)
         self.build()
         root.update_idletasks()  # never smaller than what the tallest tab needs, as far as the screen allows
@@ -376,15 +436,19 @@ class App:
         self.build_meow()
         panes = ttk.PanedWindow(self.root, orient="vertical")
         panes.pack(fill="both", expand=True, padx=8, pady=(0, 8))
-        tabs = ttk.Notebook(panes)
-        panes.add(tabs, weight=3)
-        for title, make in (("Overlay", self.build_overlay), ("Crawler", self.build_crawler),
-                            ("Full sell loop", self.build_full), ("My store", self.build_store), ("Crafting", self.build_craft),
-                            ("Custom list", self.build_custom), ("Equipment finder", self.build_finder), ("Server", self.build_server)):
-            page = ttk.Frame(tabs, padding=12)
+        pages = {"overlay": ("Overlay", self.build_overlay), "full": ("Full sell loop", self.build_full),
+                 "scout": ("Scouter", self.build_scout), "store": ("My store", self.build_store), "craft": ("Crafting", self.build_craft),
+                 "custom": ("Custom list", self.build_custom), "finder": ("Equipment finder", self.build_finder),
+                 "server": ("Server", self.build_server)}
+        tabs = ttk.Notebook(panes) if len(self.tabs) > 1 else None
+        for name in self.tabs:
+            title, make = pages[name]
+            page = ttk.Frame(tabs if tabs else panes, padding=12)
             page.columnconfigure(1, weight=1)
-            tabs.add(page, text=title)
+            if tabs:
+                tabs.add(page, text=title)
             make(page)
+        panes.add(tabs or page, weight=3)
         self.build_log(panes)
 
     def build_meow(self):
@@ -454,25 +518,12 @@ class App:
         self.check(page, 6, "Save debug screenshots", "ov_debug")
         self.controls(page, 7, "overlay")
 
-    def build_crawler(self, page):
-        self.note(page, 0, "Crawls the shops in this room, then the channels below. Stand in a Free Market room.")
-        self.entry(page, 1, "Budget", "cr_budget", "like 50000, 250k or 1.5m")
-        self.choice(page, 2, "NPC and market deals", "cr_mode", (("auto", "Buy automatically"), ("confirm", "I confirm each one")))
-        self.choice(page, 3, "Deals", "cr_deals", (("npc", "NPC deals only"), ("market", "Free Market deals too")))
-        self.entry(page, 4, "Market deal", "cr_percent", "% or more under the 24h median (with market deals)")
-        self.check(page, 5, "Buy custom list items, by the rules on the Custom list tab", "cr_custom_stop")
-        self.entry(page, 7, "Channels", "cr_channels", "only these, in order: 40-1, or 1,3,20,39")
-        self.check(page, 8, "This room only: don't change channel", "cr_single")
-        self.entry(page, 9, "Time limit", "cr_minutes", "minutes (empty: none)")
-        self.check(page, 10, "Dry run: only mark what it would open", "cr_dry")
-        self.check(page, 11, "Save a screenshot of every click", "cr_debug")
-        self.controls(page, 12, "crawler")
-
     def build_full(self, page):
         self.note(page, 0, "SELLS EVERYTHING ON THE EQUIP, USE AND ETC TABS at the NPC each trip, except what's on the custom list. "
                            "Move or list what you want to keep first.", "#c0392b")
         self.note(page, 1, "Every channel of each room, going to sell when the money runs low. Buys NPC deals without asking. "
-                           "Stand in a Free Market room with the minimap showing the map's name.")
+                           "Stand in a Free Market room with the minimap showing the map's name. With the Server tab on, it "
+                           "also goes for the stores a scouter sends it, by these same rules.")
         self.entry(page, 2, "Budget", "fl_budget", "like 50000, 250k or 1.5m")
         self.entry(page, 3, "Channels", "fl_channels", "only these, in order: 40-1, or 1,3,20,39")
         self.entry(page, 4, "Sell when under", "fl_sell_below", "% of the budget left")
@@ -480,17 +531,27 @@ class App:
         self.choice(page, 5, "Custom deals", "fl_custom", (("off", "Ignore them"), ("limit", "Buy up to each item's limit"),
                                                            ("profits", "Split the budget, no limit")))
         self.entry(page, 6, "NPC deals get", "fl_npc_money", "of the budget, and no more; the rest is for store and split custom deals (empty: all)")
-        self.check(page, 7, "Scout: go round every room for ever, buy and sell nothing, and send every store's listings "
-                            "to the buyer bots (Server tab on, on each PC; no budget needed)", "fl_scout")
         self.entry(page, 8, "Time limit", "fl_minutes", "minutes (empty: none)")
-        self.entry(page, 9, "Send stores to", "fl_scout_for", "buyer bots' names on the server, like PC1, ScrollBot (empty: any one bot); "
-                                                              "each judges them by its own rules")
         self.check(page, 12, "Store deals: also buy market deals from profits, to sell in my store (ends at 10 items)", "fl_store")
         self.entry(page, 13, "Store deal", "fl_store_percent", "% or more under the price the store would list it at")
         self.controls(page, 14, "full", lambda parent: ttk.Button(parent, text="Reset where it stopped", command=self.reset_loop))
         self.note(page, 15, "Stopped (Esc held, Stop, the time limit), it goes on next time from the room and channel it was on, with "
                             "the money it had. Reset starts the next run fresh, with the budget above, and asks which items held "
                             "for your store to carry over.")
+
+    def build_scout(self, page):
+        self.note(page, 0, "Goes round the rooms and channels below for as long as it runs, buying and selling nothing, and sends "
+                           "every store's listings to the buyer bots through the server. Each buyer judges them by its own rules "
+                           "and money. Join the server on the Server tab first. Stand in a Free Market room with the minimap "
+                           "showing the map's name.")
+        self.entry(page, 1, "Rooms", "sc_rooms", "in this order, then round again: all are " + ALL_ROOMS + ", or 3,10,15")
+        self.entry(page, 2, "Channels", "sc_channels", "in each room, in order: 40-1, or 1,3,20,39")
+        self.entry(page, 3, "Send stores to", "sc_send_to", "buyer bots' names on the server, like PC1, ScrollBot: a copy each "
+                                                            "(empty: whichever bot takes it first)")
+        self.entry(page, 4, "Time limit", "sc_minutes", "minutes (empty: until stopped)")
+        self.controls(page, 5, "scout", lambda parent: ttk.Button(parent, text="Reset where it stopped", command=self.reset_scout))
+        self.note(page, 6, "Stopped, it goes on next time from the room and channel it was on. It keeps its own place, apart "
+                           "from the full sell loop's.")
 
     def build_store(self, page):
         self.note(page, 0, "Lists what's on the custom list and in your inventory in your own store, priced from MeowDB and the "
@@ -964,9 +1025,14 @@ class App:
     # ---- settings
 
     def current(self):
+        """This window's settings, and the ones it starts tools with: the other windows' as last saved."""
         values = {key: var.get() for key, var in self.vars.items()}
-        values["cf_disciplines"] = [n for n, var in self.discipline_vars.items() if var.get()] or self.values["cf_disciplines"]
+        if self.discipline_vars:
+            values["cf_disciplines"] = [n for n, var in self.discipline_vars.items() if var.get()] or self.values["cf_disciplines"]
         return values
+
+    def everything(self):
+        return {**load_settings(), **self.current()}
 
     def remember(self):
         try:
@@ -977,7 +1043,7 @@ class App:
     # ---- starting and stopping
 
     def start(self, tool):
-        values = self.current()
+        values = self.everything()
         if tool == "craft":
             values["cf_disciplines"] = [n for n, var in self.discipline_vars.items() if var.get()]
         try:
@@ -985,15 +1051,22 @@ class App:
         except ValueError as e:
             messagebox.showerror(TOOLS[tool], str(e))
             return
+        other = game_taken() if tool in ON_GAME else None
+        if other:
+            messagebox.showerror(TOOLS[tool], f"{other} is running in another window: one tool on the game at a time. Stop it there first.")
+            return
         self.remember()
         try:
-            self.jobs[tool] = Job(tool, args, self.lines, graceful=tool in ("crawler", "full", "store"))
+            self.jobs[tool] = Job(tool, args, self.lines, graceful=tool in GRACEFUL)
         except OSError as e:
             messagebox.showerror(TOOLS[tool], f"Couldn't start it: {e}")
             return
+        if tool in ON_GAME:
+            take_game(tool)
         self.outcome.pop(tool, None)
         self.log(tool, "started: " + " ".join(args))
-        self.sync_events.put(("started", TOOLS[tool]))
+        if self.server:
+            self.sync_events.put(("started", TOOLS[tool]))
         self.refresh_buttons()
 
     def stop(self, tool):
@@ -1007,12 +1080,15 @@ class App:
         job = self.jobs.pop(tool)
         code = job.proc.wait()
         job.clean_up()
+        if not any(t in ON_GAME for t in self.jobs):
+            free_game()
         if job.stop_at is not None or code == 0:
             self.outcome[tool] = ("stopped" if job.stop_at is not None else "finished", "#666")
         else:
             self.outcome[tool] = (f"ended with an error ({code}): see the log", "#c0392b")
         self.log(tool, self.outcome[tool][0])
-        self.sync_events.put(("ended", f"{TOOLS[tool]}: {self.outcome[tool][0]}"))
+        if self.server:
+            self.sync_events.put(("ended", f"{TOOLS[tool]}: {self.outcome[tool][0]}"))
         self.last_outcome = f"{TOOLS[tool]} {self.outcome[tool][0]}"
         if tool == "update":
             self.progress = None
@@ -1056,6 +1132,14 @@ class App:
                              + (f"; forgot {', '.join(sorted(set(held) - set(carried)))}" if set(held) - set(carried) else ""))
         state.unlink(missing_ok=True)
         self.log("full", "reset: the next run starts fresh")
+
+    def reset_scout(self):
+        if not SCOUT_STATE.exists():
+            messagebox.showinfo(TOOLS["scout"], "Nothing to reset: the next run starts from the first room.")
+            return
+        if messagebox.askyesno(TOOLS["scout"], "Forget where the scouter stopped? The next run starts from the first room on this tab."):
+            SCOUT_STATE.unlink(missing_ok=True)
+            self.log("scout", "reset: the next run starts from the first room")
 
     def ask_carry_over(self, held):
         """Which store deals held go on into the next run, and how many of each: {name: held} as
@@ -1165,6 +1249,9 @@ class App:
         if job:
             self.meow_button.configure(text="Stop update")
             self.meow_button.state(["disabled"] if job.stop_at is not None else ["!disabled"])
+        elif not self.server:  # the main window keeps the prices up to date: two updates at once would clash
+            self.meow_button.configure(text="Update them in Maple tools")
+            self.meow_button.state(["disabled"])
         else:
             self.meow_button.configure(text=f"Update {due} price{'s' if due != 1 else ''} now" if due else "All up to date")
             self.meow_button.state(["!disabled"] if due else ["disabled"])
@@ -1176,7 +1263,7 @@ class App:
                                "key": self.vars["sv_key"].get(), "last": self.last_outcome}
         self.running_now = set(self.jobs)
         self.read_dump()
-        if self.list_file_time() != self.list_time:  # a bot bought something
+        if "custom" in self.tabs and self.list_file_time() != self.list_time:  # a bot bought something
             self.show_list()
         self.tick_status()
         self.root.after(1000, self.tick_meow)
@@ -1219,7 +1306,7 @@ class App:
     def close(self):
         if self.jobs:
             running = ", ".join(TOOLS[t] for t in self.jobs)
-            if not messagebox.askyesno("Maple tools", f"{running} is still running. Stop it and close?"):
+            if not messagebox.askyesno(self.root.title(), f"{running} is still running. Stop it and close?"):
                 return
             self.closing = True
             for tool in list(self.jobs):
@@ -1240,15 +1327,18 @@ def sharp_on_scaled_displays():
 
 
 def main():
+    window = sys.argv[1] if len(sys.argv) > 1 else "main"
+    if window not in WINDOWS:
+        sys.exit(f"launcher.py [{'|'.join(w for w in WINDOWS if w != 'main')}]")
     sharp_on_scaled_displays()
     # without its own id Windows files the window under Python, with Python's icon on the taskbar
-    ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("maple.tools.launcher")
+    ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(f"maple.tools.{'launcher' if window == 'main' else window}")
     root = tk.Tk()
     try:
         root.iconbitmap(default=str(ICON_FILE))
     except tk.TclError:
         pass  # only a missing icon
-    App(root)
+    App(root, window)
     root.mainloop()
 
 
