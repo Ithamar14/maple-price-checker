@@ -23,3 +23,5 @@ data/loop_state.json*
 printscreens/*.png
 data/paper_trades.json
 Maple tools.lnk
+data/scout_state.json*
+data/game_in_use.json
