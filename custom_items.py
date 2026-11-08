@@ -4,6 +4,9 @@
     when     "under": at least percent under the 24h median
              "over":  anything up to percent over the 24h median
              "price": at or below price, whatever the market says
+             "value": a potion, by what it restores: at or below hp / hp_per_meso + mp / mp_per_meso
+                      (store_deals in crawler_settings.json, the store's consumables ratio, without
+                      the store's 3%: it's for using). hp, mp: what one restores
     limit    how many to buy in all (None: no limit); bought counts them, across sessions
     confirm  True: wait for you to press OK; False: buy without asking
     only_one True: buy 1 in all and never more, in every mode, like an upgrade to wear
@@ -25,6 +28,7 @@ HERE = Path(__file__).parent
 FILE = HERE / "custom_items.json"
 OLD_FILE = HERE / "custom_search.txt"
 EQUIPMENT_FILE = HERE / "data" / "equipment_stats.json"
+SETTINGS_FILE = HERE / "crawler_settings.json"
 SAVE_TRIES = 20
 # the stats the equipment finder can ask about, by MeowDB's name for them, as tooltips word them
 STAT_NAMES = {"wdef": "Weapon Def.", "mdef": "Magic Def.", "watk": "Weapon Attack", "matk": "Magic Attack", "str": "STR", "dex": "DEX", "int": "INT", "luk": "LUK",
@@ -40,8 +44,34 @@ def key(name):
 
 def new_item(name):
     """What an item starts as: nothing is spent on it without asking, and only one."""
-    return {"name": name, "when": "under", "percent": 20.0, "price": 0, "limit": 1, "bought": 0, "confirm": True, "only_one": False,
-            "store": False, "finder": None}
+    return {"name": name, "when": "under", "percent": 20.0, "price": 0, "hp": 0, "mp": 0, "limit": 1, "bought": 0, "confirm": True,
+            "only_one": False, "store": False, "finder": None}
+
+
+def store_settings(path=None):
+    try:
+        return json.loads(Path(path or SETTINGS_FILE).read_text("utf-8")).get("store_deals", {})
+    except (OSError, ValueError):
+        return {}
+
+
+def ratio(settings=None):
+    """(HP a meso, MP a meso): what the "value" rule pays by, the store's consumables ratio."""
+    cfg = store_settings() if settings is None else settings
+    return cfg.get("hp_per_meso", 2), cfg.get("mp_per_meso", 1)
+
+
+def known_restore(name, settings=None):
+    """[HP, MP] one restores, if it's in the store's consumables list: to fill the boxes in with."""
+    cfg = store_settings() if settings is None else settings
+    found = next((v for n, v in cfg.get("consumables", {}).items() if key(n) == key(name)), None)
+    return list(found) if found else None
+
+
+def value_price(item, per_meso=None):
+    """The most a "value" item is bought for: what it restores, at the ratio."""
+    hp_rate, mp_rate = per_meso or ratio()
+    return int(item.get("hp", 0) / hp_rate + item.get("mp", 0) / mp_rate)
 
 
 def load():
@@ -182,14 +212,26 @@ def fetch_equipment():
         number += 1
     found = equipment_entries(items)
     EQUIPMENT_FILE.parent.mkdir(exist_ok=True)
+    import holdings  # the same list has every item's stack size
+    holdings.save_stack_sizes(items)
     EQUIPMENT_FILE.write_text(json.dumps(found), "utf-8")
     return len(found)
 
 
-def parse_rules(when, percent, price, limit):
+def parse_rules(when, percent, price, limit, hp="", mp=""):
     """What's typed in the launcher, as an item's fields; ValueError says what's wrong."""
     changes = {"when": when}
-    if when == "price":
+    if when == "value":
+        for name, text in (("hp", hp), ("mp", mp)):
+            try:
+                changes[name] = int(str(text).strip() or 0)
+            except ValueError:
+                changes[name] = -1
+            if changes[name] < 0:
+                raise ValueError(f"{name.upper()} restored: type a whole number, or leave it empty for none.")
+        if not changes["hp"] and not changes["mp"]:
+            raise ValueError("By HP/MP value: type how much HP or MP one restores.")
+    elif when == "price":
         try:
             changes["price"] = market.parse_mesos(price)
         except ValueError:
@@ -227,6 +269,9 @@ def describe_finder(finder):
 
 
 def describe_price(item):
+    if item["when"] == "value":
+        restores = " + ".join(f"{item[k]:,} {k.upper()}" for k in ("hp", "mp") if item.get(k))
+        return f"by value: {restores}, at or under {value_price(item):,}"
     if item["when"] == "price":
         return f"at or under {item['price']:,}"
     if item["when"] == "over":
@@ -256,7 +301,7 @@ class Book:
         return self.items.get(key(name))
 
     def needs_market(self, ignore_limits=False):
-        return any(i["when"] != "price" and left(i, ignore_limits) != 0 for i in self.items.values())
+        return any(i["when"] not in ("price", "value") and left(i, ignore_limits) != 0 for i in self.items.values())
 
     def record(self, name, quantity):
         """Count a purchase; what's read back from disk first keeps edits made in the launcher."""

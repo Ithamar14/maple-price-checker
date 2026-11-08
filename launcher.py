@@ -75,7 +75,7 @@ def defaults():
         "cr_custom_stop": False, "cr_channels": "40-1", "cr_single": False,
         "cr_minutes": "", "cr_debug": False,
         "fl_budget": "", "fl_custom": "off", "fl_npc_money": "", "fl_channels": "40-1", "fl_rooms": ALL_ROOMS,
-        "fl_store": False, "fl_store_percent": "15", "fl_rounds": "", "fl_minutes": "", "fl_sell_below": str(cfg.get("sell_below_budget_percent", 10)),
+        "fl_store": False, "fl_store_percent": "15", "fl_scout": False, "fl_scout_for": "", "fl_rounds": "", "fl_minutes": "", "fl_sell_below": str(cfg.get("sell_below_budget_percent", 10)),
         "cf_margin": str(craft.get("margin_percent", 10)), "cf_disciplines": craft.get("disciplines") or ["Arcforge"],
     }
 
@@ -188,7 +188,7 @@ def crawler_args(v):
 
 
 def full_args(v):
-    args = ["full_sell_loop.py", "--market-update", "no", "--budget", budget_of(v["fl_budget"]),
+    args = ["full_sell_loop.py", "--market-update", "no", "--budget", "1" if v["fl_scout"] else budget_of(v["fl_budget"]),
             "--channels", channels_of(v["fl_channels"]), "--rooms", rooms_of(v["fl_rooms"]),
             "--sell-below", percent_of(v["fl_sell_below"], "The sell-below %")]
     if v["fl_custom"] == "profits":
@@ -199,6 +199,8 @@ def full_args(v):
         args += ["--store-deals", "--market-percent", percent_of(v["fl_store_percent"], "The store deal %")]
     if v["fl_custom"] == "profits" or v["fl_store"]:  # NPC deals' share: the rest is for these
         args += ["--npc-money", npc_money_of(v["fl_npc_money"], budget_of(v["fl_budget"]))]
+    if v["fl_scout"]:
+        args += ["--scout"] + (["--scout-for", v["fl_scout_for"].strip()] if v["fl_scout_for"].strip() else [])
     minutes = number_of(v["fl_minutes"], "The time limit")
     return args + (["--minutes", minutes] if minutes else [])
 
@@ -478,12 +480,17 @@ class App:
         self.choice(page, 5, "Custom deals", "fl_custom", (("off", "Ignore them"), ("limit", "Buy up to each item's limit"),
                                                            ("profits", "Split the budget, no limit")))
         self.entry(page, 6, "NPC deals get", "fl_npc_money", "of the budget, and no more; the rest is for store and split custom deals (empty: all)")
+        self.check(page, 7, "Scout: go round every room for ever, buy and sell nothing, and send every store's listings "
+                            "to the buyer bots (Server tab on, on each PC; no budget needed)", "fl_scout")
         self.entry(page, 8, "Time limit", "fl_minutes", "minutes (empty: none)")
+        self.entry(page, 9, "Send stores to", "fl_scout_for", "buyer bots' names on the server, like PC1, ScrollBot (empty: any one bot); "
+                                                              "each judges them by its own rules")
         self.check(page, 12, "Store deals: also buy market deals from profits, to sell in my store (ends at 10 items)", "fl_store")
         self.entry(page, 13, "Store deal", "fl_store_percent", "% or more under the price the store would list it at")
         self.controls(page, 14, "full", lambda parent: ttk.Button(parent, text="Reset where it stopped", command=self.reset_loop))
         self.note(page, 15, "Stopped (Esc held, Stop, the time limit), it goes on next time from the room and channel it was on, with "
-                            "the money it had. Reset starts the next run fresh, with the budget above.")
+                            "the money it had. Reset starts the next run fresh, with the budget above, and asks which items held "
+                            "for your store to carry over.")
 
     def build_store(self, page):
         self.note(page, 0, "Lists what's on the custom list and in your inventory in your own store, priced from MeowDB and the "
@@ -622,18 +629,29 @@ class App:
         ttk.Entry(form, textvariable=self.item_percent, width=8).grid(row=1, column=1, rowspan=2, sticky="w", padx=4)
         ttk.Label(form, text="%").grid(row=1, column=2, rowspan=2, sticky="w")
         ttk.Entry(form, textvariable=self.item_price, width=10).grid(row=3, column=1, sticky="w", padx=4)
-        ttk.Label(form, text="Buy limit").grid(row=4, column=0, sticky="w", pady=(4, 0))
+        hp_rate, mp_rate = custom_items.ratio()
+        ttk.Radiobutton(form, text="By HP/MP value: one restores", value="value", variable=self.item_when).grid(row=4, column=0, sticky="w")
+        self.item_hp, self.item_mp = tk.StringVar(), tk.StringVar()
+        restores = ttk.Frame(form)
+        restores.grid(row=4, column=1, columnspan=3, sticky="w", padx=4)
+        ttk.Entry(restores, textvariable=self.item_hp, width=6).pack(side="left")
+        ttk.Label(restores, text="HP").pack(side="left", padx=(2, 8))
+        ttk.Entry(restores, textvariable=self.item_mp, width=6).pack(side="left")
+        ttk.Label(restores, text="MP").pack(side="left", padx=2)
+        ttk.Label(form, text=f"pays up to 1 meso per {hp_rate:g} HP and per {mp_rate:g} MP (hp_per_meso / mp_per_meso in crawler_settings.json)",
+                  foreground="#666").grid(row=5, column=0, columnspan=4, sticky="w")
+        ttk.Label(form, text="Buy limit").grid(row=6, column=0, sticky="w", pady=(4, 0))
         self.limit_entry = ttk.Entry(form, textvariable=self.item_limit, width=8)
-        self.limit_entry.grid(row=4, column=1, sticky="w", padx=4, pady=(4, 0))
-        ttk.Label(form, text="empty: no limit", foreground="#666").grid(row=4, column=2, columnspan=2, sticky="w", pady=(4, 0))
+        self.limit_entry.grid(row=6, column=1, sticky="w", padx=4, pady=(4, 0))
+        ttk.Label(form, text="empty: no limit", foreground="#666").grid(row=6, column=2, columnspan=2, sticky="w", pady=(4, 0))
         self.item_only_one = tk.BooleanVar(value=False)
         ttk.Checkbutton(form, text="Only 1: never buy more than one, in any mode (an upgrade, not for merching)",
-                        variable=self.item_only_one, command=self.only_one_changed).grid(row=5, column=0, columnspan=4, sticky="w", pady=(4, 0))
+                        variable=self.item_only_one, command=self.only_one_changed).grid(row=7, column=0, columnspan=4, sticky="w", pady=(4, 0))
         self.item_store = tk.BooleanVar(value=False)
         self.store_box = ttk.Checkbutton(form, text="Sell it in my store (My store tab); otherwise it's only held", variable=self.item_store)
-        self.store_box.grid(row=6, column=0, columnspan=4, sticky="w")
-        ttk.Radiobutton(form, text="Wait for my OK", value=True, variable=self.item_confirm).grid(row=7, column=0, sticky="w", pady=(4, 0))
-        ttk.Radiobutton(form, text="Buy without asking", value=False, variable=self.item_confirm).grid(row=7, column=1, columnspan=3, sticky="w", pady=(4, 0))
+        self.store_box.grid(row=8, column=0, columnspan=4, sticky="w")
+        ttk.Radiobutton(form, text="Wait for my OK", value=True, variable=self.item_confirm).grid(row=9, column=0, sticky="w", pady=(4, 0))
+        ttk.Radiobutton(form, text="Buy without asking", value=False, variable=self.item_confirm).grid(row=9, column=1, columnspan=3, sticky="w", pady=(4, 0))
         buttons = ttk.Frame(right)
         buttons.pack(fill="x", pady=(6, 0))
         ttk.Button(buttons, text="Save item", command=self.save_item).pack(side="left")
@@ -884,6 +902,9 @@ class App:
         self.item_when.set(item["when"])
         self.item_percent.set(f"{item['percent']:g}")
         self.item_price.set(str(item["price"]) if item["price"] else "")
+        hp, mp = (item.get("hp"), item.get("mp")) if item.get("hp") or item.get("mp") else (custom_items.known_restore(item["name"]) or (0, 0))
+        self.item_hp.set(str(hp) if hp else "")
+        self.item_mp.set(str(mp) if mp else "")
         self.item_limit.set("" if item["limit"] is None else str(item["limit"]))
         self.item_confirm.set(item["confirm"])
         self.item_only_one.set(item["only_one"])
@@ -901,9 +922,12 @@ class App:
     def save_item(self):
         name = self.chosen_name()
         if not name:
+            messagebox.showinfo("Custom list", "Pick the item in the list above first. If it isn't there yet, search for it on the "
+                                               "left and add it, then pick it, set its rules and save.")
             return
         try:
-            changes = custom_items.parse_rules(self.item_when.get(), self.item_percent.get(), self.item_price.get(), self.item_limit.get())
+            changes = custom_items.parse_rules(self.item_when.get(), self.item_percent.get(), self.item_price.get(), self.item_limit.get(),
+                                               self.item_hp.get(), self.item_mp.get())
         except ValueError as e:
             messagebox.showerror("Custom list", str(e))
             return
@@ -1015,13 +1039,77 @@ class App:
 
     def reset_loop(self):
         state = HERE / "data" / "loop_state.json"
-        if not state.exists():
+        held = holdings.load()
+        if not state.exists() and not held:
             messagebox.showinfo(TOOLS["full"], "Nothing to reset: the next run starts fresh.")
             return
-        if messagebox.askyesno(TOOLS["full"], "Forget where the last run stopped, and its money? The next run starts fresh, with the "
-                                              "budget on this tab. Store deals held stay held."):
-            state.unlink(missing_ok=True)
-            self.log("full", "reset: the next run starts fresh")
+        if not messagebox.askyesno(TOOLS["full"], "Forget where the last run stopped, and its money? The next run starts fresh, with the "
+                                                  "budget on this tab."):
+            return
+        if held:
+            carried = self.ask_carry_over(held)
+            if carried is None:  # closed without choosing: nothing changes
+                return
+            holdings.save(carried)
+            kept = ", ".join(f"{h['quantity']:,} {n}" for n, h in carried.items()) or "nothing"
+            self.log("full", f"carried over: {kept}"
+                             + (f"; forgot {', '.join(sorted(set(held) - set(carried)))}" if set(held) - set(carried) else ""))
+        state.unlink(missing_ok=True)
+        self.log("full", "reset: the next run starts fresh")
+
+    def ask_carry_over(self, held):
+        """Which store deals held go on into the next run, and how many of each: {name: held} as
+        holdings keeps them (the cost scaled to the amount kept), or None if the window was closed."""
+        win = tk.Toplevel(self.root)
+        win.title("Carry over items")
+        win.transient(self.root)
+        tk.Label(win, text="Items held for your store from the last run. Tick the ones to carry over, and how many: "
+                           "the others are forgotten, and sold at the NPC on the next sell trip if they're still in your inventory.",
+                 wraplength=460, justify="left").grid(row=0, column=0, columnspan=4, sticky="w", padx=10, pady=(10, 6))
+        rows = {}
+        yours = bot_settings().get("store_deals", {}).get("stack_sizes", {})  # as the crawler counts a stack
+        for i, (name, h) in enumerate(sorted(held.items()), 1):
+            keep = tk.BooleanVar(value=True)
+            amount = tk.StringVar(value=str(min(h["quantity"], yours.get(name) or holdings.stack_size(name))))
+            ttk.Checkbutton(win, text=name, variable=keep).grid(row=i, column=0, sticky="w", padx=10)
+            ttk.Entry(win, textvariable=amount, width=7).grid(row=i, column=1, sticky="w")
+            tk.Label(win, text=f"of {h['quantity']:,} held", fg="#666").grid(row=i, column=2, sticky="w", padx=6)
+            rows[name] = (keep, amount)
+        full = tk.BooleanVar(value=True)
+        end = len(rows) + 1
+        ttk.Checkbutton(win, text="Count the items carried over as full store slots", variable=full).grid(
+            row=end, column=0, columnspan=4, sticky="w", padx=10, pady=(8, 0))
+        result = {}
+
+        def done():
+            out = {}
+            for name, (keep, amount) in rows.items():
+                if not keep.get():
+                    continue
+                try:
+                    count = int(amount.get().strip())
+                except ValueError:
+                    count = 0
+                if count <= 0:
+                    messagebox.showerror("Carry over items", f"{name}: type how many to carry over (a whole number over 0), "
+                                                             "or untick it.", parent=win)
+                    return
+                h = held[name]
+                out[name] = {**h, "quantity": count, "paid": round(h["paid"] * count / h["quantity"]) if h["quantity"] else 0}
+                out[name].pop("full", None)
+                if full.get():
+                    out[name]["full"] = True
+            result["items"] = out
+            win.destroy()
+
+        buttons = ttk.Frame(win)
+        buttons.grid(row=end + 1, column=0, columnspan=4, sticky="e", padx=10, pady=10)
+        ttk.Button(buttons, text="Carry over and reset", command=done).pack(side="left")
+        ttk.Button(buttons, text="Cancel", command=win.destroy).pack(side="left", padx=(6, 0))
+        self.carry_window = win  # for the tests
+        win.grab_set()
+        self.root.wait_window(win)
+        return result.get("items")
 
     def forget_holdings(self):
         held = holdings.load()

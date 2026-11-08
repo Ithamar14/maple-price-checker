@@ -40,6 +40,7 @@ from pathlib import Path
 import cv2
 import mss
 import numpy as np
+from rapidfuzz import fuzz
 
 import custom_items
 import holdings
@@ -86,6 +87,8 @@ CUSTOM_START_WAIT = 5.0            # seconds per custom list item at startup, fo
 CUSTOM_PRICE_WAIT = 10.0           # seconds a store stays open for a custom search item's price to arrive
 REVIEW_PAUSE = 5.0                 # seconds a store stays open when it lists a review / custom search item
 SHOP_OPEN_WAIT = 6.0               # seconds to wait for a store to open after double-clicking its sign
+TIP_TITLE_MATCH = 75              # how alike (0-100) a sign's name must read to be the shop a scouter found
+TIP_OWNER_MATCH = 80              # how alike (0-100) the owner's name must read in the open store to be the find's shop
 NO_SHOPS_WAIT = 10.0              # seconds to wait for shops after a channel change before moving on
 CH1_CELL = (64, 128)               # from the "CHANGE CHANNEL" title to CH.1's centre
 CH_STEP = (131, 41)                 # cell spacing; 8 channels per row
@@ -99,6 +102,13 @@ EXTENDED = {"left", "up", "right", "down", "end"}
 
 class Stop(Exception):
     pass
+
+
+class TipCall(Exception):
+    """A scouter's find to go for (tips.py), between shops: carries the task."""
+    def __init__(self, task):
+        super().__init__(f"a find: {task['data'].get('item')}")
+        self.task = task
 
 
 # ---------------------------------------------------------------- input (SendInput)
@@ -469,7 +479,28 @@ def near(s, spread=0.03, step=0.01):
 
 # ---------------------------------------------------------------- the crawler
 
+def hold_items(rules, path=None):
+    """{name: mesos over its NPC price} from the "hold" rules in crawler_settings.json: equipment of a
+    subtype (e.g. Claw) from min_level up, from data/equipment_stats.json (custom_items.load_equipment)."""
+    if not rules:
+        return {}
+    gear = custom_items.load_equipment() if path is None else json.loads(Path(path).read_text("utf-8"))
+    found = {}
+    for rule in rules:
+        for name, info in gear.items():
+            if info.get("subtype") == rule["subtype"] and (info.get("level") or 0) >= rule.get("min_level", 0):
+                found[name] = max(found.get(name, 0), rule["over_npc"])
+    return found
+
+
 class Crawler:
+    # defaults, for a crawler made without __init__ (tests); __init__ sets them for a run
+    hold = {}
+    scout = False
+    tips = None
+    on_tip = False
+    current_sign, current_title = None, ""
+
     custom_from_profits = False  # the full sell loop's split: see sold_for
     profit_pool = 0     # all the money for custom deals
     custom_reserve = 0  # how much of it is what's left of the overall budget set aside at the start
@@ -528,8 +559,9 @@ class Crawler:
                           "allow_drops": cfg.get("allow_drops", ["Leather", "Fragment of Magic"]),
                           "refined_premium": cfg.get("refined_premium", 1.25),
                           "consumables": cfg.get("consumables", {}), "hp_per_meso": cfg.get("hp_per_meso", 2),
-                          "mp_per_meso": cfg.get("mp_per_meso", 1),
+                          "mp_per_meso": cfg.get("mp_per_meso", 1), "stack_sizes": cfg.get("stack_sizes", {}),
                           "reserved_slots": cfg.get("reserved_slots", {"consumable": 2, "scroll": 3})}
+        self.hold = hold_items(settings.get("hold", []))  # bought and kept, never sold at the NPC: name -> mesos over its NPC price
         self.market = market.Live(enabled=False)  # Free Market prices, after load_market()
         self.channel_refused = False  # the last channel change didn't take: the channel may be full
         self.sell_below = None  # stop opening shops once under this percent of the budget is left
@@ -541,6 +573,10 @@ class Crawler:
         self.budget = 0
         self.spent = 0
         self.bought = []  # (name, quantity, paid, value, "npc" or "market")
+        self.scout = False  # a scouter: reads every store, buys nothing, sends what it would buy (tips.py)
+        self.tips = None  # tips.Tips: the server end, for a scouter (sends) or a buyer (takes)
+        self.on_tip = False  # going for a find: no other find interrupts it
+        self.current_sign, self.current_title = None, ""  # the shop open now: its sign's spot (screen fractions), its name
         self.scans = None
         try:
             self.scans = scan_log.ScanLog(hours=settings.get("scan_log", {}).get("hours_between_same_shop", scan_log.HOURS_BETWEEN))
@@ -568,6 +604,16 @@ class Crawler:
         if market:
             return int(self.market.lowest(hit.names)["median_24h"] * (1 - SHOP_FEE)) - hit.asking
         return hit.profit
+
+    def hold_buy(self, hit):
+        """Whether this listing is one to buy and keep (the "hold" rules): at most its NPC price plus
+        the rule's mesos. Not a cut-off name that could be something else."""
+        overs = [self.hold.get(n) for n in hit.names]
+        return all(o is not None for o in overs) and bool(overs) and hit.npc_pays > 0             and hit.asking <= hit.npc_pays + min(overs)
+
+    def stacks(self, hit):
+        """Whether it piles up in one inventory slot: not equipment, and not throwing stars (one each)."""
+        return not hit.stars and hit.name not in self.db.slots
 
     def worth_buying(self, hit):
         if self.watch.kind(hit) == "custom":  # bought by its own rules, and never sold to make the profit
@@ -617,6 +663,9 @@ class Crawler:
             if item["when"] == "price":
                 tops.append(item["price"])
                 continue
+            if item["when"] == "value":  # a potion, by what it restores
+                tops.append(custom_items.value_price(item, (self.store_cfg["hp_per_meso"], self.store_cfg["mp_per_meso"])))
+                continue
             if not self.market.fresh(hit.names):
                 return None
             percent = item["percent"] if item["when"] == "under" else -item["percent"]
@@ -625,6 +674,12 @@ class Crawler:
                 return None
             tops.append(top)
         return min(tops)
+
+    def custom_from_pool(self):
+        """Whether custom deals are paid from the money for custom and store deals, not the NPC deals':
+        whenever the full sell loop splits the budget (custom deals with no limit, or store deals on).
+        Custom deals by their limits then still stop at each item's limit."""
+        return self.custom_from_profits or self.store_deals
 
     def custom_left(self, hit):
         """How many more of this listing's item may be bought; None: no limit."""
@@ -637,7 +692,7 @@ class Crawler:
         entries = self.buy_custom and self.custom_entries(hit)
         if not entries or self.custom_left(hit) == 0:
             return False
-        if self.custom_from_profits and hit.asking > self.profit_pool:
+        if self.custom_from_pool() and hit.asking > self.profit_pool:
             return False
         top = self.custom_top_price(entries, hit)
         return top is not None and hit.asking <= top
@@ -645,7 +700,7 @@ class Crawler:
     def custom_needs_price(self, hit):
         """Whether this listing's item goes by the market, with buying left to do."""
         entries = self.buy_custom and self.custom_entries(hit)
-        return bool(entries) and self.custom_left(hit) != 0 and any(i["when"] != "price" for i in entries)
+        return bool(entries) and self.custom_left(hit) != 0 and any(i["when"] not in ("price", "value") for i in entries)
 
     def too_thin_for_budget(self, deal, quantity):
         """Whether an NPC deal ties up too much of the session budget for its profit: it costs
@@ -694,6 +749,10 @@ class Crawler:
         held = holdings.load() if held is None else held
         return sum(self.is_full(name, h) for name, h in held.items())
 
+    def stack_size(self, name):
+        """Yours (stack_sizes in crawler_settings.json's store_deals) first, then MeowDB's, then 100."""
+        return self.store_cfg.get("stack_sizes", {}).get(name) or holdings.stack_size(name, self.db.ids.get(name))
+
     def slot_kind(self, name):
         return store_rules.slot_kind(name, self.db.ids, self.store_cfg["consumables"])
 
@@ -720,14 +779,16 @@ class Crawler:
 
     def store_deal(self, hit):
         """Whether to buy this listing to sell in your store: an ETC or USE item (not equipment, whose
-        stats set its price, nor a custom list item) at least below_reference_percent under its
+        stats set its price, nor a custom list item with buying left to do) at least below_reference_percent under its
         reference price (pricing.py: the one the store lists it by), that's sold at least min_sold_7d
         times in the bot's scans of the last week, from what's set aside and profits only. Out of
         money with ready_when_broke slots full, the store's items count as ready. At most
         max_held different items are held, and stacks still too small for a slot can't have more than
         max_waiting_percent of the budget in them."""
         cfg = self.store_cfg
-        if not self.prices or hit.options or self.watch.kind(hit) == "custom" \
+        # a custom list item is the list's to buy, until its limit's reached: then it's a store deal like any other
+        custom = self.watch.kind(hit) == "custom" and not (self.custom_entries(hit) and self.custom_left(hit) == 0)
+        if not self.prices or hit.options or custom \
                 or hit.name in self.db.slots or any(w in hit.name.lower() for w in self.never_buy):
             return False
         consumable = cfg["consumables"].get(hit.name)  # [HP, MP] it restores: bought by its value, not its market
@@ -749,7 +810,9 @@ class Crawler:
             full = self.store_full(held)
             if full >= cfg["ready_when_broke"]:
                 self.set_store_ready(f"out of money for store deals with {full} store slots full")
+        stack = self.stack_size(hit.name)
         why = ("the store's items are ready" if self.store_ready
+               else f"a full stack held ({held[hit.name]['quantity']:,} of {stack:,})" if held.get(hit.name, {}).get("quantity", 0) >= stack
                else f"sold only {sold} times in a week" if sold < cfg["min_sold_7d"]
                else f"no money for store deals yet ({self.profit_pool:,})" if hit.asking > self.profit_pool
                else f"already {len(held)} different items held" if hit.name not in held and len(held) >= cfg["max_held"]
@@ -797,10 +860,11 @@ class Crawler:
         """Fewer of a store deal than quantity when all of that item held would cost over its share of
         the budget (item_cap_percent), unless each one makes big_deal_profit or more. And when the item
         still wouldn't take a slot after buying them, no more than fits under the cap on money in
-        stacks still building up."""
+        stacks still building up. Never more than fills one stack (one store slot), big deal or not."""
         cfg = self.store_cfg
         held = holdings.load()
         was = held.get(deal.name, {"quantity": 0, "paid": 0, "first": time.time()})
+        quantity = max(0, min(quantity, self.stack_size(deal.name) - was["quantity"]))
         if self.profit_each(deal, True) < cfg["big_deal_profit"]:  # all of it held, not this purchase alone
             room = int(self.npc_budget * self.item_cap_percent(deal.name) / 100) - was["paid"]
             quantity = max(0, min(quantity, room // max(deal.asking, 1)))
@@ -968,6 +1032,7 @@ class Crawler:
                 break
             self.controls.check()
             self.handle_late_store(channel)
+            self.check_tips()
             skip = next((w for w in self.skip_shops_with if w in pc.norm(names[i - 1])), None)
             if skip:
                 print(f"  shop {i}/{len(shops)} '{names[i - 1]}': name has '{skip}'; skipped")
@@ -975,6 +1040,8 @@ class Crawler:
             print(f"  shop {i}/{len(shops)} '{names[i - 1]}'")
             self.marks.set("target", [box(*coin, TARGET, f"shop {i}/{len(shops)}")])
             self.doing(f"opening shop {i}/{len(shops)}")
+            self.current_sign = (x / frame.shape[1], y / frame.shape[0])
+            self.current_title = names[i - 1]
             self.click_frame(x, y, double=True)
             self.doing(f"waiting for shop {i}/{len(shops)} to open")
             started = time.monotonic()
@@ -990,11 +1057,12 @@ class Crawler:
         self.handle_late_store(channel)
         self.marks.clear("target")
 
-    def read_shop_names(self, frame, shops):
+    def read_shop_names(self, frame, shops, always=False):
         """The text on each shop's sign (sitting above its coin icon), for skipping shops by
-        name before opening them. Shops to skip are boxed orange on the overlay, with a red box
-        where the skip word was read; --debug also saves all of it to debug/shop_names.png."""
-        if not self.skip_shops_with:
+        name before opening them, and for finding a scouter's shop by it. Shops to skip are boxed
+        orange on the overlay, with a red box where the skip word was read; --debug also saves all
+        of it to debug/shop_names.png. Not read when nothing needs it."""
+        if not (self.skip_shops_with or always or self.scout):
             return [""] * len(shops)
         self.doing(f"reading the names of {len(shops)} shops")
         s = self.scale_guess(frame)
@@ -1029,9 +1097,41 @@ class Crawler:
             else:
                 marks.append(box(x0, y0, x1, y1, SHOP, str(i)))
         self.marks.set("shops", marks)
-        if self.args.debug:
+        if getattr(getattr(self, "args", None), "debug", False):
             self.save_shop_names(frame, areas, marks)
         return names
+
+    def tip_order(self, d, frame, shops, names):
+        """The order to try the shops in for a scouter's find: [(index into shops, why)]. Signs reading the
+        find's shop name first, whatever the game window's size; then signs whose name couldn't be read;
+        then every other shop. Each group nearest where the scouter saw the sign first (a share of the
+        screen, so only roughly right when the windows aren't the same size)."""
+        h, w = frame.shape[:2]
+        sign = d.get("sign")
+        away = lambda i: math.hypot(shops[i][0][0] - sign[0] * w, shops[i][0][1] - sign[1] * h) if sign else 0.0
+        title = pc.norm(d.get("title") or "")
+        scores = [fuzz.ratio(pc.norm(n), title) if n and len(title) >= 3 else 0 for n in names]
+        named = sorted((i for i, sc in enumerate(scores) if sc >= TIP_TITLE_MATCH), key=lambda i: (-scores[i] // 5, away(i)))
+        unread = sorted((i for i, n in enumerate(names) if len(pc.norm(n)) < 3 and i not in named), key=away)
+        rest = sorted((i for i in range(len(shops)) if i not in named and i not in unread), key=away)
+        return ([(i, f"its sign reads '{names[i]}'") for i in named] + [(i, "its sign couldn't be read") for i in unread]
+                + [(i, f"one of the other shops ('{names[i]}')") for i in rest])
+
+    def is_tip_shop(self, d, frame, by_name):
+        """Whether the store open is the find's: its owner is the one the scouter read. Without an owner to
+        go by, a sign reading the shop's name is enough, and otherwise the item at its price has to be
+        on the first page."""
+        if not self.find_store(frame):
+            return False
+        owner = pc.norm(d.get("owner") or "")
+        if len(owner) >= 3:
+            loc, s = self.finder.last_loc, self.finder.last_scale or 1
+            here = scan_log.read_box(frame, self.reader, scan_log.OWNER_BOX, loc, s)[0]
+            return fuzz.ratio(pc.norm(here), owner) >= TIP_OWNER_MATCH
+        if by_name:
+            return True
+        _, _, singles, _ = pc.scan(frame, self.reader, self.finder, self.db, 1, False)
+        return any(h.name == d.get("item") and h.asking == d.get("asking") for h in singles)  # the best of what's wanted
 
     def save_shop_names(self, frame, areas, marks):
         """debug/shop_names.png: every sign area read (grey) with the text read there, skipped
@@ -1069,10 +1169,13 @@ class Crawler:
         self.current_place = channel
         self.opportunities_seen = set()  # a new store: its listings are new opportunities
         self.park_mouse()  # a cursor on the list brings up a tooltip over its rows
+        visit.listed = {}  # a scouter's: every listing read, by (name, price, options)
         try:
             visit.complete = self.read_store_pages(channel, visit)
         finally:
             self.save_scan(visit)
+        if self.scout:
+            self.send_visit(channel, visit)
 
     def equipment_ok(self, deal, visit, page, channel):
         """Whether an item from the equipment finder has the stats asked for: hover it twice, read its
@@ -1189,56 +1292,60 @@ class Crawler:
             self.mark_listings(lines, singles)
             self.log_page(channel, page_number, lines, singles, done, row_key)
             self.scan_page(visit, page_number, frame, lines)
-            # a custom list item isn't missed for its price being old or still on its way
-            priced = [h for h in singles if self.custom_needs_price(h)]
-            if priced:
-                for h in priced:
-                    self.market.refresh(h.names)
-                    self.market.lowest(h.names)
-                pending = [h for h in priced if self.market.pending(h.names)]
-                if pending:
-                    self.doing(f"custom search: getting the market price of {', '.join(h.name for h in pending)}")
-                    end = time.monotonic() + CUSTOM_PRICE_WAIT
-                    while time.monotonic() < end and any(self.market.pending(h.names) for h in pending):
-                        self.controls.wait(0.25)
-                    self.mark_listings(lines, singles)
-            customs = [d for d in singles if self.custom_buy(d) and row_key(d) not in done]
-            new = [h for h in singles if self.watch.kind(h) and (h.name, h.asking) not in reviewed]
-            if new:
-                reviewed.update((h.name, h.asking) for h in new)
-                for h in new:
-                    print(f"  {self.watch.label(h)} {h.name}: asking {h.asking:,} (channel {channel})")
-                    self.log(channel, h, 0, self.watch.label(h).lower())
-                self.doing(f"{' / '.join(sorted({self.watch.label(h) for h in new}))}: "
-                           f"{', '.join(h.name for h in new)} (hold ESC to stop here)")
-                winsound.MessageBeep(winsound.MB_ICONASTERISK)
-                if self.review_pause and not customs and not (self.buy_custom and all(self.watch.kind(h) == "custom" for h in new)):
-                    self.controls.wait(REVIEW_PAUSE)  # your rules already say what to do with custom items
-            if customs:  # before any other deal: it's what you're looking for
-                deal = customs[0]
-                key = row_key(deal)
-                if not self.equipment_ok(deal, visit, tuple(l.text for l in lines), channel):
-                    done.add(key)
+            if self.scout:  # it only collects: what's listed goes to the buyers, who judge it (send_visit)
+                for h in singles:
+                    visit.listed.setdefault((h.name, h.asking, h.options), h)
+            else:
+                # a custom list item isn't missed for its price being old or still on its way
+                priced = [h for h in singles if self.custom_needs_price(h)]
+                if priced:
+                    for h in priced:
+                        self.market.refresh(h.names)
+                        self.market.lowest(h.names)
+                    pending = [h for h in priced if self.market.pending(h.names)]
+                    if pending:
+                        self.doing(f"custom search: getting the market price of {', '.join(h.name for h in pending)}")
+                        end = time.monotonic() + CUSTOM_PRICE_WAIT
+                        while time.monotonic() < end and any(self.market.pending(h.names) for h in pending):
+                            self.controls.wait(0.25)
+                        self.mark_listings(lines, singles)
+                customs = [d for d in singles if self.custom_buy(d) and row_key(d) not in done]
+                new = [h for h in singles if self.watch.kind(h) and (h.name, h.asking) not in reviewed]
+                if new:
+                    reviewed.update((h.name, h.asking) for h in new)
+                    for h in new:
+                        print(f"  {self.watch.label(h)} {h.name}: asking {h.asking:,} (channel {channel})")
+                        self.log(channel, h, 0, self.watch.label(h).lower())
+                    self.doing(f"{' / '.join(sorted({self.watch.label(h) for h in new}))}: "
+                               f"{', '.join(h.name for h in new)} (hold ESC to stop here)")
+                    winsound.MessageBeep(winsound.MB_ICONASTERISK)
+                    if self.review_pause and not customs and not (self.buy_custom and all(self.watch.kind(h) == "custom" for h in new)):
+                        self.controls.wait(REVIEW_PAUSE)  # your rules already say what to do with custom items
+                if customs:  # before any other deal: it's what you're looking for
+                    deal = customs[0]
+                    key = row_key(deal)
+                    if not self.equipment_ok(deal, visit, tuple(l.text for l in lines), channel):
+                        done.add(key)
+                        continue
+                    buys[key] += 1
+                    ask = self.confirm_all or any(i["confirm"] for i in self.custom_entries(deal))
+                    if not self.buy(deal, frame, channel, market=True, ask_you=ask, custom=True) \
+                            or buys[key] >= MAX_BUYS_PER_LISTING:
+                        done.add(key)
                     continue
-                buys[key] += 1
-                ask = self.confirm_all or any(i["confirm"] for i in self.custom_entries(deal))
-                if not self.buy(deal, frame, channel, market=True, ask_you=ask, custom=True) \
-                        or buys[key] >= MAX_BUYS_PER_LISTING:
-                    done.add(key)
-                continue
-            # NPC deals (guaranteed profit) are bought on their own; market deals wait for you
-            npc = [d for d in singles if self.worth_buying(d) and row_key(d) not in done]
-            mkt = [d for d in singles if not self.worth_buying(d) and self.market_deal(d) and row_key(d) not in done]
-            if npc or mkt:
-                deal = (npc or mkt)[0]
-                key = row_key(deal)
-                # a listing that's still there (not grey) after a purchase has stock left, because its
-                # stock number was read low: it gets bought again (a stack it can't read is skipped)
-                buys[key] += 1
-                ask = self.confirm_all or (not npc and not self.store_deals and deal.name not in self.market_auto)
-                if not self.buy(deal, frame, channel, market=not npc, ask_you=ask) or buys[key] >= MAX_BUYS_PER_LISTING:
-                    done.add(key)
-                continue  # the list changes after a purchase: read this page again
+                # NPC deals (guaranteed profit) are bought on their own; market deals wait for you
+                npc = [d for d in singles if (self.worth_buying(d) or self.hold_buy(d)) and row_key(d) not in done]
+                mkt = [d for d in singles if not self.worth_buying(d) and self.market_deal(d) and row_key(d) not in done]
+                if npc or mkt:
+                    deal = (npc or mkt)[0]
+                    key = row_key(deal)
+                    # a listing that's still there (not grey) after a purchase has stock left, because its
+                    # stock number was read low: it gets bought again (a stack it can't read is skipped)
+                    buys[key] += 1
+                    ask = self.confirm_all or (not npc and not self.store_deals and deal.name not in self.market_auto)
+                    if not self.buy(deal, frame, channel, market=not npc, ask_you=ask) or buys[key] >= MAX_BUYS_PER_LISTING:
+                        done.add(key)
+                    continue  # the list changes after a purchase: read this page again
             page = tuple(l.text for l in lines)
             # the same again may just be rows that look alike: only twice in a row is the end of the list
             same_pages = same_pages + 1 if page == last_page else 0
@@ -1261,6 +1368,7 @@ class Crawler:
         rows = []
         for h in singles:
             verdict = ("done with" if row_key(h) in done else "custom buy" if self.custom_buy(h) else "NPC deal" if self.worth_buying(h)
+                       else "to hold" if self.hold_buy(h)
                        else "market deal" if self.market_deal(h) else "no")
             rows.append(f"{h.name} at {h.asking:,}: {verdict}")
         text = " | ".join(l.text for l in lines)
@@ -1455,12 +1563,14 @@ class Crawler:
 
     def _buy(self, deal, frame, channel, market=False, ask_you=False, custom=False):
         store_deal = market and not custom and self.store_deals
-        from_profits = (custom and self.custom_from_profits) or store_deal
+        hold = not market and not custom and self.hold_buy(deal)  # kept, not flipped: paid like a custom list item
+        from_profits = ((custom or hold) and self.custom_from_pool()) or store_deal
         remaining = self.profit_pool if from_profits else self.budget - self.spent
         self.doing(f"{'market deal' if market else 'deal'} on {deal.name}: reading the stock")
         # None when unreadable, which is normal for equipment (its icon shows no number). Which buy
-        # window opens settles it: "Are you sure?" means a single item; "How many?" means a stack
-        # whose size isn't known, and that gets cancelled rather than guessed at.
+        # window opens settles it: "Are you sure?" means a single item; "How many?" means something
+        # that stacks with no number on its icon, which the game shows for a stock of 1: it buys 1
+        # (the total is still checked, and a row that doesn't go grey is topped up as usual).
         # the number on the icon of throwing stars is how many stars: they're always one item to buy
         stock_read = None if deal.stars else self.read_stock(frame, deal)
         stock = stock_read or 1
@@ -1468,8 +1578,8 @@ class Crawler:
         if store_deal:
             capped = self.store_deal_cap(deal, quantity)
             if capped < quantity:
-                print(f"    {quantity} would be over {self.item_cap_percent(deal.name):g}% of the budget, or put too much in "
-                      f"stacks not worth a slot yet ({self.waiting_money():,} of {self.waiting_cap():,}): buying {capped}")
+                print(f"    {quantity} would be over one stack ({self.stack_size(deal.name):,}), over {self.item_cap_percent(deal.name):g}% "
+                      f"of the budget, or put too much in stacks not worth a slot yet ({self.waiting_money():,} of {self.waiting_cap():,}): buying {capped}")
             quantity = capped
             reference = self.prices.reference(deal.name)[0]
             print(f"  STORE DEAL {deal.name}: asking {deal.asking:,}, reference {reference:,.0f} "
@@ -1480,6 +1590,8 @@ class Crawler:
             against = f"24h median {median:,} ({100 * (deal.asking - median) / median:+.0f}%)" if median else "no market price"
             print(f"  {'CUSTOM SEARCH' if custom else 'MARKET DEAL'} {deal.name}: asking {deal.asking:,}, {against}, "
                   f"stock {stock_read or 'not shown'}{'; asks you' if ask_you else '; auto-buy'}")
+        elif hold:
+            print(f"  TO HOLD {deal.name}: asking {deal.asking:,}, NPC pays {deal.npc_pays:,} (up to {min(self.hold[n] for n in deal.names):,} over); keeping it")
         else:
             print(f"  DEAL {deal.name}: asking {deal.asking:,}, {deal.npc_label}{deal.could_be} "
                   f"(+{deal.profit:,} each), stock {stock_read or 'not shown'}")
@@ -1498,14 +1610,16 @@ class Crawler:
             print(f"    not enough mesos ({before:,}); skipped")
             self.log(channel, deal, 0, "not enough mesos")
             return
-        if not custom and not store_deal:  # a custom list item is wanted, not flipped; a store deal can stack up from small buys
+        # a custom list item is wanted, not flipped; a store deal, and an NPC deal on something that stacks,
+        # add up from small buys (a stack takes one inventory slot however many trips it's bought on)
+        if not custom and not store_deal and not hold and not (not market and self.stacks(deal)):
             total = quantity * self.profit_each(deal, market)
             if total < self.min_total_profit:
                 print(f"    {quantity} x {self.profit_each(deal, market):+,} = {total:+,} profit, under the "
                       f"{self.min_total_profit:,} minimum per purchase; skipped")
                 self.log(channel, deal, 0, f"total profit {total} < {self.min_total_profit}")
                 return
-        if not market and self.too_thin_for_budget(deal, quantity):
+        if not market and not hold and self.too_thin_for_budget(deal, quantity):
             cost = quantity * deal.asking
             flip = 100 * deal.profit / deal.asking
             print(f"    {cost:,} is {100 * cost / self.budget:.0f}% of the budget for a {flip:.1f}% flip "
@@ -1546,14 +1660,8 @@ class Crawler:
             return
         kind, where = dialog
         if kind == "quantity" and stock_read is None:
-            self.doing("it's a stack, but its stock couldn't be read: cancelling")
-            self.controls.key("esc")  # Cancel: nothing is spent
-            _, closed = self.wait_for(lambda f: not self.find_quantity_dialog(f), 2.0)
-            if not closed:
-                raise Stop("the quantity window won't close")
-            print("    it's a stack, but its stock couldn't be read confidently; skipped")
-            self.log(channel, deal, 0, "stack size unreadable")
-            return
+            quantity = 1  # already at most 1 (stock taken as 1), so this only says it out loud
+            print("    it stacks, but its icon shows no number (a stock of 1): buying 1")
 
         if kind == "single":
             quantity = 1
@@ -1675,6 +1783,8 @@ class Crawler:
                 value = quantity * deal.npc_pays
                 self.bought.append((deal.name, quantity, expected, value, "npc"))
                 worth = f"NPC value {value:,}"
+                if hold:
+                    how += " (to hold: never sold at the NPC)"
                 if ask_you:
                     how += " (you confirmed)"
                 if self.market.lowest(deal.names):  # a market item too: log it with the others
@@ -1797,6 +1907,138 @@ class Crawler:
                                         below=True)], ttl=3)
             return True
         return False
+
+    # ---- scouting: finds sent to a buyer, and a buyer going for them (tips.py)
+
+    def find_profit(self, deal, kind, quantity):
+        """About what a find makes, to rank finds by: NPC deals at the NPC's price, store and market deals
+        at their price after the shop fee, custom items at the market median. Held items: nothing."""
+        if kind == "npc":
+            return deal.profit * quantity
+        if kind in ("store", "market"):
+            ref = (self.prices.reference(deal.name)[0] if kind == "store" and self.prices
+                   else (self.market.lowest(deal.names) or {}).get("median_24h")) or 0
+            return int((ref * (1 - SHOP_FEE) - deal.asking) * quantity)
+        if kind == "custom":
+            median = (self.market.lowest(deal.names) or {}).get("median_24h")
+            return int((median - deal.asking) * quantity) if median else 0
+        return 0
+
+    def send_visit(self, channel, visit):
+        """A scouter's store: everything still for sale in it, and where it is, to the buyers. They each
+        judge it by their own rules (judge_visit). Nothing is judged or bought here."""
+        import tips
+        rows = []
+        for (name, asking, options), h in visit.listed.items():
+            stock = None if h.stars else next((r["stock"] for r in visit.rows if r["price"] == asking and not r["sold"]
+                                                and pc.norm(r["name"])[:8] == pc.norm(name.rstrip("."))[:8]), None)
+            rows.append({"name": name, "options": list(options), "qty": h.qty, "asking": asking, "npc_pays": h.npc_pays, "stock": stock})
+        if not rows:
+            return
+        if self.tips:
+            self.tips.send(tips.visit(channel, self.current_sign, self.current_title, visit.owner or self.scan_owner, visit.title, rows))
+        self.doing(f"store sent to the buyers: {len(rows)} listings")
+
+    def judge_visit(self, d):
+        """A scouter's store, by this bot's own rules and money: [(row, kind, profit)] of what it would buy,
+        best first. Kinds as in buying: custom, npc (NPC deals, while there's money for them), hold, then
+        store or market deals."""
+        import tips
+        wanted = []
+        was = (self.current_place, self.scan_owner)
+        self.current_place, self.scan_owner = d.get("place", ""), d.get("owner", "")  # for the opportunities log
+        try:
+            for r in d.get("rows", []):
+                hit = tips.hit(r)
+                kind = ("custom" if self.custom_buy(hit) else "npc" if self.worth_buying(hit) and not self.money_low()
+                        else "hold" if self.hold_buy(hit) else None)
+                if kind is None and not self.worth_buying(hit) and self.market_deal(hit):
+                    kind = "store" if self.store_deals else "market"
+                if kind:
+                    wanted.append((r, kind, self.find_profit(hit, kind, r.get("stock") or 1)))
+        finally:
+            self.current_place, self.scan_owner = was
+        return sorted(wanted, key=lambda w: -w[2])
+
+    def check_tips(self):
+        """A buyer, between shops: the scouters' new stores judged (judge_visit); one with something to buy
+        goes first, the most profitable first (TipCall), unless it's on a find already. Stores with
+        nothing for this bot, and ones too old to be worth going for, are marked done."""
+        if not self.tips or self.scout or self.on_tip:
+            return
+        import tips
+        queue = self.__dict__.setdefault("tip_queue", [])
+        for task in self.tips.new():
+            d = task["data"]
+            if not tips.fresh(d):
+                self.tips.done(task, "too old")
+                continue
+            wanted = self.judge_visit(d)
+            if not wanted:
+                self.tips.done(task, "nothing for this bot")
+                continue
+            top = wanted[0][0]
+            d.update(item=top["name"], asking=top["asking"], kind=wanted[0][1], profit=sum(p for _, _, p in wanted),
+                     wanted=[f"{r['name']} at {r['asking']:,} ({k})" for r, k, _ in wanted])
+            queue.append(task)
+        for task in [t for t in queue if not tips.fresh(t["data"])]:
+            queue.remove(task)
+            self.tips.done(task, "too old by the time it came up")
+        if queue:
+            task = max(queue, key=lambda t: (t["data"]["profit"], t["data"].get("seen", 0)))
+            queue.remove(task)
+            raise TipCall(task)
+
+    def visit_tip(self, task):
+        """In the find's room and channel: the find's shop (tip_order, is_tip_shop), read like any other
+        (buying by this bot's own rules and money). A shop that turns out not to be it is left at once,
+        nothing bought. Returns what happened."""
+        d = task["data"]
+        place = f"room {d['room']} channel {d['channel']}"
+        self.on_tip = True
+        try:
+            frame = self.screen.grab()
+            if self.find_store(frame):
+                self.leave_store()
+            end = time.monotonic() + NO_SHOPS_WAIT
+            while True:
+                frame = self.screen.grab()
+                shops = self.find_shops(frame)
+                if shops or time.monotonic() > end:
+                    break
+                self.controls.wait(0.5)
+            if not shops:
+                return "the shop wasn't found: no shops on screen"
+            names = self.read_shop_names(frame, shops, always=True)
+            h, w = frame.shape[:2]
+            tried = 0
+            for i, why in self.tip_order(d, frame, shops, names):
+                self.controls.check()
+                (x, y), coin = shops[i]
+                self.marks.set("target", [box(*coin, TARGET, f"find: {d.get('title') or 'the shop'}?")])
+                self.doing(f"looking for the find's shop: {why}")
+                self.click_frame(x, y, double=True)
+                tried += 1
+                _, opened = self.wait_for(self.find_store, SHOP_OPEN_WAIT)
+                if not opened:
+                    continue
+                self.controls.wait(0.4)
+                if not self.is_tip_shop(d, self.screen.grab(), why.startswith("its sign reads")):
+                    self.leave_store()
+                    continue
+                print(f"  the find's shop: {why} (shop {tried} tried)")
+                self.current_sign, self.current_title = (x / w, y / h), names[i] or d.get("title", "")
+                bought = len(self.bought)
+                self.read_store(place)
+                self.leave_store()
+                new = self.bought[bought:]
+                if not new:
+                    return f"found ({why}), nothing bought: {d['item']} gone, or not a deal by this bot's rules"
+                return f"found ({why}), bought " + ", ".join(f"{q} x {n} for {p:,}" for n, q, p, _, _ in new)
+            return f"the shop wasn't found: {tried} of {len(shops)} shops opened, none was {d.get('owner') or d.get('title') or 'it'}'s (closed or moved)"
+        finally:
+            self.on_tip = False
+            self.marks.clear("target")
 
     def leave_store(self):
         for _ in range(2):
@@ -2165,6 +2407,12 @@ def main(sell_loop=None):
                         help="the only rooms to go through, in order: 6-1, or 3,10,15, or a mix like 6-1,16-13 (default: all of them)")
         ap.add_argument("--sell-below", type=float,
                         help="go and sell early under this percent of the budget (default: from the settings)")
+        ap.add_argument("--scout", action="store_true",
+                        help="a scouter: every channel of every room, over and over, buying and selling nothing; what the "
+                             "buyer would buy goes to it through the server (tips.py, the launcher's Server tab)")
+        ap.add_argument("--scout-for", default="*", metavar="BOT",
+                        help="with --scout: the buyer's name on the server (default: any bot that takes finds)")
+        ap.add_argument("--no-finds", action="store_true", help="a buyer that doesn't go for a scouter's finds")
     market.add_update_flag(ap)
     ap.add_argument("--no-overlay", action="store_true",
                     help="don't draw what the crawler sees and does over the game")
@@ -2179,6 +2427,17 @@ def main(sell_loop=None):
 
     crawler = Crawler(args)
     crawler.store_deals = bool(getattr(args, "store_deals", False))
+    if sell_loop:
+        import tips
+        crawler.scout = bool(args.scout)
+        if args.scout or not args.no_finds:
+            crawler.tips = tips.Tips.from_settings(send_to=args.scout_for)
+            if crawler.tips:
+                crawler.tips.start(take=not args.scout)
+                print(f"  scouting: buys nothing, sends finds to {args.scout_for if args.scout_for != '*' else 'any buyer'} through the server"
+                      if args.scout else "  takes the scouter's finds from the server, the most profitable first")
+            elif args.scout:
+                print("  scouting, but the server isn't set up (the launcher's Server tab): finds are only logged")
     if sell_loop:  # nobody is watching the full sell loop: those items are only logged, not waited on
         crawler.review_pause = False
     if not args.dry_run:

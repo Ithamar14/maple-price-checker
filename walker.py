@@ -38,6 +38,7 @@ import numpy as np
 from rapidfuzz import fuzz, process
 
 import crawler
+import custom_items
 import holdings
 import navigation as nav
 import price_checker as pc
@@ -66,6 +67,7 @@ RING_HIDDEN_NEAR = 15  # a circle that vanishes from this close has gone under t
 SETTLE_STEPS = 10     # small steps at most to get onto a portal
 UP_PRESSES = 3
 UP_WAIT = 1.2         # seconds after each press of Up for the map to change
+VENDOR_UP_WAIT = 3.0  # leaving the NPC's store: seconds after Up before trying anything else
 NAME_EVERY = 0.4      # seconds between readings of the map's name while walking into a portal
 PUSH_LIMIT = 12.0     # seconds to keep walking into a portal whose position isn't known
 WALL_AFTER = 1.0      # seconds without moving there before it counts as the end of the map
@@ -134,6 +136,7 @@ ROW_CHANGED = 0.1      # share of the first row's icon that differs once another
 SELL_DIALOG_WAIT = 2.0
 SELL_SETTLE = 0.5      # seconds for the list to update after a sale
 MAX_SALES_PER_TAB = 100
+MAX_SELL_SCROLLS = 40  # wheel notches down a tab's list once every row showing is kept, before giving up
 FULL_ROOMS = (6, 5, 4, 3, 2, 1)  # the bottom floor of the Entrance, in the order the sweep reaches them
 UPPER_ROOMS = (16, 15, 14, 13)   # two teleporters up: only reached by their saved points
 OTHER_LAYOUT = (12, 11, 10, 9, 8, 7, 20, 19, 18, 17)  # one and three teleporters up, and with another inside: see leave_by_ladder
@@ -473,14 +476,24 @@ class Walker:
             self.controls.hold(key if gap > 0 else other, TAP)
         self.note("couldn't settle on the portal: trying from here")
 
-    def press_up_into(self, expected, presses=UP_PRESSES):
+    def leave_vendor(self):
+        """Out of the NPC's store: it arrives on the store's door and sells from there, so Up, and a few
+        seconds for the map to change, before anything else. Then only small steps either side, with Up
+        at each: never walking off."""
+        if self.press_up_into("market", presses=1, wait=VENDOR_UP_WAIT):
+            return
+        self.note(f"Up didn't take it out within {VENDOR_UP_WAIT:g}s: small steps either side of here")
+        if not self.door_nearby("right", "vendor", "market"):
+            raise Lost("couldn't find the store's door with small steps either side")
+
+    def press_up_into(self, expected, presses=UP_PRESSES, wait=UP_WAIT):
         """Standing still on a portal: press Up (a few times). True once on the expected map."""
         self.target = None
         start = self.wait_for_map()
         for attempt in range(1, presses + 1):
             self.doing(f"standing on the portal to {PLACE_NAMES[expected]}: pressing Up ({attempt} of {presses})")
             self.controls.key("up")
-            end = time.monotonic() + UP_WAIT
+            end = time.monotonic() + wait
             while time.monotonic() < end:
                 self.controls.wait(0.2)
                 self.screen.grab()
@@ -875,7 +888,7 @@ class Walker:
         elif (here, there) == ("market", "entrance"):
             self.walk_to_ring("left", "entrance", FM_HEIGHT)
         elif here == "vendor":
-            self.push_through("right", "market")  # the door is on the right of the store
+            self.leave_vendor()
 
     def next_map(self, here, target):
         if target == "vendor":
@@ -1253,6 +1266,17 @@ class Walker:
         self.controls.wait(SELL_SETTLE)
         return True
 
+    def scroll_sell_list(self, spot):
+        """One wheel notch down over the list of your items. False when nothing moved: the end of it."""
+        x, y, s = spot
+        before = [self.row_icon(self.screen.grab(), spot, r) for r in range(SELL_ROWS)]
+        self.doing("scrolling the list of items to sell")
+        self.controls.wheel(*self.screen.to_screen(x + FIRST_ROW[0] * s, y + (FIRST_ROW[1] + (SELL_ROWS - 1) / 2 * ROW_PITCH) * s))
+        self.park()
+        self.controls.wait(0.4)
+        frame = self.screen.grab()
+        return any(self.changed(b, self.row_icon(frame, spot, r)) >= ROW_CHANGED for r, b in enumerate(before))
+
     def park(self):
         """The cursor off the shop window: it can cover what's being read."""
         self.controls.move(*self.screen.to_screen(self.screen.region["width"] * crawler.PARK_AT[0],
@@ -1267,7 +1291,9 @@ class Walker:
             return
         if not self.known:
             raise crawler.Stop("no item names to check what's sold against: not selling anything")
-        self.keep = frozenset(self.keep) | {pc.norm(n) for n in holdings.load()}  # bought for your store
+        # bought for your store, and the custom list as it is now: an item added since the start is kept too
+        self.keep = (frozenset(self.keep) | {pc.norm(n) for n in holdings.load()}
+                     | {pc.norm(i["name"]) for i in custom_items.load()} - {""})
         self.park()
         self.controls.wait(0.3)
         spot = self.find_sell_button(self.screen.grab())
@@ -1285,11 +1311,14 @@ class Walker:
             if active != tab:
                 self.shot(f"clicked the {tab} tab, but {active} is selected: not selling from it")
                 continue
-            row, sold = 0, 0
+            row, sold, scrolls, told = 0, 0, 0, set()
             while sold < MAX_SALES_PER_TAB:
-                if row >= SELL_ROWS:
-                    self.note(f"{tab} tab: all {SELL_ROWS} rows showing are being kept: anything below them stays too")
-                    break
+                if row >= SELL_ROWS:  # every row showing is kept: on down the list, as in a player's store
+                    if scrolls >= MAX_SELL_SCROLLS or not self.scroll_sell_list(spot):
+                        self.note(f"{tab} tab: the end of the list, after scrolling {scrolls} times")
+                        break
+                    scrolls, row = scrolls + 1, 0
+                    continue
                 frame = self.screen.grab()
                 if not self.row_used(frame, spot, row):
                     self.note(f"{tab} tab: done after {sold} sales, keeping {row}")
@@ -1297,7 +1326,9 @@ class Walker:
                 name = self.settled_row_name(spot, row)
                 why = keep_reason(name, self.keep, self.known)
                 if why:
-                    self.note(f"{tab} tab: keeping row {row + 1}: {why}")
+                    if name not in told:  # rows seen again after a scroll aren't noted again
+                        self.note(f"{tab} tab: keeping row {row + 1}: {why}")
+                        told.add(name)
                     row += 1
                     continue
                 frame = self.screen.frame
@@ -1487,7 +1518,8 @@ def save_state(shops, room, todo, finished_rounds, sell_next, path=None):
     """Where the full sell loop is and its money, so a stopped one goes on from there next time."""
     path = Path(path or STATE_FILE)
     state = {"saved": datetime.now().isoformat(timespec="seconds"), "room": room, "todo": list(todo) if todo is not None else None,
-             "finished_rounds": finished_rounds, "sell_next": sell_next, **{k: getattr(shops, k, 0) for k in STATE_MONEY}}
+             "finished_rounds": finished_rounds, "sell_next": sell_next, "scout": bool(getattr(shops, "scout", False)),
+             **({} if getattr(shops, "scout", False) else {k: getattr(shops, k, 0) for k in STATE_MONEY})}  # a scouter has no money to keep
     path.parent.mkdir(exist_ok=True)
     part = path.with_name(path.name + ".part")
     part.write_text(json.dumps(state, indent=1), "utf-8")
@@ -1527,12 +1559,15 @@ def run_full(shops, channels, budget, rounds=0, sell_below=10):
     shops.profit_pool = shops.custom_reserve = start
     shops.spent = 0
     shops.sell_below = sell_below
+    scout = getattr(shops, "scout", False)
     resumed = None if getattr(shops.args, "fresh", False) else load_state()
     if getattr(shops.args, "fresh", False):
         clear_state()
-    if resumed:
+    if resumed and not resumed.get("scout"):
         for k in STATE_MONEY:
             setattr(shops, k, resumed.get(k, getattr(shops, k)))
+    if scout:  # no money, no selling: money never runs low
+        shops.sell_below = None
     shops.update_info()
     limit = shops.args.minutes * 60 if shops.args.minutes else float("inf")
     deadline = time.monotonic() + limit
@@ -1540,8 +1575,8 @@ def run_full(shops, channels, budget, rounds=0, sell_below=10):
     walker = Walker(shops.hwnd, controls, shops.screen, shops.reader)
     walker.marks = shops.marks
     walker.shops = shops
-    walker.selling = True
-    walker.keep, walker.known = frozenset(shops.watch.custom) | pc.STAR_KEYS, shops.db.keys
+    walker.selling = not scout
+    walker.keep, walker.known = frozenset(shops.watch.custom) | pc.STAR_KEYS | {pc.norm(n) for n in getattr(shops, 'hold', {})}, shops.db.keys
     rooms = rooms_for(walker.points)
     asked = getattr(shops.args, "rooms", None)
     if asked:
@@ -1551,6 +1586,8 @@ def run_full(shops, channels, budget, rounds=0, sell_below=10):
             return f"stopped: no saved door for room {', '.join(map(str, unknown))}"
         rooms = tuple(asked)
     total = rounds or len(rooms)  # each room asked for once, in order, then a last sell trip
+    if scout:
+        total = rounds or float("inf")  # round and round: it only collects
     print(f"Rooms, in order: {', '.join(map(str, rooms))}")
     print(f"Channels, in order: {', '.join(map(str, channels)) or 'only the one you are on'}")
     if split:
@@ -1562,8 +1599,11 @@ def run_full(shops, channels, budget, rounds=0, sell_below=10):
         else:
             print(f"{budget - start:,} of the budget is only for NPC deals. {what[0].upper() + what[1:]} are bought from the "
                   f"{start:,} set aside, then only from profits once the money is past {budget:,}.")
-    print(f"Budget {budget:,} mesos. At the NPC it SELLS EVERYTHING on the Equip, Use and Etc tabs, except "
-          f"the {len(shops.watch.custom)} items on your custom list and throwing stars.")
+    if scout:
+        print("Scouting: reads every store, buys and sells nothing, and sends the buyer what's worth buying.")
+    else:
+        print(f"Budget {budget:,} mesos. At the NPC it SELLS EVERYTHING on the Equip, Use and Etc tabs, except "
+              f"the {len(shops.watch.custom)} items on your custom list and throwing stars.")
     print("Switch to MapleStory now. Starting in 3 seconds... (hold ESC for 1s to stop)")
     walker.doing("switch to MapleStory: starting in 3 seconds (hold ESC 1s to stop)")
     time.sleep(3)
@@ -1584,12 +1624,69 @@ def run_full(shops, channels, budget, rounds=0, sell_below=10):
 
     def profits():
         split = getattr(shops, "custom_from_profits", False) or getattr(shops, "store_deals", False)
-        return f", for custom and store deals {shops.profit_pool:,}" if split else ""
+        return f", for custom and store deals {shops.profit_pool:,}" if split and not scout else ""
+
+    on = {"channel": None}  # the channel it's on, once known: where to come back to after a find
+
+    def leave_room_for(target):
+        """Walks to another room (or nowhere, if it's in it)."""
+        kind, here = walker.place()
+        if (kind, here) == ("room", target):
+            return
+        if kind == "room" and not walker.on_door and here not in OTHER_LAYOUT:
+            walker.drop_to_portal()
+        walker.on_door = False
+        walker.go_to_room(target)
+
+    def to_channel(channel):
+        """True once on it (or already there)."""
+        for _ in range(CHANNEL_TRIES):
+            changed = shops.change_channel(channel)
+            if changed is not False and not shops.channel_refused:
+                on["channel"] = channel
+                walker.on_door = False
+                return True
+            walker.recover()
+        return False
+
+    def follow(task):
+        """A scouter's find: there, the shop read and bought from by this bot's rules, and the result back to the server."""
+        d = task["data"]
+        age = time.time() - d.get("seen", time.time())
+        walker.note(f"-- a store from {task.get('by') or 'the scouter'} in room {d['room']} channel {d['channel']} "
+                    f"(seen {age / 60:.0f} min ago, about {d.get('profit', 0):+,}): {', '.join(d.get('wanted') or [d.get('item', '')])}")
+        result = "not done"
+        try:
+            leave_room_for(d["room"])
+            if not to_channel(d["channel"]):
+                result = f"couldn't get into channel {d['channel']}"
+            else:
+                result = shops.visit_tip(task)
+        except crawler.Stop as e:
+            result = f"failed: {e}"
+            raise
+        finally:
+            shops.tips.done(task, result)
+            walker.note(f"-- the find: {result}")
+
+    def crawl(label, back_room, back_channel):
+        """crawl_room, but a find from the scouter goes first: then back to this room and channel, and it
+        starts again (shops already read are read again: quicker than knowing where it was)."""
+        while True:
+            try:
+                shops.crawl_room(label)
+                return
+            except crawler.TipCall as call:
+                follow(call.task)
+                leave_room_for(back_room)
+                if back_channel is not None and not to_channel(back_channel):
+                    walker.note(f"couldn't get back into channel {back_channel}: moving on")
+                    return
 
     if resumed:
         room = resumed.get("room") if resumed.get("room") in rooms else None
         todo = None if resumed.get("todo") is None or room is None else [c for c in resumed["todo"] if c in channels]
-        finished_rounds, sell_next = resumed.get("finished_rounds", 0), resumed.get("sell_next", False)
+        finished_rounds, sell_next = resumed.get("finished_rounds", 0), resumed.get("sell_next", False) and not scout
         where = f"room {room}" + (f", channels {', '.join(map(str, todo))} still to do" if todo else "") if room else "the room it's in"
         walker.note(f"-- going on from where it stopped ({resumed.get('saved')}): {where}, budget {shops.budget - shops.spent:,}{profits()}"
                     f"{', selling first' if sell_next else ''}. Reset on the launcher's tab to start fresh instead")
@@ -1625,14 +1722,16 @@ def run_full(shops, channels, budget, rounds=0, sell_below=10):
                 if walker.place() != ("room", room):
                     walker.go_to_room(room)
                 if todo is None:
-                    walker.note(f"-- room {room} ({finished_rounds + 1} of {total}), budget {shops.budget:,} ({duration()} so far)")
+                    walker.note(f"-- room {room} ({finished_rounds + 1}" + (f" of {total}" if total != float("inf") else "") + ")"
+                                + ("" if scout else f", budget {shops.budget:,}") + f" ({duration()} so far)")
                     walker.marks.clear("minimap", "npc")
                     walker.target = None
                     crawl_here, todo = shops.start_channel(channels)
                     if crawl_here:
                         here = [c for c in channels if c not in todo][:1]  # if it's stopped in this one, it's done again
                         save_state(shops, room, here + todo, finished_rounds, False)
-                        shops.crawl_room(f"room {room}")
+                        on["channel"] = here[0] if here else None
+                        crawl(f"room {room}" + (f" channel {here[0]}" if here else ""), room, on["channel"])
                     save_state(shops, room, todo, finished_rounds, False)
                 while todo and not shops.money_low() and not store_ends():
                     target = todo[0]
@@ -1649,13 +1748,18 @@ def run_full(shops, channels, budget, rounds=0, sell_below=10):
                         walker.note(f"-- skipping channel {target}: couldn't get in after {CHANNEL_TRIES} tries")
                     if changed:
                         walker.on_door = False
-                        shops.crawl_room(f"room {room} channel {target}")
+                        on["channel"] = target
+                        crawl(f"room {room} channel {target}", room, target)
                     todo.pop(0)
                     problems = 0
                     save_state(shops, room, todo, finished_rounds, False)
                 ready = store_ends()
                 last = finished_rounds + 1 >= total  # sold before it ends, so its profits are made
-                low = shops.money_low() or ready or last
+                low = (shops.money_low() or ready or last) and not scout
+                if scout and last:
+                    ended = True
+                    walker.note(f"-- all {finished_rounds + 1} rooms scouted")
+                    return f"all {finished_rounds + 1} rooms scouted"
                 walker.note(f"-- room {room} done" + (": store deals ready, selling the rest" if ready else ": the last room, going to sell"
                                                       if last else ": budget low, going to sell" if low else "") + f" ({duration()} so far)")
                 finished_rounds += 1
@@ -1685,10 +1789,13 @@ def run_full(shops, channels, budget, rounds=0, sell_below=10):
         return f"stopped: {e}"
     finally:
         controls.stop.set()
+        if getattr(shops, "tips", None):
+            shops.tips.close()
         walker.marks.clear("click", "target", "minimap", "npc")
         npc = [b for b in getattr(shops, "bought", []) if b[4] == "npc"]  # its profit counts when bought, sold yet or not
         deals = f"; NPC deals {sum(b[2] for b in npc):,} for {sum(b[3] for b in npc):,} of NPC value ({sum(b[3] - b[2] for b in npc):+,})" if npc else ""
-        walker.note(f"{finished_rounds} rounds in {duration()}; {earned:,} mesos from the NPC{deals}; budget left {shops.budget - shops.spent:,}{profits()}")
+        walker.note(f"{finished_rounds} rounds in {duration()}" + ("; scouting, nothing bought" if scout else
+                    f"; {earned:,} mesos from the NPC{deals}; budget left {shops.budget - shops.spent:,}{profits()}"))
         if ended:
             clear_state()
         else:  # stopped (Esc, Stop, the time limit, a problem): the next run goes on from here
@@ -1733,7 +1840,7 @@ def main():
         shops_crawler.marks = walker.marks  # the overlay draws these
         walker.shops = shops_crawler
         walker.selling = bool(args.long_loop) and not args.no_sell
-        walker.keep, walker.known = shops_crawler.watch.custom, shops_crawler.db.keys
+        walker.keep, walker.known = frozenset(shops_crawler.watch.custom) | {pc.norm(n) for n in shops_crawler.hold}, shops_crawler.db.keys
         print("At the NPC it SELLS EVERYTHING on the Equip, Use and Etc tabs, except your custom list" if walker.selling
               else "At the NPC it sells nothing")
     finished = []

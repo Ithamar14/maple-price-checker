@@ -20,3 +20,6 @@ data/holdings.json*
 printscreens/store_setup/
 server/*.sqlite*
 data/loop_state.json*
+printscreens/*.png
+data/paper_trades.json
+Maple tools.lnk

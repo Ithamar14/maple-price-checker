@@ -52,3 +52,21 @@ while the launcher is open; the log shows what went up and down.
 
 `.venv\Scripts\python server\server.py` with `ADMIN_KEY` set, then the address
 `http://127.0.0.1:8080`. Only that PC can reach it.
+
+Your other PC can reach it over your home network too: on that PC the address is
+`http://<this PC's IPv4 address>:8080` (`ipconfig` shows the address). The first time, Windows asks
+whether to let Python through the firewall: allow it on private networks. That's enough to run a
+scouter and a buyer before the server is on Railway.
+
+## A scouter and a buyer
+
+A scouter (the **Full sell loop** tab, **Scout** ticked) goes round every room and channel. It
+buys, sells and judges nothing, and needs no budget. After each store, everything still for sale
+there goes to the server, with where the store is and who owns it. Each buyer named in **Send
+stores to** gets its own copy, so a scroll bot and an equipment bot can each pick what they want.
+
+A buyer (the full sell loop, with its **Server** tab on) judges the scouter's stores between shops,
+by its own rules and money. It goes straight to the store with the most profit in it, finds the
+shop by the name on its sign or by its owner, and buys. Then it goes back to the room and channel
+it was on. Stores over 10 minutes old are too late. Every PC needs the server joined. The game
+windows can be different sizes, as shops are found by name and owner, not by screen position.

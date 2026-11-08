@@ -59,6 +59,7 @@ PAID_DAYS = 30           # what the bot paid, from purchases this recent
 MATCH_THRESHOLD = 0.8    # a window's template match
 MARKET_WAIT = 30         # seconds to wait for MeowDB lookups
 DIALOG_WAIT = 3.0
+CHANNEL_MENU_SECONDS = 10  # once the store is open, the channel window shows this long
 INVENTORY_WAIT = 0.6     # seconds for the inventory window to show after I
 
 # where things are, at UI scale 1, from the top left corner of each window's template
@@ -342,6 +343,7 @@ class StoreBot:
         self.store_tpl = crawler.load_template("store_buttons_own.png")
         self.inv_tpl = crawler.load_template("inventory_title.png")
         self.sell_tpl = crawler.load_template("to_sell.png")
+        self.channel_tpl = crawler.load_template("channel_title.png")
         self.equipment = set(custom_items.load_equipment()) | set(self.db.slots)
         LOG_DIR.mkdir(exist_ok=True)
         self.log_file = LOG_DIR / f"store_{datetime.now():%Y-%m-%d_%H%M%S}.txt"
@@ -450,6 +452,7 @@ class StoreBot:
         """Goes through the tabs, slot by slot, and puts each item whose name is in wanted in the
         store as soon as it knows it, at its price. Returns (what was priced, the store's rows)."""
         priced, listed, mixups = [], set(), 0
+        self.listed = listed  # what's been put in the store, by name
         self.seen, self.overflow, self.unread = set(), False, 0
         for tab in TABS:
             if len(rows) >= MAX_ROWS:
@@ -515,6 +518,31 @@ class StoreBot:
         for name in gone:
             holdings.remove(name)
         self.log(f"no longer held, sold or moved by hand: {', '.join(gone)}")
+
+    def sync_held(self, held, rows, placed):
+        """Store deals partly sold: what's left in the store is what's held, so a stack that's sold down
+        isn't still counted full (the crawler would refuse to buy more, and count the slot taken). Only
+        ever lowers, never raises; paid goes down in step, at what each one cost. Skipped for an item
+        whose stock number couldn't be read, and for one still in the inventory unplaced (how many
+        there is unknown). Grey rows are sold out: none left."""
+        left = {}
+        for r in rows:
+            found = self.db.candidates(r["name"])
+            if len(found) != 1 or found[0][0] not in held:
+                continue
+            name = found[0][0]
+            if r["sold"]:
+                left.setdefault(name, 0)
+            elif r["stock"] is None or (name in left and left[name] is None):
+                left[name] = None  # a number not read: how many is unknown
+            else:
+                left[name] = left.get(name, 0) + r["stock"] * r["bundle"]
+        for name, count in sorted(left.items()):
+            was = held[name]["quantity"]
+            if count is None or count >= was or (name in self.seen and name not in placed):
+                continue
+            holdings.set_quantity(name, count)
+            self.log(f"{name}: {was:,} held, {count:,} left in the store: {was - count:,} sold" + (", none left" if not count else ""))
 
     def read_store(self):
         """Every row in the store, scrolling through the list when it's longer than it shows."""
@@ -744,6 +772,37 @@ class StoreBot:
         if message_box(self.screen.grab(), self.reader):
             raise Stopped("a message is still showing after OK: check the game")
 
+    def show_channels(self, seconds=None):
+        """Once the store is open: the channel window for a while (Esc: the game menu, Enter: its Change
+        Channel, as the crawler opens it), then closed. If the first Esc only closed the store's own
+        window, Enter did nothing that matters (chat, closed again by Esc): once more."""
+        seconds = CHANNEL_MENU_SECONDS if seconds is None else seconds
+        for attempt in (1, 2):
+            self.controls.key("esc")
+            self.controls.wait(0.4)
+            self.controls.key("enter")
+            found = self.wait_until(lambda f: find_template(f, self.channel_tpl), 2.5)
+            if found:
+                self.log(f"channel window open, for {seconds:g}s")
+                self.controls.wait(seconds)
+                self.controls.key("esc")
+                gone = self.wait_until(lambda f: not find_template(f, self.channel_tpl), 2.0)
+                self.log("channel window closed" if gone else "the channel window didn't close: check the game")
+                return bool(gone)
+            self.controls.key("esc")  # whatever Enter opened instead
+            self.controls.wait(0.4)
+        self.log("the channel window didn't open (Esc, Enter): left as it is")
+        return False
+
+    def wait_until(self, test, timeout):
+        end = time.monotonic() + timeout
+        while True:
+            if test(self.screen.grab()):
+                return True
+            if time.monotonic() > end:
+                return False
+            self.controls.wait(0.2)
+
     def to_front(self):
         ctypes.windll.user32.SetForegroundWindow(self.hwnd)
         self.controls.ensure_front()
@@ -838,6 +897,7 @@ def main():
         priced, rows = bot.fill(wanted, before, args.dry_run)
         if not args.item and not args.dry_run:
             bot.forget_gone(held, rows)
+            bot.sync_held(holdings.load(), rows, bot.listed)
         if args.dry_run:
             ask("Store: dry run", "Dry run: this is what would be listed. Nothing was placed.", plan_rows(priced), PLAN_COLUMNS, "OK", "Close")
             return
@@ -850,6 +910,7 @@ def main():
             bot.windows()
             bot.open_store()
             bot.log("store opened")
+            bot.show_channels()
         else:
             bot.log("left closed: open it yourself, or close it to take everything back")
     except (Stopped, crawler.Stop) as e:
