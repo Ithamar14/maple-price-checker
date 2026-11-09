@@ -16,6 +16,9 @@ never kept by a bot.
     PUT  /api/files/<name>                  replaces it (body: the file)
     POST /api/events   {"kind", "text"}     GET /api/events?after=N
     POST /api/tasks    {"bot", "kind", "data"}   GET /api/tasks (open tasks for this bot or "*")
+    GET  /api/snapshots                     MeowDB's daily numbers the server pulled (snapshots.py): [{"day", "done", "size", "updated"}]
+    GET  /api/snapshots/<day>               one, gzipped JSON
+    PUT  /api/snapshots/<day>               a day a PC pulled itself (gzipped JSON): kept only if the server hasn't a whole one
     POST /api/tasks/<id>/done {"result"}
                                             GET /api/tasks?max_age=S: only those under S seconds old. Tasks
                                             nobody took within TASK_TTL are closed as "expired", and a task for a
@@ -36,6 +39,8 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
+import snapshots
+
 DATA_DIR = Path(os.environ.get("DATA_DIR", "."))
 DB_FILE = DATA_DIR / "maple_server.sqlite"
 MAX_BODY = 20 * 1024 * 1024  # a request's body: a big first upload of scans comes in parts below this
@@ -43,6 +48,7 @@ MAX_PAGE = 5000
 TASK_TTL = float(os.environ.get("TASK_TTL", 600))  # seconds a task waits to be taken (a buyer's tips.MAX_AGE): then closed as expired
 TAKER_GONE = 60.0  # a bot that hasn't asked for tasks in this long isn't taking any: tasks for it aren't kept at all
 FILE_NAME = re.compile(r"^[A-Za-z0-9_.-]{1,80}$")
+DAY = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS bots (name TEXT PRIMARY KEY, key_hash TEXT UNIQUE, created REAL, seen REAL, status TEXT);
 CREATE TABLE IF NOT EXISTS records (seq INTEGER PRIMARY KEY AUTOINCREMENT, kind TEXT, uid TEXT UNIQUE, bot TEXT,
@@ -51,6 +57,7 @@ CREATE TABLE IF NOT EXISTS files (name TEXT PRIMARY KEY, body BLOB, updated REAL
 CREATE TABLE IF NOT EXISTS events (id INTEGER PRIMARY KEY AUTOINCREMENT, bot TEXT, at REAL, kind TEXT, text TEXT);
 CREATE TABLE IF NOT EXISTS tasks (id INTEGER PRIMARY KEY AUTOINCREMENT, bot TEXT, kind TEXT, data TEXT, created REAL,
     by TEXT, done REAL, done_by TEXT, result TEXT);
+CREATE TABLE IF NOT EXISTS snapshots (day TEXT PRIMARY KEY, body BLOB, done INTEGER, updated REAL);
 CREATE INDEX IF NOT EXISTS records_kind ON records(kind, seq);
 """
 
@@ -154,7 +161,7 @@ class Handler(BaseHTTPRequestHandler):
             if not bot:
                 return self.reply(401, {"error": "unknown bot key: join the server first"})
             return self.api(method, parts[1:], query, bot) if parts[:1] == ["api"] else self.reply(404, {"error": "not found"})
-        except (ValueError, KeyError, TypeError) as e:
+        except (ValueError, KeyError, TypeError, OSError, EOFError) as e:  # OSError, EOFError: a body that isn't gzip
             return self.reply(400, {"error": str(e)})
 
     def do_GET(self):
@@ -207,6 +214,25 @@ class Handler(BaseHTTPRequestHandler):
         if parts == ["events"]:
             rows = s.run("SELECT id, bot, at, kind, text FROM events WHERE id > ? ORDER BY id LIMIT 500", (int(query.get("after", 0)),))
             return self.reply(200, [dict(zip(("id", "bot", "at", "kind", "text"), r)) for r in rows])
+        if parts == ["snapshots"]:
+            return self.reply(200, [{"day": d, "done": bool(done), "size": z, "updated": u} for d, done, z, u in
+                                    s.run("SELECT day, done, length(body), updated FROM snapshots ORDER BY day")])
+        if len(parts) == 2 and parts[0] == "snapshots":
+            day = parts[1]
+            if not DAY.match(day):
+                return self.reply(400, {"error": "a day is like 2026-11-09"})
+            if method == "PUT":
+                body = self.body()
+                state = snapshots.unpack(body)  # a bad one is refused (400) rather than kept
+                if not isinstance(state, dict) or not state.get("summary"):
+                    return self.reply(400, {"error": "not a snapshot"})
+                if s.run("SELECT 1 FROM snapshots WHERE day = ? AND done = 1", (day,)):
+                    return self.reply(200, {"ok": True, "kept": "the server's own"})
+                s.run("INSERT INTO snapshots (day, body, done, updated) VALUES (?, ?, 1, ?) ON CONFLICT(day) DO UPDATE SET "
+                      "body = excluded.body, done = 1, updated = excluded.updated", (day, body, time.time()))
+                return self.reply(200, {"ok": True})
+            rows = s.run("SELECT body FROM snapshots WHERE day = ? AND done = 1", (day,))
+            return self.reply(200, raw=rows[0][0], kind="application/gzip") if rows else self.reply(404, {"error": "no such day"})
         if parts == ["tasks"] and method == "POST":
             data = self.json_body()
             target, now = str(data.get("bot") or "*"), time.time()
@@ -248,5 +274,6 @@ def serve(port=None, store=None, admin_key=None):
 
 if __name__ == "__main__":
     server = serve()
+    snapshots.Puller(Handler.store, log=lambda t: print(t, flush=True)).start()  # MeowDB's numbers, once a day
     print(f"serving on port {server.server_address[1]}, data in {DB_FILE}", flush=True)
     server.serve_forever()

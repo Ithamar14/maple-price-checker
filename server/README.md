@@ -58,6 +58,14 @@ Your other PC can reach it over your home network too: on that PC the address is
 whether to let Python through the firewall: allow it on private networks. That's enough to run a
 scouter and a buyer before the server is on Railway.
 
+## MeowDB's daily numbers
+
+The server pulls MeowDB's numbers for the market report once a day by itself, from 08:00 Israel time
+(06:00 UTC; the `PULL_HOUR` variable changes it), about 10 minutes at one request a second. MeowDB
+only shows the last day and week at the moment you ask, so this way no day is missed even with every
+PC off. Each day takes about 140 KB. The launcher brings new days down into
+`data/meowdb_snapshots/` when it syncs, and sends up days only that PC has.
+
 ## A scouter and a buyer
 
 A scouter (the launcher's **Scouter** tab) goes round the rooms and channels you give it, for as

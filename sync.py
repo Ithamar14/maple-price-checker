@@ -10,11 +10,12 @@ when its Server tab is on. Plain Python: nothing to install.
 
 Anything going wrong only skips this round: the bots never wait on the server.
 """
+import gzip
 import json
 import time
 import urllib.error
 import urllib.request
-from datetime import datetime
+from datetime import date, datetime
 from pathlib import Path
 
 import scan_log
@@ -23,6 +24,7 @@ HERE = Path(__file__).parent
 SHARED_FILES = [HERE / "data" / "recipes_meowdb.json", HERE / "data" / "equipment_stats.json"]
 STATE_FILE = HERE / "data" / "loop_state.json"
 SCOUT_STATE_FILE = HERE / "data" / "scout_state.json"
+SNAPSHOTS = HERE / "data" / "meowdb_snapshots"  # MeowDB's daily numbers for the market report (server/snapshots.py)
 HOLDINGS_FILE = HERE / "data" / "holdings.json"
 TIMEOUT = 20
 UPLOAD_BATCH = 200   # store visits a request
@@ -162,6 +164,29 @@ def sync_files(client, files=None):
     return moved
 
 
+def sync_snapshots(client, folder=None, today=None):
+    """MeowDB's daily snapshots: the server's whole ones this PC hasn't got come down, and days only this PC
+    has (pulled here before the server did it) go up. Today's own isn't sent: it may still be being pulled.
+    Returns what moved, as text."""
+    folder = Path(folder or SNAPSHOTS)
+    today = today or date.today().isoformat()
+    there = {d["day"]: d for d in client.call("GET", "/api/snapshots")}
+    mine = {p.stem for p in folder.glob("*.json")} if folder.exists() else set()
+    moved = []
+    for day in sorted(d for d, info in there.items() if info["done"] and d not in mine):
+        folder.mkdir(parents=True, exist_ok=True)
+        part = folder / f"{day}.json.part"
+        part.write_bytes(gzip.decompress(client.call("GET", f"/api/snapshots/{day}")))
+        part.replace(folder / f"{day}.json")
+        moved.append(f"snapshot {day} down")
+    for day in sorted(d for d in mine if d < today and not there.get(d, {}).get("done")):
+        state = read_json(folder / f"{day}.json")
+        if state and state.get("summary"):
+            client.call("PUT", f"/api/snapshots/{day}", raw=gzip.compress(json.dumps(state).encode("utf-8")))
+            moved.append(f"snapshot {day} up")
+    return moved
+
+
 def read_json(path):
     try:
         return json.loads(Path(path).read_text("utf-8"))
@@ -188,7 +213,7 @@ def run_once(client, log_path=None, running=(), last_outcome="", files=True):
         up, down = upload(log, client), download(log, client)
     finally:
         log.close()
-    moved = sync_files(client) if files else []
+    moved = (sync_files(client) + sync_snapshots(client)) if files else []
     return f"{up} up, {down} down" + (f", {', '.join(moved)}" if moved else "")
 
 
