@@ -72,7 +72,9 @@ The server is also a Discord bot: it posts to one channel, and answers slash com
 HTTP (no extra program running anywhere). Until the variables below are set, it's off and the rest works as before.
 
 **Commands.** Everyone in your Discord server: `/status` (what each bot is doing), `/price <item>` (MeowDB and
-what the scans saw), `/report` (today's market report). You and whoever you `/allow`: `/buy <item> <max_price>
+what the scans saw), `/report` (today's market report), and `/alert <item> <max_price> [days]` with `/alerts` and
+`/unalert <id>`: an alert pings only whoever set it, in the channel, when a bot's scans show the item at or under
+that price (once a store and price, at most 6 an hour, for 7 days unless told otherwise). You and whoever you `/allow`: `/buy <item> <max_price>
 <amount> [bot]`, `/requests`, `/cancel <id>`. Only you: `/allow @someone`, `/disallow @someone`.
 
 A buy request goes onto a bot's custom list at its next sync, bought automatically at or under the price, up to the

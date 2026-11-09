@@ -71,6 +71,9 @@ CREATE TABLE IF NOT EXISTS requests (id INTEGER PRIMARY KEY AUTOINCREMENT, item 
     by_id TEXT, by_name TEXT, created REAL, status TEXT, bought INTEGER, added INTEGER, removed INTEGER, claimed_by TEXT,
     note TEXT, updated REAL);
 CREATE TABLE IF NOT EXISTS discord_users (id TEXT PRIMARY KEY, name TEXT, added REAL);
+CREATE TABLE IF NOT EXISTS alerts (id INTEGER PRIMARY KEY AUTOINCREMENT, item TEXT, max_price INTEGER, by_id TEXT, by_name TEXT,
+    created REAL, expires REAL, status TEXT);
+CREATE TABLE IF NOT EXISTS alert_hits (alert_id INTEGER, shop TEXT, price REAL, at REAL);
 CREATE INDEX IF NOT EXISTS records_kind ON records(kind, seq);
 CREATE INDEX IF NOT EXISTS scan_rows_item ON scan_rows(item, epoch);
 """
@@ -218,6 +221,11 @@ class Handler(BaseHTTPRequestHandler):
         if parts == ["scans"] and method == "POST":
             data = self.json_body()
             new = {kind: s.add_records(bot, kind, data.get(kind) or []) for kind in ("shops", "own_buys")}
+            if self.discord and data.get("shops"):
+                try:
+                    self.discord.check_alerts(data["shops"], bot)
+                except Exception as e:  # an alert failing never loses the scans
+                    print(f"alerts: {e!r}", flush=True)
             return self.reply(200, {"new": new})
         if parts == ["scans"]:
             after, limit = int(query.get("after", 0)), min(int(query.get("limit", 1000)), MAX_PAGE)

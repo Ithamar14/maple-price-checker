@@ -10,8 +10,9 @@ Set on Railway (the Developer Portal's application gives the first three):
     DISCORD_CHANNEL_ID   the channel notifications and reports go to
     DISCORD_OWNER_ID     your own user id: you can always buy, and only you can /allow others
 
-Commands: /status, /price and /report for everyone; /buy, /requests and /cancel for you and whoever you /allow;
-/allow and /disallow for you. A buy request goes to a bot's custom list at its next sync (sync.sync_requests),
+Commands: /status, /price and /report for everyone; /alert, /alerts and /unalert for everyone too (an alert spends
+nothing: it pings whoever set it when a bot's scans show the item at or under their price, check_alerts); /buy,
+/requests and /cancel for you and whoever you /allow; /allow and /disallow for you. A buy request goes to a bot's custom list at its next sync (sync.sync_requests),
 auto-buying at or under the price given, up to the amount, and is never sold at the NPC.
 
 Notifications, each one turned on or off from the launcher's Server tab (NOTIFY): bots starting and stopping, errors
@@ -34,10 +35,15 @@ API = "https://discord.com/api/v10"
 UA = "DiscordBot (https://github.com/Ithamar14/maple-price-checker, 1)"
 NOTIFY = {"runs": "Bots starting and stopping", "errors": "Errors, and bots that stop checking in",
           "finds": "Scouter finds bought", "requests": "Buy requests: taken, bought, done",
-          "snapshot": "The day's MeowDB snapshot is in", "rmt": "An RMT wave starting", "report": "The daily market report"}
+          "snapshot": "The day's MeowDB snapshot is in", "rmt": "An RMT wave starting", "report": "The daily market report",
+          "alerts": "Price alerts (/alert) pinging whoever set them"}
 GONE_AFTER = 300     # seconds without a status from a bot that was running something: it's said to have gone quiet
 WATCH_EVERY = 60
 MAX_AMOUNT = 100_000
+MAX_ALERTS = 10        # open alerts a person may have
+ALERT_DAYS = 7         # how long an alert lasts unless told otherwise (1 to 30 days)
+ALERT_FRESH = 1800     # seconds: only listings seen this recently ping (not a bot's old scans arriving late)
+ALERT_PER_HOUR = 6     # pings an alert may make in an hour
 EPHEMERAL = 64       # a reply only the one who asked sees
 
 # slash commands (type 1: chat input). Option types: 3 text, 4 whole number, 6 user
@@ -53,6 +59,15 @@ COMMANDS = [
                  {"type": 3, "name": "bot", "description": "Which bot (default: whichever takes it first)", "required": False,
                   "autocomplete": True}]},
     {"name": "requests", "description": "Buy requests: open ones and the last finished"},
+    {"name": "alert", "description": "Get pinged when a bot sees an item at or under a price",
+     "options": [{"type": 3, "name": "item", "description": "The item", "required": True, "autocomplete": True},
+                 {"type": 4, "name": "max_price", "description": "Ping at this price or less (a throwing star: for the set)",
+                  "required": True, "min_value": 1},
+                 {"type": 4, "name": "days", "description": f"How long it lasts (default {ALERT_DAYS})", "required": False,
+                  "min_value": 1, "max_value": 30}]},
+    {"name": "alerts", "description": "Your price alerts"},
+    {"name": "unalert", "description": "Remove one of your price alerts",
+     "options": [{"type": 4, "name": "id", "description": "The alert's number (see /alerts)", "required": True}]},
     {"name": "cancel", "description": "Cancel a buy request",
      "options": [{"type": 4, "name": "id", "description": "The request's number (see /requests)", "required": True}]},
     {"name": "allow", "description": "Let someone make buy requests (owner only)",
@@ -122,14 +137,15 @@ class Discord:
             self.send("PUT", f"/applications/{self.cfg['app_id']}/guilds/{self.cfg['guild_id']}/commands", COMMANDS)
             self.log(f"discord: {len(COMMANDS)} commands set up")
 
-    def post(self, text):
+    def post(self, text, ping=None):
+        """To the channel; ping: a user id, the only one it may ping."""
         if self.on:
-            self.outbox.put(text[:1990])
+            self.outbox.put((text[:1990], ping))
 
-    def notify(self, kind, text):
+    def notify(self, kind, text, ping=None):
         """A notification, if that kind is on (the launcher's Server tab)."""
         if self.toggles().get(kind, True):
-            self.post(text)
+            self.post(text, ping)
 
     def toggles(self):
         rows = self.store.run("SELECT value FROM settings WHERE key = 'notify'")
@@ -144,9 +160,10 @@ class Discord:
 
     def _poster(self):
         while True:
-            text = self.outbox.get()
+            text, ping = self.outbox.get()
             try:
-                self.send("POST", f"/channels/{self.cfg['channel_id']}/messages", {"content": text, "allowed_mentions": {"parse": []}})
+                self.send("POST", f"/channels/{self.cfg['channel_id']}/messages",
+                          {"content": text, "allowed_mentions": {"parse": [], "users": [ping] if ping else []}})
             except Exception as e:  # Discord down or a bad setting: logged, never taken further
                 self.log(f"discord: couldn't post: {e!r}")
 
@@ -255,6 +272,30 @@ class Discord:
             return reply(f"{target_name} can't make buy requests any more.")
         if name == "requests":
             return reply(self.requests_text())
+        if name == "alert":
+            item, close = self.item(opts.get("item", ""))
+            if not item:
+                return reply(f"No item called '{opts.get('item')}'." + (f" Did you mean: {', '.join(close)}?" if close else ""), private=True)
+            now = time.time()
+            if self.store.run("SELECT COUNT(*) FROM alerts WHERE by_id = ? AND status = 'open' AND expires > ?", (user, now))[0][0] >= MAX_ALERTS:
+                return reply(f"You have {MAX_ALERTS} alerts already: /unalert one first.", private=True)
+            days = int(opts.get("days") or ALERT_DAYS)
+            self.store.run("INSERT INTO alerts (item, max_price, by_id, by_name, created, expires, status) VALUES (?, ?, ?, ?, ?, ?, 'open')",
+                           (item, int(opts["max_price"]), user, user_name, now, now + days * 86400))
+            aid = self.store.run("SELECT MAX(id) FROM alerts")[0][0]
+            return reply(f"Alert #{aid}: you'll be pinged here when a bot sees **{item}** at {int(opts['max_price']):,} or less, "
+                         f"for the next {days} day{'s' if days != 1 else ''}.", private=True)
+        if name == "alerts":
+            rows = self.store.run("SELECT id, item, max_price, expires FROM alerts WHERE by_id = ? AND status = 'open' AND expires > ? "
+                                  "ORDER BY id", (user, time.time()))
+            return reply("\n".join(f"#{a} {item} at {price:,} or less, until <t:{int(exp)}:d>" for a, item, price, exp in rows)
+                         or "You have no price alerts.", private=True)
+        if name == "unalert":
+            rows = self.store.run("SELECT by_id, item FROM alerts WHERE id = ? AND status = 'open'", (int(opts["id"]),))
+            if not rows or rows[0][0] not in (user, self.cfg.get("owner_id")):
+                return reply(f"You have no alert #{opts['id']}.", private=True)
+            self.store.run("UPDATE alerts SET status = 'removed' WHERE id = ?", (int(opts["id"]),))
+            return reply(f"Alert #{opts['id']} ({rows[0][1]}) removed.", private=True)
         if name == "buy":
             if not self.may_buy(user):
                 return reply("You can't make buy requests: ask the owner to /allow you.", private=True)
@@ -293,6 +334,39 @@ class Discord:
             whose = claimed or ("any bot" if bot == "*" else bot)
             out.append(f"#{rid} {item}: {bought:,} of {amount:,} at {price:,} or less, for {by}, {whose} · {status}" + (f" ({note})" if note else ""))
         return "\n".join(out)
+
+    def check_alerts(self, shops, by, now=None):
+        """Store visits a bot just sent (server.py's /api/scans): listings at or under an open alert's price ping whoever
+        set it, once a store and price, ALERT_PER_HOUR an hour at most, and only if seen in the last ALERT_FRESH seconds."""
+        now = now or time.time()
+        alerts = self.store.run("SELECT id, item, max_price, by_id FROM alerts WHERE status = 'open' AND expires > ?", (now,))
+        if not alerts:
+            return
+        wanted = {}
+        for a in alerts:
+            wanted.setdefault(a[1].lower(), []).append(a)
+        _, snap = market_view.snapshot(self.store)
+        for shop in shops:
+            if not shop.get("epoch") or now - shop["epoch"] > ALERT_FRESH:
+                continue
+            for listing in shop.get("listings") or []:
+                hits = wanted.get(str(listing.get("item") or "").lower())
+                if not hits or listing.get("sold") or not listing.get("price"):
+                    continue
+                star = market_view.is_star(snap.get(hits[0][1], (None,))[0])
+                each = listing["price"] if star else listing["price"] / max(listing.get("bundle") or 1, 1)
+                for aid, item, price, user in hits:
+                    if each > price or self.store.run("SELECT 1 FROM alert_hits WHERE alert_id = ? AND shop = ? AND price = ?",
+                                                      (aid, shop.get("id"), each)):
+                        continue
+                    if self.store.run("SELECT COUNT(*) FROM alert_hits WHERE alert_id = ? AND at > ?", (aid, now - 3600))[0][0] >= ALERT_PER_HOUR:
+                        continue
+                    self.store.run("INSERT INTO alert_hits (alert_id, shop, price, at) VALUES (?, ?, ?, ?)", (aid, shop.get("id"), each, now))
+                    where = f"room {shop.get('room')} channel {shop.get('channel')}" if shop.get("channel") else (shop.get("place") or "a store")
+                    amount = f"{listing.get('bundle')} for {listing['price']:,}" if (listing.get("bundle") or 1) > 1 and not star else f"{each:,.0f}"
+                    self.notify("alerts", f"\U0001f514 <@{user}> **{item}** at {amount} (your alert #{aid}: {price:,} or less) in {where}, "
+                                          f"{shop.get('title') or 'a shop'}" + (f" by {shop['owner']}" if shop.get("owner") else "")
+                                          + f", seen <t:{int(shop['epoch'])}:R> by {by}.", ping=user)
 
     # ---- the bots' side of buy requests (server.py's /api/requests)
 

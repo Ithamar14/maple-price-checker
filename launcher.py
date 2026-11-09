@@ -60,7 +60,8 @@ SCOUT_STATE = HERE / "data" / "scout_state.json"  # where the scouter stopped (w
 DISCORD_NOTIFY = {"runs": "Bots starting and stopping", "errors": "Errors, and bots that stop checking in",
                   "finds": "Scouter finds bought", "requests": "Buy requests: taken, bought, done",
                   "snapshot": "The day's MeowDB snapshot is in", "rmt": "An RMT wave starting",
-                  "report": "The daily market report"}  # as server/discord_link.py's NOTIFY
+                  "report": "The daily market report",
+                  "alerts": "Price alerts (/alert) pinging whoever set them"}  # as server/discord_link.py's NOTIFY
 WINDOWS = {  # which window shows what: title, tabs, whether it talks to the server and updates MeowDB
     "main": ("Maple tools", ("full", "scout", "store", "custom", "finder", "server"), True),
     "overlay": ("Maple overlay", ("overlay",), False),
