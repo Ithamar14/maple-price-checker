@@ -18,7 +18,8 @@ never kept by a bot.
     POST /api/tasks    {"bot", "kind", "data"}   GET /api/tasks (open tasks for this bot or "*")
     POST /api/tasks/<id>/done {"result"}
                                             GET /api/tasks?max_age=S: only those under S seconds old. Tasks
-                                            nobody took within TASK_TTL are closed as "expired"
+                                            nobody took within TASK_TTL are closed as "expired", and a task for a
+                                            bot that isn't asking for tasks (TAKER_GONE) isn't kept: {"dropped"}
 
     python server.py    # PORT (8080), DATA_DIR (.), ADMIN_KEY from the environment
 """
@@ -39,7 +40,8 @@ DATA_DIR = Path(os.environ.get("DATA_DIR", "."))
 DB_FILE = DATA_DIR / "maple_server.sqlite"
 MAX_BODY = 20 * 1024 * 1024  # a request's body: a big first upload of scans comes in parts below this
 MAX_PAGE = 5000
-TASK_TTL = float(os.environ.get("TASK_TTL", 1800))  # seconds a task waits to be taken; older ones are closed as expired
+TASK_TTL = float(os.environ.get("TASK_TTL", 600))  # seconds a task waits to be taken (a buyer's tips.MAX_AGE): then closed as expired
+TAKER_GONE = 60.0  # a bot that hasn't asked for tasks in this long isn't taking any: tasks for it aren't kept at all
 FILE_NAME = re.compile(r"^[A-Za-z0-9_.-]{1,80}$")
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS bots (name TEXT PRIMARY KEY, key_hash TEXT UNIQUE, created REAL, seen REAL, status TEXT);
@@ -98,6 +100,7 @@ class Store:
 class Handler(BaseHTTPRequestHandler):
     store = None
     admin_key = ""
+    asked = {}  # bot -> when it last asked for tasks: who's taking them now (kept in memory: a restart forgets for a moment)
     server_version = "maple-server/1"
 
     # ---- plumbing
@@ -206,11 +209,16 @@ class Handler(BaseHTTPRequestHandler):
             return self.reply(200, [dict(zip(("id", "bot", "at", "kind", "text"), r)) for r in rows])
         if parts == ["tasks"] and method == "POST":
             data = self.json_body()
+            target, now = str(data.get("bot") or "*"), time.time()
+            takers = [b for b, at in self.asked.items() if now - at < TAKER_GONE]
+            if (target not in takers) if target != "*" else not takers:
+                return self.reply(200, {"ok": True, "dropped": f"{'no bot' if target == '*' else target} is taking tasks right now"})
             s.run("INSERT INTO tasks (bot, kind, data, created, by) VALUES (?, ?, ?, ?, ?)",
                   (str(data.get("bot") or "*"), str(data["kind"])[:40], json.dumps(data.get("data")), time.time(), bot))
             return self.reply(200, {"ok": True})
         if parts == ["tasks"]:
             now = time.time()  # a buyer that's off never takes them: they'd only pile up
+            self.asked[bot] = now
             s.run("UPDATE tasks SET done = ?, done_by = 'server', result = ? WHERE done IS NULL AND created < ?",
                   (now, json.dumps("expired: nobody took it in time"), now - TASK_TTL))
             try:
@@ -229,6 +237,7 @@ class Handler(BaseHTTPRequestHandler):
 
 def serve(port=None, store=None, admin_key=None):
     Handler.store = store or Store()
+    Handler.asked = {}
     Handler.admin_key = admin_key if admin_key is not None else os.environ.get("ADMIN_KEY", "")
     if not Handler.admin_key:
         print("warning: no ADMIN_KEY set, so no bot can join", flush=True)
