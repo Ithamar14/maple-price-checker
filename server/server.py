@@ -17,6 +17,8 @@ never kept by a bot.
     POST /api/events   {"kind", "text"}     GET /api/events?after=N
     POST /api/tasks    {"bot", "kind", "data"}   GET /api/tasks (open tasks for this bot or "*")
     POST /api/tasks/<id>/done {"result"}
+                                            GET /api/tasks?max_age=S: only those under S seconds old. Tasks
+                                            nobody took within TASK_TTL are closed as "expired"
 
     python server.py    # PORT (8080), DATA_DIR (.), ADMIN_KEY from the environment
 """
@@ -37,6 +39,7 @@ DATA_DIR = Path(os.environ.get("DATA_DIR", "."))
 DB_FILE = DATA_DIR / "maple_server.sqlite"
 MAX_BODY = 20 * 1024 * 1024  # a request's body: a big first upload of scans comes in parts below this
 MAX_PAGE = 5000
+TASK_TTL = float(os.environ.get("TASK_TTL", 1800))  # seconds a task waits to be taken; older ones are closed as expired
 FILE_NAME = re.compile(r"^[A-Za-z0-9_.-]{1,80}$")
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS bots (name TEXT PRIMARY KEY, key_hash TEXT UNIQUE, created REAL, seen REAL, status TEXT);
@@ -207,7 +210,15 @@ class Handler(BaseHTTPRequestHandler):
                   (str(data.get("bot") or "*"), str(data["kind"])[:40], json.dumps(data.get("data")), time.time(), bot))
             return self.reply(200, {"ok": True})
         if parts == ["tasks"]:
-            rows = s.run("SELECT id, bot, kind, data, created, by FROM tasks WHERE done IS NULL AND bot IN (?, '*') ORDER BY id", (bot,))
+            now = time.time()  # a buyer that's off never takes them: they'd only pile up
+            s.run("UPDATE tasks SET done = ?, done_by = 'server', result = ? WHERE done IS NULL AND created < ?",
+                  (now, json.dumps("expired: nobody took it in time"), now - TASK_TTL))
+            try:
+                newest = now - float(query.get("max_age", TASK_TTL))
+            except ValueError:
+                newest = now - TASK_TTL
+            rows = s.run("SELECT id, bot, kind, data, created, by FROM tasks WHERE done IS NULL AND bot IN (?, '*') AND created >= ? "
+                         "ORDER BY id", (bot, newest))
             return self.reply(200, [{"id": i, "bot": b, "kind": k, "data": json.loads(d), "created": c, "by": by} for i, b, k, d, c, by in rows])
         if len(parts) == 3 and parts[0] == "tasks" and parts[2] == "done" and method == "POST":
             s.run("UPDATE tasks SET done = ?, done_by = ?, result = ? WHERE id = ? AND done IS NULL",

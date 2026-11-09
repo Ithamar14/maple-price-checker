@@ -136,7 +136,7 @@ class Tips:
             if take and time.monotonic() >= next_poll:
                 next_poll = time.monotonic() + POLL_EVERY
                 try:
-                    tasks = self.client.call("GET", "/api/tasks")
+                    tasks = self.client.call("GET", f"/api/tasks?max_age={MAX_AGE:g}")  # older ones are too late to go for
                     with self.lock:
                         self.waiting = {t["id"]: t for t in tasks if t.get("kind") == KIND and t["id"] not in self.taken}
                     self.last_error = None
