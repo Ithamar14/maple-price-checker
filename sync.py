@@ -187,6 +187,54 @@ def sync_snapshots(client, folder=None, today=None):
     return moved
 
 
+def sync_requests(client):
+    """Buy requests from Discord (server/discord_link.py) onto this bot's custom list: taken, added to auto-buy at
+    or under their price up to their amount, what's bought reported back, and cancelled ones dealt with. What was
+    bought stays on the list, so it's never sold at the NPC. Returns what happened, as text."""
+    import custom_items
+    reqs = client.call("GET", "/api/requests")
+    if not reqs:
+        return []
+    moved, adds, stops, drops = [], [], set(), set()
+    items = custom_items.load()
+    for r in reqs:
+        rid = r["id"]
+        mine = next((i for i in items if i.get("request") == rid), None)
+        if r["status"] == "cancelled":
+            if mine:
+                (stops if mine["bought"] else drops).add(rid)
+            client.call("POST", f"/api/requests/{rid}/progress", {"removed": True})
+            moved.append(f"request #{rid} cancelled")
+            continue
+        if not r.get("claimed_by") and not client.call("POST", f"/api/requests/{rid}/claim").get("ok"):
+            continue  # another bot took it first
+        if mine:
+            if mine["bought"] != r["bought"]:
+                client.call("POST", f"/api/requests/{rid}/progress", {"bought": min(mine["bought"], r["amount"])})
+        elif not r.get("added"):  # once added, it's left to you: taken off the list by hand, it isn't put back
+            if custom_items.find(items, r["item"]):
+                client.call("POST", f"/api/requests/{rid}/progress", {"refused": "it's already on this bot's own custom list"})
+                continue
+            adds.append({**custom_items.new_item(r["item"]), "when": "price", "price": int(r["max_price"]), "limit": int(r["amount"]),
+                         "confirm": False, "request": rid, "requested_by": r.get("by_name", "")})
+            moved.append(f"request #{rid} added: {r['amount']:,} x {r['item']} at {r['max_price']:,} or less")
+    if adds or stops or drops:
+        items = custom_items.load()  # read again just before saving: a running bot may have counted a purchase
+        for i in items:
+            if i.get("request") in stops:
+                i["limit"] = i["bought"]  # nothing more bought; what was bought stays listed
+        items = [i for i in items if i.get("request") not in drops] + [a for a in adds if not custom_items.find(items, a["name"])]
+        custom_items.save(items)
+        for a in adds:
+            client.call("POST", f"/api/requests/{a['request']}/progress", {"added": True})
+    return moved
+
+
+def discord_settings(client, notify=None):
+    """The server's notification toggles; with notify, changes them first."""
+    return client.call("PUT" if notify is not None else "GET", "/api/discord/settings", {"notify": notify} if notify is not None else None)
+
+
 def read_json(path):
     try:
         return json.loads(Path(path).read_text("utf-8"))
@@ -214,6 +262,7 @@ def run_once(client, log_path=None, running=(), last_outcome="", files=True):
     finally:
         log.close()
     moved = (sync_files(client) + sync_snapshots(client)) if files else []
+    moved += sync_requests(client)
     return f"{up} up, {down} down" + (f", {', '.join(moved)}" if moved else "")
 
 

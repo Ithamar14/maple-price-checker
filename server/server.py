@@ -20,6 +20,11 @@ never kept by a bot.
     GET  /api/snapshots/<day>               one, gzipped JSON
     PUT  /api/snapshots/<day>               a day a PC pulled itself (gzipped JSON): kept only if the server hasn't a whole one
     POST /api/tasks/<id>/done {"result"}
+    GET  /api/requests                      buy requests from Discord for this bot to act on (discord_link.py)
+    POST /api/requests/<id>/claim           this bot takes one
+    POST /api/requests/<id>/progress        {"added"|"removed"|"bought"|"refused"}
+    GET  /api/discord/settings              which notifications are on; PUT {"notify": {kind: true/false}} changes them
+    POST /discord/interactions              Discord's slash commands (signed by Discord, no bot key)
                                             GET /api/tasks?max_age=S: only those under S seconds old. Tasks
                                             nobody took within TASK_TTL are closed as "expired", and a task for a
                                             bot that isn't asking for tasks (TAKER_GONE) isn't kept: {"dropped"}
@@ -39,6 +44,8 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
+import discord_link
+import market_view
 import snapshots
 
 DATA_DIR = Path(os.environ.get("DATA_DIR", "."))
@@ -58,7 +65,14 @@ CREATE TABLE IF NOT EXISTS events (id INTEGER PRIMARY KEY AUTOINCREMENT, bot TEX
 CREATE TABLE IF NOT EXISTS tasks (id INTEGER PRIMARY KEY AUTOINCREMENT, bot TEXT, kind TEXT, data TEXT, created REAL,
     by TEXT, done REAL, done_by TEXT, result TEXT);
 CREATE TABLE IF NOT EXISTS snapshots (day TEXT PRIMARY KEY, body BLOB, done INTEGER, updated REAL);
+CREATE TABLE IF NOT EXISTS scan_rows (seq INTEGER, item TEXT, price INTEGER, bundle INTEGER, sold INTEGER, epoch REAL);
+CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT);
+CREATE TABLE IF NOT EXISTS requests (id INTEGER PRIMARY KEY AUTOINCREMENT, item TEXT, max_price INTEGER, amount INTEGER, bot TEXT,
+    by_id TEXT, by_name TEXT, created REAL, status TEXT, bought INTEGER, added INTEGER, removed INTEGER, claimed_by TEXT,
+    note TEXT, updated REAL);
+CREATE TABLE IF NOT EXISTS discord_users (id TEXT PRIMARY KEY, name TEXT, added REAL);
 CREATE INDEX IF NOT EXISTS records_kind ON records(kind, seq);
+CREATE INDEX IF NOT EXISTS scan_rows_item ON scan_rows(item, epoch);
 """
 
 
@@ -74,6 +88,16 @@ class Store:
         self.db = sqlite3.connect(path, check_same_thread=False)
         self.db.executescript(SCHEMA)
         self.lock = threading.Lock()
+        if not self.run("SELECT 1 FROM scan_rows LIMIT 1"):  # the listings of scans sent before the index existed
+            with self.lock, self.db:
+                for seq, body in self.db.execute("SELECT seq, body FROM records WHERE kind = 'shops'").fetchall():
+                    self._index(seq, json.loads(body))
+
+    def _index(self, seq, shop):
+        """A shop visit's listings with a known item, for looking prices up (market_view). Under the lock."""
+        self.db.executemany("INSERT INTO scan_rows (seq, item, price, bundle, sold, epoch) VALUES (?, ?, ?, ?, ?, ?)",
+                            [(seq, l["item"], l.get("price"), l.get("bundle"), int(bool(l.get("sold"))), shop.get("epoch"))
+                             for l in shop.get("listings") or [] if l.get("item") and l.get("price")])
 
     def run(self, sql, args=()):
         with self.lock, self.db:
@@ -101,12 +125,15 @@ class Store:
                 cur = self.db.execute("INSERT OR IGNORE INTO records (kind, uid, bot, epoch, body) VALUES (?, ?, ?, ?, ?)",
                                       (kind, uid, bot, item.get("epoch"), json.dumps(item)))
                 new += cur.rowcount
+                if cur.rowcount and kind == "shops":
+                    self._index(cur.lastrowid, item)
         return new
 
 
 class Handler(BaseHTTPRequestHandler):
     store = None
     admin_key = ""
+    discord = None  # discord_link.Discord, when it's set up
     asked = {}  # bot -> when it last asked for tasks: who's taking them now (kept in memory: a restart forgets for a moment)
     server_version = "maple-server/1"
 
@@ -157,6 +184,11 @@ class Handler(BaseHTTPRequestHandler):
                 if not name:
                     return self.reply(400, {"error": "a bot needs a name"})
                 return self.reply(200, {"name": name, "key": self.store.join(name)})
+            if parts == ["discord", "interactions"] and method == "POST":
+                if not self.discord or not self.discord.public_key:
+                    return self.reply(404, {"error": "Discord isn't set up"})
+                code, out = self.discord.interaction(self.headers, self.body())
+                return self.reply(code, out)
             bot = self.who()
             if not bot:
                 return self.reply(401, {"error": "unknown bot key: join the server first"})
@@ -210,10 +242,31 @@ class Handler(BaseHTTPRequestHandler):
         if parts == ["events"] and method == "POST":
             data = self.json_body()
             s.run("INSERT INTO events (bot, at, kind, text) VALUES (?, ?, ?, ?)", (bot, time.time(), str(data.get("kind", "note"))[:40], str(data.get("text", ""))[:2000]))
+            if self.discord:
+                kind, text = str(data.get("kind", "")), str(data.get("text", ""))
+                if kind == "started":
+                    self.discord.notify("runs", f"\u25b6\ufe0f **{bot}** started {text}")
+                elif kind == "ended":
+                    failed = "error" in text
+                    icon = "\u274c" if failed else "\u23f9\ufe0f"
+                    self.discord.notify("errors" if failed else "runs", f"{icon} **{bot}**: {text}")
             return self.reply(200, {"ok": True})
         if parts == ["events"]:
             rows = s.run("SELECT id, bot, at, kind, text FROM events WHERE id > ? ORDER BY id LIMIT 500", (int(query.get("after", 0)),))
             return self.reply(200, [dict(zip(("id", "bot", "at", "kind", "text"), r)) for r in rows])
+        if parts == ["discord", "settings"]:
+            if not self.discord:
+                return self.reply(200, {"on": False, "notify": {}, "kinds": {}})
+            if method == "PUT":
+                self.discord.set_toggles(self.json_body().get("notify") or {})
+            return self.reply(200, {"on": self.discord.on, "notify": self.discord.toggles(), "kinds": discord_link.NOTIFY})
+        if parts == ["requests"]:
+            return self.reply(200, self.discord.for_bot(bot) if self.discord else [])
+        if len(parts) == 3 and parts[0] == "requests" and method == "POST" and self.discord:
+            if parts[2] == "claim":
+                return self.reply(200, {"ok": self.discord.claim(int(parts[1]), bot)})
+            if parts[2] == "progress":
+                return self.reply(200, {"ok": self.discord.progress(int(parts[1]), bot, self.json_body())})
         if parts == ["snapshots"]:
             return self.reply(200, [{"day": d, "done": bool(done), "size": z, "updated": u} for d, done, z, u in
                                     s.run("SELECT day, done, length(body), updated FROM snapshots ORDER BY day")])
@@ -255,15 +308,22 @@ class Handler(BaseHTTPRequestHandler):
                          "ORDER BY id", (bot, newest))
             return self.reply(200, [{"id": i, "bot": b, "kind": k, "data": json.loads(d), "created": c, "by": by} for i, b, k, d, c, by in rows])
         if len(parts) == 3 and parts[0] == "tasks" and parts[2] == "done" and method == "POST":
+            result = self.json_body().get("result")
             s.run("UPDATE tasks SET done = ?, done_by = ?, result = ? WHERE id = ? AND done IS NULL",
-                  (time.time(), bot, json.dumps(self.json_body().get("result")), int(parts[1])))
+                  (time.time(), bot, json.dumps(result), int(parts[1])))
+            if self.discord and "bought" in str(result) and "nothing bought" not in str(result):
+                rows = s.run("SELECT data, by FROM tasks WHERE id = ?", (int(parts[1]),))
+                d, by = (json.loads(rows[0][0]), rows[0][1]) if rows else ({}, "a scouter")
+                self.discord.notify("finds", f"\U0001f4b0 **{bot}** went for {by}'s find in room {d.get('room')} channel "
+                                             f"{d.get('channel')}: {result}")
             return self.reply(200, {"ok": True})
         return self.reply(404, {"error": "not found"})
 
 
-def serve(port=None, store=None, admin_key=None):
+def serve(port=None, store=None, admin_key=None, discord=None):
     Handler.store = store or Store()
     Handler.asked = {}
+    Handler.discord = discord
     Handler.admin_key = admin_key if admin_key is not None else os.environ.get("ADMIN_KEY", "")
     if not Handler.admin_key:
         print("warning: no ADMIN_KEY set, so no bot can join", flush=True)
@@ -272,8 +332,20 @@ def serve(port=None, store=None, admin_key=None):
     return httpd
 
 
+def after_snapshot(discord, store, day):
+    """The day's snapshot is in: say so, check for an RMT wave, and post the report."""
+    discord.notify("snapshot", f"\U0001f4c8 MeowDB snapshot for {day} is in.")
+    alert = market_view.rmt_check(store, day)
+    if alert:
+        discord.notify("rmt", "\U0001f6a8 " + alert)
+    discord.notify("report", market_view.report_text(store, day, alert=not (alert and discord.toggles()["rmt"])))  # not twice
+
+
 if __name__ == "__main__":
-    server = serve()
-    snapshots.Puller(Handler.store, log=lambda t: print(t, flush=True)).start()  # MeowDB's numbers, once a day
+    log = lambda t: print(t, flush=True)
+    store = Store()
+    discord = discord_link.Discord(store, log=log).start()
+    server = serve(store=store, discord=discord)
+    snapshots.Puller(store, log=log, on_done=lambda day: after_snapshot(discord, store, day)).start()  # MeowDB's numbers, once a day
     print(f"serving on port {server.server_address[1]}, data in {DB_FILE}", flush=True)
     server.serve_forever()

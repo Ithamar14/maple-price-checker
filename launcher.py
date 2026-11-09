@@ -57,6 +57,10 @@ ON_GAME = ("overlay", "full", "scout", "store")  # these use the game's screen: 
 GRACEFUL = ("full", "scout", "store")           # told to stop, and given STOP_WAIT to do it
 GAME_LOCK = HERE / "data" / "game_in_use.json"   # which window's tool has the game, across the windows
 SCOUT_STATE = HERE / "data" / "scout_state.json"  # where the scouter stopped (walker.SCOUT_STATE_FILE)
+DISCORD_NOTIFY = {"runs": "Bots starting and stopping", "errors": "Errors, and bots that stop checking in",
+                  "finds": "Scouter finds bought", "requests": "Buy requests: taken, bought, done",
+                  "snapshot": "The day's MeowDB snapshot is in", "rmt": "An RMT wave starting",
+                  "report": "The daily market report"}  # as server/discord_link.py's NOTIFY
 WINDOWS = {  # which window shows what: title, tabs, whether it talks to the server and updates MeowDB
     "main": ("Maple tools", ("full", "scout", "store", "custom", "finder", "server"), True),
     "overlay": ("Maple overlay", ("overlay",), False),
@@ -84,6 +88,7 @@ def defaults():
         "ov_market": True, "ov_percent": percent, "ov_min_profit": "1", "ov_interval": "1.0",
         "ov_tooltips": False, "ov_debug": False,
         "sv_on": False, "sv_url": "", "sv_name": "", "sv_key": "",
+        **{f"dn_{k}": True for k in DISCORD_NOTIFY},
         "st_dry": False, "st_place": False, "st_name": "",
         "fl_budget": "", "fl_custom": "off", "fl_npc_money": "", "fl_channels": "40-1", "fl_rooms": ALL_ROOMS,
         "fl_store": False, "fl_store_percent": "15", "fl_wait": False, "fl_minutes": "", "fl_sell_below": str(cfg.get("sell_below_budget_percent", 10)),
@@ -422,6 +427,7 @@ class App:
         self.sync_events = queue.Queue()     # ("started" / "ended", text) for the server's events
         self.server_cfg, self.running_now, self.last_outcome = {}, set(), ""
         self.discipline_vars, self.list_time = {}, None
+        self.notify_pending = None  # the Discord toggles, changed here and not yet sent
         if self.server:  # one window talks to the server
             threading.Thread(target=self.sync_loop, daemon=True).start()
 
@@ -584,6 +590,27 @@ class App:
         self.check(page, 4, "Share scans and status with the server (every minute, in the background)", "sv_on")
         self.var("sv_key")  # this bot's key from joining: kept with the settings, not shown
         self.show_server_state()
+        box = ttk.LabelFrame(page, text="Discord notifications (for every bot: the server's, changed from any launcher)", padding=8)
+        box.grid(row=5, column=0, columnspan=2, sticky="we", pady=(12, 0))
+        for i, (kind, label) in enumerate(DISCORD_NOTIFY.items()):
+            ttk.Checkbutton(box, text=label, variable=self.var(f"dn_{kind}"), command=self.notify_changed).grid(
+                row=i // 2, column=i % 2, sticky="w", padx=(0, 16), pady=1)
+        self.discord_state = tk.StringVar(value="Discord: not checked yet")
+        tk.Label(box, textvariable=self.discord_state, fg="#666").grid(row=(len(DISCORD_NOTIFY) + 1) // 2, column=0, columnspan=2,
+                                                                       sticky="w", pady=(6, 0))
+
+    def notify_changed(self):
+        """A toggle clicked: the server gets all of them at the next sync, and they hold for every bot."""
+        self.notify_pending = {k: self.vars[f"dn_{k}"].get() for k in DISCORD_NOTIFY}
+        self.sync_now.set()
+
+    def show_notify(self, settings):
+        """The server's toggles, shown (from the sync thread, through the log queue)."""
+        for kind, on in (settings.get("notify") or {}).items():
+            if f"dn_{kind}" in self.vars and self.notify_pending is None:
+                self.vars[f"dn_{kind}"].set(bool(on))
+        self.discord_state.set("Discord: set up on the server" if settings.get("on") else
+                               "Discord: not set up on the server yet (see server/README.md)")
 
     def show_server_state(self):
         joined = bool(self.vars["sv_key"].get())
@@ -624,6 +651,11 @@ class App:
             try:
                 while not self.sync_events.empty():
                     sync.event(client, *self.sync_events.get_nowait())
+                pending, self.notify_pending = self.notify_pending, None
+                settings = sync.discord_settings(client, pending)
+                if pending is not None:
+                    self.lines.put(("server", "Discord notifications on: " + (", ".join(k for k, on in pending.items() if on) or "none")))
+                self.lines.put(("__discord__", settings))
                 files = time.monotonic() - last_files > SYNC_FILES_EVERY
                 summary = sync.run_once(client, running=running, last_outcome=cfg.get("last", ""), files=files)
                 if files:
@@ -1296,6 +1328,10 @@ class App:
                 break
             if line is None:
                 self.ended(tool)
+                continue
+            if tool == "__discord__":  # the server's notification toggles, from the sync thread
+                if "server" in self.tabs:
+                    self.show_notify(line)
                 continue
             progress = PROGRESS_RE.fullmatch(line) if tool == "update" else None
             if progress:

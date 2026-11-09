@@ -569,6 +569,7 @@ class Crawler:
         self.market_deals = True  # False: NPC deals only (prices may still be loaded for custom_percent)
         self.buy_custom = False  # buy custom list items, each by its own rules
         self.book = custom_items.Book()
+        self.custom_time = self.custom_file_time()  # the custom list is read again when it changes (refresh_custom)
         self.watch = pc.Watchlists(pc.load_custom_items(self.db), pc.load_review_items())
         self.budget = 0
         self.spent = 0
@@ -586,6 +587,23 @@ class Crawler:
         self.custom_started = None
         self.custom_bought = []  # (time, name, quantity, paid, where, how)
         self.marks = Marks()
+
+    @staticmethod
+    def custom_file_time():
+        try:
+            return custom_items.FILE.stat().st_mtime
+        except OSError:
+            return None
+
+    def refresh_custom(self):
+        """The custom list again if it changed on disk since it was read: a buy request from Discord, or an edit in
+        the launcher, is then bought without a restart. Between shops."""
+        changed = self.custom_file_time()
+        if changed == self.custom_time:
+            return
+        self.custom_time = changed
+        self.book = custom_items.Book()
+        self.watch = pc.Watchlists(pc.load_custom_items(self.db), self.watch.review)
 
     def required_profit(self, asking):
         """Minimum profit per item the buy rules ask for at this price."""
@@ -1032,6 +1050,7 @@ class Crawler:
                 break
             self.controls.check()
             self.handle_late_store(channel)
+            self.refresh_custom()
             self.check_tips()
             skip = next((w for w in self.skip_shops_with if w in pc.norm(names[i - 1])), None)
             if skip:

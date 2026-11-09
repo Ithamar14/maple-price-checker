@@ -66,6 +66,40 @@ only shows the last day and week at the moment you ask, so this way no day is mi
 PC off. Each day takes about 140 KB. The launcher brings new days down into
 `data/meowdb_snapshots/` when it syncs, and sends up days only that PC has.
 
+## Discord
+
+The server is also a Discord bot: it posts to one channel, and answers slash commands that Discord sends it over
+HTTP (no extra program running anywhere). Until the variables below are set, it's off and the rest works as before.
+
+**Commands.** Everyone in your Discord server: `/status` (what each bot is doing), `/price <item>` (MeowDB and
+what the scans saw), `/report` (today's market report). You and whoever you `/allow`: `/buy <item> <max_price>
+<amount> [bot]`, `/requests`, `/cancel <id>`. Only you: `/allow @someone`, `/disallow @someone`.
+
+A buy request goes onto a bot's custom list at its next sync, bought automatically at or under the price, up to the
+amount, from that bot's custom money. It's only bought while that bot runs with **Custom deals** on. What's bought
+stays on the list, so it's never sold at the NPC: hand it over in the game. A running bot picks new requests up
+between shops.
+
+**Notifications** go to the channel: bots starting and stopping, errors and bots that stop checking in, scouter
+finds bought, buy requests' progress, the day's snapshot, an RMT wave, and the daily report. Each is turned on or
+off in the launcher's Server tab, for every bot at once.
+
+**Setting it up**
+1. [discord.com/developers/applications](https://discord.com/developers/applications) > **New Application**,
+   any name. On its **General Information** page, copy the **Application ID** and the **Public Key**.
+2. **Bot** (left) > **Reset Token** > copy the token. It's a password: it only goes into Railway.
+3. **OAuth2** > **URL Generator**: tick **bot** and **applications.commands**; under bot permissions, **View
+   Channels** and **Send Messages**. Open the URL at the bottom and add the bot to your Discord server.
+4. In Discord: **User Settings** > **Advanced** > **Developer Mode** on. Then right-click your server's icon >
+   **Copy Server ID**, the channel for notifications > **Copy Channel ID**, and your own name > **Copy User ID**.
+5. On Railway, the service's **Variables**: `DISCORD_APP_ID`, `DISCORD_PUBLIC_KEY`, `DISCORD_BOT_TOKEN`,
+   `DISCORD_GUILD_ID` (the server ID), `DISCORD_CHANNEL_ID` and `DISCORD_OWNER_ID` (your user ID). Railway
+   restarts the server with them; it sets the slash commands up on your Discord server when it starts.
+6. Back on the application's **General Information** page, **Interactions Endpoint URL**:
+   `https://<your server's address>/discord/interactions` > **Save Changes**. Discord checks it there and then,
+   so do this after step 5's restart.
+7. In Discord, type `/`: the commands are there. `/allow` the friends who may make buy requests.
+
 ## A scouter and a buyer
 
 A scouter (the launcher's **Scouter** tab) goes round the rooms and channels you give it, for as

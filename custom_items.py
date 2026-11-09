@@ -11,6 +11,8 @@
     confirm  True: wait for you to press OK; False: buy without asking
     only_one True: buy 1 in all and never more, in every mode, like an upgrade to wear
     store    True: store.py lists it in your own store; False: it's only held (never Only 1 ones)
+    request  a buy request from Discord (sync.sync_requests): its number; requested_by, who asked. Its
+             limit is always kept, even when the budget is split with no limit
     finder   from the equipment finder: {"slots": at least this many scroll slots left or None,
              "stats": {stat: at least this}}, checked on its tooltip in the store. Always only 1
 
@@ -285,7 +287,9 @@ def describe(item):
 
 
 def left(item, ignore_limits=False):
-    """How many more may be bought; None: no limit. ignore_limits doesn't get past only_one."""
+    """How many more may be bought; None: no limit. ignore_limits doesn't get past only_one, or a buy request's amount."""
+    if item.get("request"):
+        ignore_limits = False
     if item["only_one"] or item.get("finder"):
         return max(0, 1 - item["bought"])
     return None if ignore_limits or item["limit"] is None else max(0, item["limit"] - item["bought"])

@@ -98,8 +98,9 @@ def today():
 class Puller:
     """The daily pull, on its own thread. store is server.Store."""
 
-    def __init__(self, store, fetch=get, sleep=time.sleep, log=print):
+    def __init__(self, store, fetch=get, sleep=time.sleep, log=print, on_done=None):
         self.store, self.fetch, self.sleep, self.log = store, fetch, sleep, log
+        self.on_done = on_done  # called with the day once it's whole (the Discord notifications)
         self.stop = threading.Event()
 
     def recipes(self):
@@ -154,6 +155,11 @@ class Puller:
         self.save(day, state, whole)
         if whole:
             self.log(f"snapshot {day}: done, {len(state['summary'])} items")
+            if self.on_done:
+                try:
+                    self.on_done(day)
+                except Exception as e:  # a notification failing never undoes the pull
+                    self.log(f"snapshot {day}: after it: {e!r}")
         return whole
 
     def due(self, now=None):
