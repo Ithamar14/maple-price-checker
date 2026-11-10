@@ -16,6 +16,7 @@ never kept by a bot.
     PUT  /api/files/<name>                  replaces it (body: the file)
     POST /api/events   {"kind", "text"}     GET /api/events?after=N
     POST /api/tasks    {"bot", "kind", "data"}   GET /api/tasks (open tasks for this bot or "*")
+    GET  /api/meowdb                        while MeowDB blocks us: the daily check's last result
     GET  /api/snapshots                     MeowDB's daily numbers the server pulled (snapshots.py): [{"day", "done", "size", "updated"}]
     GET  /api/snapshots/<day>               one, gzipped JSON
     PUT  /api/snapshots/<day>               a day a PC pulled itself (gzipped JSON): kept only if the server hasn't a whole one
@@ -275,6 +276,9 @@ class Handler(BaseHTTPRequestHandler):
                 return self.reply(200, {"ok": self.discord.claim(int(parts[1]), bot)})
             if parts[2] == "progress":
                 return self.reply(200, {"ok": self.discord.progress(int(parts[1]), bot, self.json_body())})
+        if parts == ["meowdb"]:
+            rows = s.run("SELECT value FROM settings WHERE key = 'meowdb_check'")
+            return self.reply(200, {"pulls": snapshots.ALLOWED, "check": json.loads(rows[0][0]) if rows else None})
         if parts == ["snapshots"]:
             return self.reply(200, [{"day": d, "done": bool(done), "size": z, "updated": u} for d, done, z, u in
                                     s.run("SELECT day, done, length(body), updated FROM snapshots ORDER BY day")])
@@ -354,6 +358,10 @@ if __name__ == "__main__":
     store = Store()
     discord = discord_link.Discord(store, log=log).start()
     server = serve(store=store, discord=discord)
-    snapshots.Puller(store, log=log, on_done=lambda day: after_snapshot(discord, store, day)).start()  # MeowDB's numbers, once a day
+    unblocked = lambda day: discord.notify("snapshot", "\U0001f513 MeowDB answered the daily check again: it no longer blocks "
+                                                       "us. Pulls stay off until you turn them on (MEOWDB_ALLOWED=1 on Railway); "
+                                                       "it asked for a permission request first (contact@meowdb.com).")
+    snapshots.Puller(store, log=log, on_done=lambda day: after_snapshot(discord, store, day),
+                     on_unblocked=unblocked).start()  # MeowDB's numbers once a day, or while it blocks us, one check a day
     print(f"serving on port {server.server_address[1]}, data in {DB_FILE}", flush=True)
     server.serve_forever()

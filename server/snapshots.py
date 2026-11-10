@@ -102,9 +102,10 @@ def today():
 class Puller:
     """The daily pull, on its own thread. store is server.Store."""
 
-    def __init__(self, store, fetch=get, sleep=time.sleep, log=print, on_done=None):
+    def __init__(self, store, fetch=get, sleep=time.sleep, log=print, on_done=None, on_unblocked=None):
         self.store, self.fetch, self.sleep, self.log = store, fetch, sleep, log
         self.on_done = on_done  # called with the day once it's whole (the Discord notifications)
+        self.on_unblocked = on_unblocked  # called with the day the daily check finds MeowDB answering again
         self.stop = threading.Event()
 
     def recipes(self):
@@ -184,7 +185,48 @@ class Puller:
 
     def start(self):
         if not ALLOWED:
-            self.log("snapshot: MeowDB isn't asked (blocked 2026-11-10; MEOWDB_ALLOWED=1 once it gives permission again)")
+            self.log("snapshot: no pulls while MeowDB blocks us (MEOWDB_ALLOWED=1 once it gives permission); one check a day")
+            threading.Thread(target=self.watch_block, daemon=True).start()
             return self
         threading.Thread(target=self.run, daemon=True).start()
         return self
+
+    # ---- while blocked: one request a day, to see whether it still is
+
+    def check_block(self, now=None):
+        """One request, once a day from PULL_HOUR (UTC): whether MeowDB still turns us away. Kept in settings
+        ('meowdb_check'); the day it answers again, on_unblocked is told. Never pulls anything."""
+        now = now or datetime.now(timezone.utc)
+        day = now.date().isoformat()
+        last = self.last_check()
+        if now.hour < PULL_HOUR or last.get("day") == day:
+            return None
+        try:
+            self.fetch("items", limit=1, page=1)
+            status, note = "open", "MeowDB answered"
+        except urllib.error.HTTPError as e:
+            status, note = "blocked", f"{e.code}: {e.read()[:200].decode('utf-8', 'replace').strip()}"
+        except (OSError, ValueError) as e:
+            status, note = "unreachable", str(e)[:200]
+        check = {"day": day, "at": time.time(), "status": status, "note": note}
+        self.store.run("INSERT INTO settings (key, value) VALUES ('meowdb_check', ?) ON CONFLICT(key) DO UPDATE SET "
+                       "value = excluded.value", (json.dumps(check),))
+        self.log(f"snapshot: daily MeowDB check: {status} ({note[:80]})")
+        if status == "open" and last.get("status") != "open" and self.on_unblocked:
+            try:
+                self.on_unblocked(day)
+            except Exception as e:
+                self.log(f"snapshot: telling about it: {e!r}")
+        return check
+
+    def last_check(self):
+        rows = self.store.run("SELECT value FROM settings WHERE key = 'meowdb_check'")
+        return json.loads(rows[0][0]) if rows else {}
+
+    def watch_block(self):
+        while not self.stop.is_set():
+            try:
+                self.check_block()
+            except Exception as e:  # never takes the server down with it
+                self.log(f"snapshot: daily check: {e!r}")
+            self.stop.wait(CHECK_EVERY)
