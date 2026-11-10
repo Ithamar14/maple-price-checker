@@ -3,8 +3,9 @@ cheap. By the item's game id (its category) and name:
 
 - throwing stars, except those an NPC sells (Subi, Wolbi): buying them from players to sell on
   only works on players who don't know the NPC sells them
-- scrolls, except HP, MP, Magic Def. and Evasion ones, and the DEF scrolls that hardly trade
-  (Cape Weapon Def., Bottomwear DEF)
+- scrolls, except HP, MP, Magic Def. and Evasion ones, the DEF scrolls that hardly trade
+  (Cape Weapon Def., Bottomwear DEF), and ones that sell for under min_scroll_price unless named in
+  scroll_allow: the cheap niche ones mostly pass between merchants and are hardly used
 - Elixirs
 - ETC items used in a crafting recipe (craft level 8 and under) or that are a catalyst, except:
   - monster drops (40000xx), whose prices are mostly people finishing a quest, unless named in
@@ -71,10 +72,11 @@ def fits(kind, counts, reserved, max_items):
 
 
 class Rules:
-    def __init__(self, ids, reference, allow_drops=(), refined_premium=1.25, recipes=None):
+    def __init__(self, ids, reference, allow_drops=(), refined_premium=1.25, recipes=None, min_scroll_price=0, scroll_allow=()):
         """ids: name -> game item id. reference(name): its price, or None."""
         self.ids, self.reference = ids, reference
         self.allow_drops = set(allow_drops)
+        self.min_scroll_price, self.scroll_allow = min_scroll_price, set(scroll_allow)
         self.refined_premium = refined_premium
         self.uses, self.makes, self.catalysts = recipes if recipes is not None else load_recipes()
 
@@ -87,7 +89,12 @@ class Rules:
         if kind.startswith("207"):
             return "an NPC sells it" if name in NPC_STARS else ""
         if kind.startswith("204"):
-            return "not a scroll worth trading" if BAD_SCROLLS.search(name) else ""
+            if BAD_SCROLLS.search(name):
+                return "not a scroll worth trading"
+            price = self.reference(name) if self.min_scroll_price and name not in self.scroll_allow else None
+            if price is not None and price < self.min_scroll_price:
+                return f"a cheap scroll (under {self.min_scroll_price:,}): they mostly pass between merchants"
+            return ""
         if kind.startswith("2"):
             return "" if "Elixir" in name else "not a USE item worth trading"
         if not kind.startswith("4"):

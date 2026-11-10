@@ -558,6 +558,7 @@ class Crawler:
                           "demand_caps": cfg.get("demand_caps", [[50, 20], [15, 10], [5, 5]]),
                           "allow_drops": cfg.get("allow_drops", ["Leather", "Fragment of Magic"]),
                           "refined_premium": cfg.get("refined_premium", 1.25),
+                          "min_scroll_price": cfg.get("min_scroll_price", 0), "scroll_allow": cfg.get("scroll_allow", []),
                           "consumables": cfg.get("consumables", {}), "hp_per_meso": cfg.get("hp_per_meso", 2),
                           "mp_per_meso": cfg.get("mp_per_meso", 1), "stack_sizes": cfg.get("stack_sizes", {}),
                           "reserved_slots": cfg.get("reserved_slots", {"consumable": 2, "scroll": 3})}
@@ -731,7 +732,9 @@ class Crawler:
         self.market = market.prepare(self.db.ids)
         self.prices = pricing.Prices(self.market, scan_log.FILE, self.store_cfg["consumables"])
         self.store_rules = store_rules.Rules(self.db.ids, lambda name: self.prices.reference(name)[0],
-                                             self.store_cfg["allow_drops"], self.store_cfg["refined_premium"])
+                                             self.store_cfg["allow_drops"], self.store_cfg["refined_premium"],
+                                             min_scroll_price=self.store_cfg["min_scroll_price"],
+                                             scroll_allow=self.store_cfg["scroll_allow"])
 
     def update_custom_prices(self):
         """The latest prices of everything on the custom list still to be bought, before the first
