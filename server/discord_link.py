@@ -10,7 +10,7 @@ Set on Railway (the Developer Portal's application gives the first three):
     DISCORD_CHANNEL_ID   the channel notifications and reports go to
     DISCORD_OWNER_ID     your own user id: you can always buy, and only you can /allow others
 
-Commands: /status, /price and /report for everyone; /alert, /alerts and /unalert for everyone too (an alert spends
+Commands: /maplebot (what they all do), /status, /price and /report for everyone; /alert, /alerts and /unalert for everyone too (an alert spends
 nothing: it pings whoever set it when a bot's scans show the item at or under their price, check_alerts); /buy,
 /requests and /cancel for you and whoever you /allow; /allow and /disallow for you. A buy request goes to a bot's custom list at its next sync (sync.sync_requests),
 auto-buying at or under the price given, up to the amount, and is never sold at the NPC.
@@ -47,7 +47,27 @@ ALERT_PER_HOUR = 6     # pings an alert may make in an hour
 EPHEMERAL = 64       # a reply only the one who asked sees
 
 # slash commands (type 1: chat input). Option types: 3 text, 4 whole number, 6 user
+HELP = f"""**Maple bot commands**
+**For everyone**
+`/maplebot`: this list.
+`/status`: what each bot is doing: running or not, its room and channel, its money.
+`/price item`: an item's price: MeowDB's 24h and 7-day medians, and what the bots saw asked and sold in the last 3 days.
+`/report`: today's market report.
+`/alert item max_price [days]`: get pinged here when a bot sees the item at or under that price (per item; a throwing star \
+by the set). Lasts {ALERT_DAYS} days unless you say (1 to 30), up to {MAX_ALERTS} each. Pings once a store and price, at most \
+{ALERT_PER_HOUR} an hour, a minute or two after the bot saw it.
+`/alerts`: your alerts. `/unalert id`: remove one.
+**For the owner and whoever they /allow**
+`/buy item max_price amount [bot]`: a bot buys up to that many at or under the price, from its own money, while it runs \
+with Custom deals on. Leave bot out for whichever takes it first. What's bought is kept, never sold at the NPC: it's \
+handed over in the game.
+`/requests`: open buy requests and the last finished. `/cancel id`: cancel one (whoever asked, or the owner).
+**For the owner**
+`/allow @someone`, `/disallow @someone`: who may make buy requests.
+Item boxes suggest names as you type. Only you see the answers to /maplebot, /alert, /alerts and /unalert."""
+
 COMMANDS = [
+    {"name": "maplebot", "description": "What every command does, and who can use it"},
     {"name": "status", "description": "What each bot is doing"},
     {"name": "price", "description": "An item's price: MeowDB, and what the bots' scans saw",
      "options": [{"type": 3, "name": "item", "description": "The item", "required": True, "autocomplete": True}]},
@@ -251,6 +271,8 @@ class Discord:
 
     def command(self, name, opts, payload):
         user, user_name = who(payload)
+        if name == "maplebot":
+            return reply(HELP, private=True)
         if name == "status":
             return reply(market_view.status_text(self.store))
         if name == "report":
