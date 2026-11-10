@@ -18,7 +18,7 @@
                                   "Pure Water": [0, 800]},
                   "hp_per_meso": 2, "mp_per_meso": 1, "reserved_slots": {"consumable": 2, "scroll": 3},
                   "_min_scroll_price": "a scroll that sells for under this isn't a store deal: the cheap niche ones (Pet Equip Jump, Topwear DEF and the like) mostly pass between merchants and are hardly used. Those in scroll_allow are, whatever their price",
-                  "min_scroll_price": 5000, "scroll_allow": ["Hat Accuracy Scroll: Greater"],
+                  "min_scroll_price": 5000, "scroll_allow": ["Hat Accuracy Scroll: Greater", "Shield DEF Scroll: Greater"],
                   "_stack_sizes": "store deals hold at most one stack of an item: MeowDB's stack size, or 100 if it has none. Set an item's here to change it, like {\"Stiff Feather\": 100}",
                   "stack_sizes": {}},
   "_hold": "bought at up to over_npc mesos over the NPC's price and kept, never sold at the NPC: equipment of this subtype from min_level up (data/equipment_stats.json). From the custom and store money when the budget is split",
