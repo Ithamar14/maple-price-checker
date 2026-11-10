@@ -7,7 +7,7 @@ MeowDB item, "summary": {item id: its market summary}, "fetched": {item id: when
 report uses. It's kept gzipped in the server's database (snapshots table), and the PCs download the ones
 they don't have when they sync (sync.sync_snapshots), into data/meowdb_snapshots/<day>.json.
 
-About one request a second, each item once a day, from PULL_HOUR (UTC). A pull that's cut off (a restart,
+One request every GAP seconds, each item once a day, from PULL_HOUR (UTC); off unless MEOWDB_ALLOWED=1. A pull that's cut off (a restart,
 MeowDB down) goes on from where it stopped at the next check.
 """
 import gzip
@@ -22,7 +22,11 @@ from datetime import datetime, timezone
 
 API = "https://meowdb.com/msclassic/api"
 UA = "maple-price-checker (personal use; each item once a day at most)"  # as market.py
-GAP = 1.1           # seconds between requests
+# MeowDB blocked this tool on 2026-11-10 for going faster than one request every 10 seconds (its tool rules,
+# https://meowdb.com/reuse#tool-rules). The daily pull only runs with MEOWDB_ALLOWED=1 set on Railway, once MeowDB
+# has given permission again.
+ALLOWED = os.environ.get("MEOWDB_ALLOWED") == "1"
+GAP = 11.0          # seconds between requests: MeowDB's rules allow one every 10 seconds at most
 CHECK_EVERY = 600   # seconds between looks at whether today's is done
 PULL_HOUR = int(os.environ.get("PULL_HOUR", 6))  # UTC: 08:00 in Israel in winter, 09:00 in summer; the same date there
 EQUIP_LEVELS = {35}
@@ -179,5 +183,8 @@ class Puller:
             self.stop.wait(CHECK_EVERY)
 
     def start(self):
+        if not ALLOWED:
+            self.log("snapshot: MeowDB isn't asked (blocked 2026-11-10; MEOWDB_ALLOWED=1 once it gives permission again)")
+            return self
         threading.Thread(target=self.run, daemon=True).start()
         return self

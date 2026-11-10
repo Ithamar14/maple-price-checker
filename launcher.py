@@ -345,7 +345,10 @@ def ago(hours):
 
 def meow_status(dump):
     """(text for the status line, how many prices are due)."""
-    total = len(market.priced(dump))
+    if not market.ALLOWED:
+        last = market.last_fetched(dump)
+        return (f"MeowDB blocked this tool on 2026-11-10: nothing is asked, saved prices are used "
+                f"(last fetched {ago(last) if last is not None else 'never'})"), 0
     if not total:
         return "MeowDB: no saved prices yet. They're looked up as items show up.", 0
     due = len(market.stale_names(dump))
@@ -1288,6 +1291,9 @@ class App:
         if job:
             self.meow_button.configure(text="Stop update")
             self.meow_button.state(["disabled"] if job.stop_at is not None else ["!disabled"])
+        elif not market.ALLOWED:
+            self.meow_button.configure(text="MeowDB blocked")
+            self.meow_button.state(["disabled"])
         elif not self.server:  # the main window keeps the prices up to date: two updates at once would clash
             self.meow_button.configure(text="Update them in Maple tools")
             self.meow_button.state(["disabled"])

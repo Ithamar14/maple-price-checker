@@ -33,7 +33,16 @@ UA = "maple-price-checker (personal use; each item once a day at most)"
 DUMP_FILE = Path(__file__).parent / "data" / "market_prices.json"
 SETTINGS_FILE = Path(__file__).parent / "crawler_settings.json"
 REFRESH_HOURS = 24
-REQUEST_GAP = 1.0  # seconds between requests to MeowDB
+# MeowDB blocked this tool on 2026-11-10 for sending requests faster than one every 10 seconds, against its tool
+# rules (https://meowdb.com/reuse#tool-rules), and took back any earlier permission. Nothing is asked while this is
+# False: saved prices are still used. Set it True only once MeowDB has given permission again (contact@meowdb.com).
+ALLOWED = False
+BLOCKED_NOTE = "MeowDB blocked this tool on 2026-11-10: nothing is asked until it gives permission again (market.ALLOWED)"
+REQUEST_GAP = 11.0  # seconds between requests to MeowDB: its rules allow one every 10 seconds at most
+
+
+class Blocked(OSError):
+    """MeowDB isn't asked (ALLOWED is False). An OSError, so it's handled like MeowDB being unreachable."""
 SAVE_TRIES = 20    # Windows refuses to replace a file while something is reading it: try again
 update_saved = None  # "yes" / "no" from --market-update: prepare() doesn't ask, None: it does
 
@@ -106,6 +115,8 @@ def ask_percent(default):
 
 
 def _get(path, **params):
+    if not ALLOWED:
+        raise Blocked(BLOCKED_NOTE)
     url = f"{API}/{path}?{urllib.parse.urlencode(params)}"
     req = urllib.request.Request(url, headers={"User-Agent": UA})
     with urllib.request.urlopen(req, timeout=30) as r:
@@ -218,6 +229,10 @@ class Live:
         return entry
 
     def _queue(self, name):
+        if not ALLOWED:  # never looked up: the saved price, if any, is all there is
+            with self.lock:
+                self.waiting.discard(name)
+            return
         self.todo.put(name)
         if self.thread is None:
             self.thread = threading.Thread(target=self._work, daemon=True)
@@ -353,12 +368,15 @@ def prepare(game_ids=None):
 
 def update_stale():
     """Look up every saved price that's due, printing 'progress <done> <total>' along the way."""
+    if not ALLOWED:
+        print(BLOCKED_NOTE)
+        return
     dump = load()
     names = stale_names(dump)
     if not names:
         print("all saved prices are under 24 hours old: nothing to update")
         return
-    print(f"updating {len(names)} prices on MeowDB, about one a second")
+    print(f"updating {len(names)} prices on MeowDB, one every {REQUEST_GAP:g} seconds")
     live = Live(dump, update=True)
     for name in names:
         live.get(name)

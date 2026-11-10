@@ -743,6 +743,9 @@ class Crawler:
                 names.append(known[0])  # as MeowDB's lookups and the listings spell it
         if not names or not self.market:
             return
+        if not market.ALLOWED:
+            print(f"  custom list: {market.BLOCKED_NOTE}; using the saved prices")
+            return
         print(f"  custom list: getting the latest prices of {len(names)} items from MeowDB...")
         self.market.update_now(names)
         end = time.monotonic() + CUSTOM_START_WAIT * len(names)
